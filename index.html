@@ -569,11 +569,17 @@ async function initLiff() {
     } else {
         loadingText.innerText = "老娘正在翻帳本，幫你算驚喜...";
     }
-    try {
+     try {
         await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) { liff.login(); return; }
+        if (!liff.isLoggedIn()) { 
+            console.log("未登入，跳轉登入");
+            liff.login(); 
+            return; 
+        }
         userId = (await liff.getProfile()).userId;
+        console.log("取得 userId:", userId);  // ✅ 加上這行
         await fetchData();
+        console.log("fetchData 完成");  // ✅ 加上這行
     } catch(e) { 
         console.error('LIFF init error:', e);
         showToast('初始化失敗，請重新開啟頁面'); 
@@ -636,7 +642,7 @@ async function fetchData(isReload = false) {
             }
         }
     } catch(e) { 
-        console.error("Fetch Error:", e);
+        console.error("Fetch Error 詳細:", e);  // ✅ 加上這行
         showToast('資料載入失敗，請稍後再試');
     } finally {
         // 無論成功失敗都關閉載入中動畫
