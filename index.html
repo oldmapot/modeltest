@@ -755,14 +755,15 @@ function openProfile() {
   let p = userData?.profile; 
   if(!p) return; 
   
-  // 處理生日格式
   let birthday = p.birthday || "";
-  if (birthday && birthday.includes('T')) {
-    birthday = birthday.split('T')[0];
-  }
-  // 如果還是 ISO 格式
-  if (birthday && birthday.includes('Z')) {
+  
+  // 處理時區問題：加一天
+  if (birthday && !birthday.includes('T')) {
+    // 如果是 YYYY-MM-DD 格式，直接顯示
+  } else if (birthday) {
     let d = new Date(birthday);
+    // 加一天補償時區
+    d.setDate(d.getDate() + 1);
     let y = d.getFullYear();
     let m = String(d.getMonth() + 1).padStart(2, '0');
     let day = String(d.getDate()).padStart(2, '0');
