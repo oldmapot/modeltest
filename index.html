@@ -561,13 +561,28 @@ async function initLiff() {
     referrerParam = referrerParam.trim();
     
     const loadingText = document.getElementById('loading-text');
-    if (currentFrom === 'so') {
-        document.body.classList.add('theme-so');
-        document.getElementById('loader').className = 'loader-icon so';
-        loadingText.innerText = "正在為你的生活，加入一點甜...";
-    } else {
-        loadingText.innerText = "老娘正在翻帳本，幫你算驚喜...";
-    }
+
+// 等候詞列表（可自由增減）
+const loadingTexts = {
+    omp: [
+        "老娘正在翻帳本，幫你算驚喜...",
+        "老娘正在火速趕來...",
+        "別催，老娘正在幫你算點數...",
+        "正在幫您端上熱騰騰的驚喜...",
+        "火鍋滾了，心意也快好了..."
+    ],
+    swo: [
+        "正在為你的生活，加入一點甜...",
+        "攪拌心意中，請稍候片刻...",
+        "正準備為您送上今日份的療癒...",
+        "心意準備中，等等來點甜的吧！",
+        "STAY SWEET！"
+    ]
+};
+
+const texts = currentFrom === 'so' ? loadingTexts.swo : loadingTexts.omp;
+const randomIndex = Math.floor(Math.random() * texts.length);
+loadingText.innerText = texts[randomIndex];
      try {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) { 
@@ -610,7 +625,33 @@ async function fetchData(isReload = false) {
             document.getElementById('regUI').style.display = 'none';
             const displayPoints = userData.points !== undefined ? userData.points : (userData.profile?.points || 0);
             document.getElementById('pointsDisplay').innerText = displayPoints;
-            document.getElementById('welcomeQuote').innerText = userData.welcomeQuote || '歡迎回來！';
+            // 歡迎詞列表（可自由增減）
+const welcomeQuotes = {
+    omp: [
+        "熟悉的位子，老娘幫你留好了",
+        "老娘這鍋湯，專治各種不開心",
+        "歡迎回家，今天想喝什麼湯",
+        "進了老娘的門，就是家裡人",
+        "每一口美味，都在累積心意。",
+        "沒什麼事是老娘一鍋解決不了的。",
+        "累積一點心意，換一口老娘美味",
+        "來老娘這，吃飽喝足最幸福"
+    ],
+    swo: [
+        "生活七八分苦？今天必須一點甜。",
+        "遇見你，就是一點甜...",
+         "點點心意，只為甜你的心。",
+         "生活苦甜參半，今天留給甜的那半。",
+         "生活苦甜參半，今天留給甜的那半。",
+        "給生活加點糖，一點甜正剛好。",
+        "一點甜，一點暖，一點幸福",
+        "今日宜加糖， 一點甜正好"
+    ]
+};
+
+const quotes = currentFrom === 'so' ? welcomeQuotes.swo : welcomeQuotes.omp;
+const randomQuoteIndex = Math.floor(Math.random() * quotes.length);
+document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
             generateMemberCode();
             if (isReload) showToast('✅ 資料已更新');
 
