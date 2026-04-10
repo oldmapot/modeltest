@@ -757,10 +757,12 @@ function openProfile() {
   
   let birthday = p.birthday || "";
   if (birthday && birthday.includes('T')) {
-    // 直接取 YYYY-MM-DD 部分，不要轉換時區
-    birthday = birthday.split('T')[0];
-  } else if (birthday && birthday.includes('/')) {
-    birthday = birthday.replace(/\//g, '-');
+    let d = new Date(birthday);
+    // 用 UTC 方式取值，不要用 getFullYear/getMonth/getDate
+    let y = d.getUTCFullYear();
+    let m = String(d.getUTCMonth() + 1).padStart(2, '0');
+    let day = String(d.getUTCDate()).padStart(2, '0');
+    birthday = y + "-" + m + "-" + day;
   }
   
   openModal(`<h3 style="color:var(--primary); text-align:center;">👤 個人資料</h3>
