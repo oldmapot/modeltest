@@ -588,7 +588,6 @@ async function initLiff() {
 
 async function fetchData(isReload = false) {
     try {
-        // ✅ 加上 branch 參數
         const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
         const url = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
         let res = await fetch(url);
@@ -596,6 +595,12 @@ async function fetchData(isReload = false) {
         let responseText = await res.text();
         
         try { userData = JSON.parse(responseText); } catch(e) { throw new Error("伺服器回應格式錯誤"); }
+        
+        // 🔧 新增：更新載入畫面的等候詞（從後端隨機選一個）
+        if (userData.loadingTexts && userData.loadingTexts.length > 0) {
+            const randomIndex = Math.floor(Math.random() * userData.loadingTexts.length);
+            document.getElementById('loading-text').innerText = userData.loadingTexts[randomIndex];
+        }
         
         document.getElementById('loading').style.display = 'none';
 
