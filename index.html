@@ -756,18 +756,11 @@ function openProfile() {
   if(!p) return; 
   
   let birthday = p.birthday || "";
-  
-  // 處理時區問題：加一天
-  if (birthday && !birthday.includes('T')) {
-    // 如果是 YYYY-MM-DD 格式，直接顯示
-  } else if (birthday) {
-    let d = new Date(birthday);
-    // 加一天補償時區
-    d.setDate(d.getDate() + 1);
-    let y = d.getFullYear();
-    let m = String(d.getMonth() + 1).padStart(2, '0');
-    let day = String(d.getDate()).padStart(2, '0');
-    birthday = y + "-" + m + "-" + day;
+  if (birthday && birthday.includes('T')) {
+    // 直接取 YYYY-MM-DD 部分，不要轉換時區
+    birthday = birthday.split('T')[0];
+  } else if (birthday && birthday.includes('/')) {
+    birthday = birthday.replace(/\//g, '-');
   }
   
   openModal(`<h3 style="color:var(--primary); text-align:center;">👤 個人資料</h3>
