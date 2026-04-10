@@ -509,6 +509,9 @@ function openGiftBox() {
 async function refreshAll() {
     if (!userId) return;
     try {
+        // ✅ 加上 branch 參數
+        const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
+        const url = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
         // 顯示載中（可選）
         const refreshBtn = document.querySelector('.asset-card button');
         if (refreshBtn) refreshBtn.disabled = true;
@@ -580,7 +583,9 @@ async function initLiff() {
 
 async function fetchData(isReload = false) {
     try {
-        const url = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
+        // ✅ 加上 branch 參數
+        const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
+        const url = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
         let res = await fetch(url);
         if (!res.ok) { throw new Error(`HTTP ${res.status}`); }
         let responseText = await res.text();
