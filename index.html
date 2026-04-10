@@ -754,23 +754,15 @@ function openPointHistory() {
 function openProfile() { 
   let p = userData?.profile; 
   if(!p) return; 
-  
+
+  // 直接使用後端傳回來的正確生日，不要再轉換！
   let birthday = p.birthday || "";
-  if (birthday && birthday.includes('T')) {
-    let d = new Date(birthday);
-    // 用 UTC 方式取值，不要用 getFullYear/getMonth/getDate
-    let y = d.getUTCFullYear();
-    let m = String(d.getUTCMonth() + 1).padStart(2, '0');
-    let day = String(d.getUTCDate()).padStart(2, '0');
-    birthday = y + "-" + m + "-" + day;
-  }
-  
+
   openModal(`<h3 style="color:var(--primary); text-align:center;">👤 個人資料</h3>
     <p>姓名：${p.name}</p>
     <p>電話：${p.phone}</p>
     <p>生日：${birthday}</p>`); 
 }
-
 function autoCopyShare() { 
     // 1. 取得當前時間戳記 (例如: 1711939200000)
     const now = Date.now();
