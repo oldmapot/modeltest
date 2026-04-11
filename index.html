@@ -604,58 +604,81 @@ loadingText.innerText = texts[randomIndex];
 async function fetchData(isReload = false) {
     try {
         const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        const url = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
-        let res = await fetch(url);
-        if (!res.ok) { throw new Error(`HTTP ${res.status}`); }
-        let responseText = await res.text();
         
-        try { userData = JSON.parse(responseText); } catch(e) { throw new Error("伺服器回應格式錯誤"); }
+        // ========== 第一階段：輕量版 API（只載入基本資料） ==========
+        const basicUrl = `${GAS_URL}?action=getBasicMemberInfo&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&t=${Date.now()}`;
+        let basicRes = await fetch(basicUrl);
+        let basicData = await basicRes.json();
         
-        // 🔧 新增：更新載入畫面的等候詞（從後端隨機選一個）
-        if (userData.loadingTexts && userData.loadingTexts.length > 0) {
-            const randomIndex = Math.floor(Math.random() * userData.loadingTexts.length);
-            document.getElementById('loading-text').innerText = userData.loadingTexts[randomIndex];
+        // 更新載入畫面的等候詞（如果後端有回傳）
+        if (basicData.loadingTexts && basicData.loadingTexts.length > 0) {
+            const randomIndex = Math.floor(Math.random() * basicData.loadingTexts.length);
+            document.getElementById('loading-text').innerText = basicData.loadingTexts[randomIndex];
         }
         
         document.getElementById('loading').style.display = 'none';
 
         // --- 1. 已是會員的情況 ---
-        if (userData && userData.isMember === true) {
+        if (basicData && basicData.isMember === true) {
             document.getElementById('memberUI').style.display = 'block';
             document.getElementById('regUI').style.display = 'none';
-            const displayPoints = userData.points !== undefined ? userData.points : (userData.profile?.points || 0);
+            
+            // 顯示點數
+            const displayPoints = basicData.points || 0;
             document.getElementById('pointsDisplay').innerText = displayPoints;
-            // 歡迎詞列表（可自由增減）
-const welcomeQuotes = {
-    omp: [
-        "熟悉的位子，老娘幫你留好了",
-        "老娘這鍋湯，專治各種不開心",
-        "歡迎回家，今天想喝什麼湯",
-        "進了老娘的門，就是家裡人",
-        "每一口美味，都在累積心意。",
-        "沒什麼事是老娘一鍋解決不了的。",
-        "累積一點心意，換一口老娘美味",
-        "來老娘這，吃飽喝足最幸福"
-    ],
-    swo: [
-        "生活七八分苦？今天必須一點甜。",
-        "遇見你，就是一點甜...",
-         "點點心意，只為甜你的心。",
-         "生活苦甜參半，今天留給甜的那半。",
-         "生活苦甜參半，今天留給甜的那半。",
-        "給生活加點糖，一點甜正剛好。",
-        "一點甜，一點暖，一點幸福",
-        "今日宜加糖， 一點甜正好"
-    ]
-};
-
-const quotes = currentFrom === 'so' ? welcomeQuotes.swo : welcomeQuotes.omp;
-const randomQuoteIndex = Math.floor(Math.random() * quotes.length);
-document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
+            
+            // 歡迎詞列表（前端寫死，隨機顯示）
+            const welcomeQuotes = {
+                omp: [
+                    "熟悉的位子，老娘幫你留好了",
+                    "老娘這鍋湯，專治各種不開心",
+                    "歡迎回家，今天想喝什麼湯",
+                    "進了老娘的門，就是家裡人",
+                    "每一口美味，都在累積心意。",
+                    "沒什麼事是老娘一鍋解決不了的。",
+                    "累積一點心意，換一口老娘美味",
+                    "來老娘這，吃飽喝足最幸福"
+                ],
+                swo: [
+                    "生活七八分苦？今天必須一點甜。",
+                    "遇見你，就是一點甜...",
+                    "點點心意，只為甜你的心。",
+                    "生活苦甜參半，今天留給甜的那半。",
+                    "給生活加點糖，一點甜正剛好。",
+                    "一點甜，一點暖，一點幸福",
+                    "今日宜加糖，一點甜正好"
+                ]
+            };
+            const quotes = currentFrom === 'so' ? welcomeQuotes.swo : welcomeQuotes.omp;
+            const randomQuoteIndex = Math.floor(Math.random() * quotes.length);
+            document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
+            
+            // 儲存基本資料
+            userData = basicData;
+            
+            // 產生 QR Code
             generateMemberCode();
+            
             if (isReload) showToast('✅ 資料已更新');
-
-       // --- 2. 非會員（準備註冊）的情況 ---
+            
+            // ========== 第二階段：背景載入詳細資料 ==========
+            setTimeout(async () => {
+                try {
+                    const detailUrl = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
+                    let detailRes = await fetch(detailUrl);
+                    let detailData = await detailRes.json();
+                    
+                    if (detailData) {
+                        // 合併詳細資料（推薦名單、點數明細、活動資訊等）
+                        userData = { ...userData, ...detailData };
+                        console.log("詳細資料已載入完成");
+                    }
+                } catch(e) {
+                    console.error("載入詳細資料失敗:", e);
+                }
+            }, 500);
+            
+        // --- 2. 非會員（準備註冊）的情況 ---
         } else {
             document.getElementById('memberUI').style.display = 'none';
             document.getElementById('regUI').style.display = 'block';
@@ -664,7 +687,7 @@ document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
             if (referrerParam && referrerParam !== 'undefined' && referrerParam !== '') {
                 
                 // 如果連結已過期 (GAS 回傳 expiredLink: true)
-                if (userData && userData.expiredLink === true) {
+                if (basicData && basicData.expiredLink === true) {
                     document.getElementById('regGiftArea').style.display = 'none';
                     showToast('⚠️ 此推薦連結已超過 14 天效期');
                 } else {
@@ -672,13 +695,13 @@ document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
                     document.getElementById('regGiftArea').style.display = 'block';
                     
                     // 取得推薦人姓名
-                    let referrerName = (userData && userData.myReferrer && userData.myReferrer !== "無") ? userData.myReferrer : "神祕好友";
+                    let referrerName = (basicData && basicData.myReferrer && basicData.myReferrer !== "無") ? basicData.myReferrer : "神祕好友";
                     
                     document.getElementById('giftTitle').innerText = `🎁 你的好友 ${referrerName} 送你的專屬好禮`;
                     document.getElementById('giftTitle').style.textAlign = "center";
                     document.getElementById('giftTip').style.textAlign = "center";
                     
-                    // 產生 QR Code (請確保 generateRegCode 裡面也有處理 split('|'))
+                    // 產生 QR Code
                     generateRegCode(); 
                 }
             } else {
@@ -687,14 +710,12 @@ document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
             }
         }
     } catch(e) { 
-        console.error("Fetch Error 詳細:", e);  // ✅ 加上這行
+        console.error("Fetch Error 詳細:", e);
         showToast('資料載入失敗，請稍後再試');
     } finally {
-        // 無論成功失敗都關閉載入中動畫
         document.getElementById('loading').style.display = 'none';
     }
 }
-
 async function doRegister() {
     let name = document.getElementById('regName').value.trim();
     let phone = document.getElementById('regPhone').value.trim();
