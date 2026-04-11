@@ -440,6 +440,7 @@ function generateRegCode() {
 
     let cleanRefId = rawRef.split('|')[0];
     
+    // ✅ QR 內容：分店_金鑰_新客ID_推薦人ID
     const codeData = `${userData.shopCode}_${userData.shopKey}_${userId}_${cleanRefId}`;
     
     const qrImg = document.getElementById('regGiftQR');
