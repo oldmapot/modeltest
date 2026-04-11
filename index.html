@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -199,8 +198,6 @@
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzyYTgRv27kFU-xM2zXv2RQsakzH0aNETyqhTEY9McZ6913Xjnts9FYcWilUpISiuvs/exec";
 const LIFF_ID = "2009761099-xXvMY51i";
-//const idToken = liff.getIDToken();
-//const url = `${GAS_URL}?action=checkID&idToken=${encodeURIComponent(idToken)}&branch=${branch}&t=${Date.now()}`;
 let userId = '', userData = null, currentFrom = 'omp', referrerParam = '', userToken = '', pendingCheckboxId = null;
 
 // QR Code 倒數計時相關變數
@@ -302,7 +299,7 @@ function openLegalModal(e) {
       </div>
 
       <div class="legal-row">
-        <div class="legal-title">◆ 非現金資產</div>
+        <div class="rule-title">◆ 非現金資產</div>
         <div class="legal-body">本平台發放之點數屬無償贈與之紅利，不具貨幣價值，不得要求兌換現金。</div>
       </div>
 
@@ -443,7 +440,6 @@ function generateRegCode() {
 
     let cleanRefId = rawRef.split('|')[0];
     
-    // ✅ QR 內容：分店_金鑰_新客ID_推薦人ID
     const codeData = `${userData.shopCode}_${userData.shopKey}_${userId}_${cleanRefId}`;
     
     const qrImg = document.getElementById('regGiftQR');
@@ -591,9 +587,9 @@ loadingText.innerText = texts[randomIndex];
             return; 
         }
         userId = (await liff.getProfile()).userId;
-        console.log("取得 userId:", userId);  // ✅ 加上這行
+        console.log("取得 userId:", userId);
         await fetchData();
-        console.log("fetchData 完成");  // ✅ 加上這行
+        console.log("fetchData 完成");
     } catch(e) { 
         console.error('LIFF init error:', e);
         showToast('初始化失敗，請重新開啟頁面'); 
