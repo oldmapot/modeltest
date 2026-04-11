@@ -248,11 +248,11 @@ function parseScannedCode(scannedText) {
 
 // ========== 情況0：優惠券 QR（動態比對所有可能前綴）==========
 // 所有可能的優惠券前綴（需與後端 getAllCouponPrefixes 保持一致）
-const COUPON_PREFIXES = ["GIFT_BY_OMP", "GIFT_BY_SWO"];  // 可根據工作表動態擴充
+const COUPON_PREFIXES = ["GIFT_BY_OMP", "GIFT_BY_SWO"];
 
 let matchedPrefix = null;
 for (let i = 0; i < COUPON_PREFIXES.length; i++) {
-    if (clean.startsWith(COUPON_PREFIXES[i])) {
+    if (clean.indexOf(COUPON_PREFIXES[i]) === 0) {
         matchedPrefix = COUPON_PREFIXES[i];
         break;
     }
@@ -261,7 +261,7 @@ for (let i = 0; i < COUPON_PREFIXES.length; i++) {
 if (matchedPrefix) {
     let couponCode = clean.substring(matchedPrefix.length);
     // 移除開頭的底線（如果有的話）
-    if (couponCode.startsWith("_")) {
+    if (couponCode.indexOf("_") === 0) {
         couponCode = couponCode.substring(1);
     }
     const parts = couponCode.split("_");
