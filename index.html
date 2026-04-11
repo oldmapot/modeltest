@@ -610,11 +610,26 @@ async function fetchData(isReload = false) {
         let basicRes = await fetch(basicUrl);
         let basicData = await basicRes.json();
         
-        // 更新載入畫面的等候詞（如果後端有回傳）
-        if (basicData.loadingTexts && basicData.loadingTexts.length > 0) {
-            const randomIndex = Math.floor(Math.random() * basicData.loadingTexts.length);
-            document.getElementById('loading-text').innerText = basicData.loadingTexts[randomIndex];
-        }
+        // 🔧 等候詞改為前端寫死，不再從後端讀取
+        const loadingTexts = {
+            omp: [
+                "老娘正在翻帳本，幫你算驚喜...",
+                "老娘正在熬湯頭，請稍候...",
+                "老娘幫你查好康，馬上好...",
+                "老娘偷偷告訴你一個秘密...",
+                "老娘正在加湯，馬上來..."
+            ],
+            swo: [
+                "正在為你的生活，加入一點甜...",
+                "一點甜正在準備驚喜...",
+                "甜蜜計算中，請稍候...",
+                "馬上為你端上今日甜點...",
+                "一點甜，一點暖，請稍等..."
+            ]
+        };
+        const texts = currentFrom === 'so' ? loadingTexts.swo : loadingTexts.omp;
+        const randomIndex = Math.floor(Math.random() * texts.length);
+        document.getElementById('loading-text').innerText = texts[randomIndex];
         
         document.getElementById('loading').style.display = 'none';
 
@@ -627,7 +642,7 @@ async function fetchData(isReload = false) {
             const displayPoints = basicData.points || 0;
             document.getElementById('pointsDisplay').innerText = displayPoints;
             
-            // 歡迎詞列表（前端寫死，隨機顯示）
+            // 歡迎詞列表（前端寫死）
             const welcomeQuotes = {
                 omp: [
                     "熟悉的位子，老娘幫你留好了",
@@ -669,7 +684,6 @@ async function fetchData(isReload = false) {
                     let detailData = await detailRes.json();
                     
                     if (detailData) {
-                        // 合併詳細資料（推薦名單、點數明細、活動資訊等）
                         userData = { ...userData, ...detailData };
                         console.log("詳細資料已載入完成");
                     }
@@ -686,26 +700,18 @@ async function fetchData(isReload = false) {
             // 檢查有無推薦人參數
             if (referrerParam && referrerParam !== 'undefined' && referrerParam !== '') {
                 
-                // 如果連結已過期 (GAS 回傳 expiredLink: true)
                 if (basicData && basicData.expiredLink === true) {
                     document.getElementById('regGiftArea').style.display = 'none';
                     showToast('⚠️ 此推薦連結已超過 14 天效期');
                 } else {
-                    // 連結有效，顯示招待區
                     document.getElementById('regGiftArea').style.display = 'block';
-                    
-                    // 取得推薦人姓名
                     let referrerName = (basicData && basicData.myReferrer && basicData.myReferrer !== "無") ? basicData.myReferrer : "神祕好友";
-                    
                     document.getElementById('giftTitle').innerText = `🎁 你的好友 ${referrerName} 送你的專屬好禮`;
                     document.getElementById('giftTitle').style.textAlign = "center";
                     document.getElementById('giftTip').style.textAlign = "center";
-                    
-                    // 產生 QR Code
                     generateRegCode(); 
                 }
             } else {
-                // 完全沒有推薦人參數的情況
                 document.getElementById('regGiftArea').style.display = 'none';
             }
         }
