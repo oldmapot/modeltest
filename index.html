@@ -742,10 +742,12 @@ async function doRegister() {
     document.getElementById('loading').style.display = 'flex';
     document.getElementById('regUI').style.display = 'none';
     
-   try {
-        // ✅ 加上 branch 參數
+    try {
         const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        let res = await fetch(`${GAS_URL}?action=register&userId=${userId}&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&birthday=${birthday}&referrerId=${encodeURIComponent(referrerParam)}&from=${currentFrom}&branch=${encodeURIComponent(branch)}`);
+        const res = await fetch(`${GAS_URL}?action=register&userId=${userId}&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&birthday=${birthday}&referrerId=${encodeURIComponent(referrerParam)}&from=${currentFrom}&branch=${encodeURIComponent(branch)}`);
+        
+        // 🔧 修正：定義 result
+        const result = await res.json();
         
         if (result.success) {
             document.getElementById('loading').style.display = 'none';
