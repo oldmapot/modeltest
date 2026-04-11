@@ -535,22 +535,25 @@ async function submitData() {
     btn.disabled = true;
     showLoading("處理中...保持微笑");
 
-    const payload = {
-        action: "addPoints", customerId: customerId, branch: staff.branch,
-        staffName: staff.name, staffRole: staff.role, isTicketMode: isTicketMode,
-        totalSpend: Number(document.getElementById('totalSpend').value) || 0,
-        ticketSpend: Number(document.getElementById('ticketSpend').value) || 0,
-        redeemAmount: Number(document.getElementById('redeemAmount').value) || 0,
-        buyTicket: Number(document.getElementById('buyTicket').value) || 0,
-        earnRate: config.earnRate, ticketRate: config.ticketRate, levelRate: levelRate,
-        eventMultiplier: config.eventMultiplier
-    };
+    // 🔧 改用 GET 請求，參數放在 URL 上
+    const params = new URLSearchParams({
+        action: "addPoints",
+        customerId: customerId,
+        branch: staff.branch,
+        staffName: staff.name,
+        totalSpend: document.getElementById('totalSpend').value || 0,
+        ticketSpend: document.getElementById('ticketSpend').value || 0,
+        redeemAmount: document.getElementById('redeemAmount').value || 0,
+        earnRate: config.earnRate,
+        ticketRate: config.ticketRate,
+        levelRate: levelRate,
+        eventMultiplier: config.eventMultiplier,
+        isTicketMode: isTicketMode
+    });
 
     try {
-        const response = await fetch(GAS_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload) 
+        const response = await fetch(`${GAS_URL}?${params.toString()}`, { 
+            method: 'GET'
         });
         
         const result = await response.json();
