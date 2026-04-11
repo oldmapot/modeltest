@@ -431,44 +431,47 @@ function generateMemberCode() {
 
 function generateRegCode() {
     try {
-        // 沒有推薦連結 → 整個區塊隱藏（連框都不見）
         if (!referrerParam || referrerParam === "undefined") {
             document.getElementById("regGiftArea").style.display = "none";
             return;
         }
-
-        // 已經掃過 → 隱藏
         if (userData && userData.alreadyScanned) {
             document.getElementById("regGiftArea").style.display = "none";
             return;
         }
-
-        // 已經是會員 → 隱藏
         if (userData && userData.isMember) {
             document.getElementById("regGiftArea").style.display = "none";
             return;
         }
 
-        // ======================
-        // 【完全照你的 GAS 邏輯】
-        // 真正 QR 格式：GIFT_BY_shopCode_shopKey_userId
-        // ======================
-        const uid = userId || "";
-        const shopCode = (userData && userData.shopCode) || "omp";
-        const shopKey  = (userData && userData.shopKey)  || "DEFAULT";
+        // 🔥 直接使用後端給的完整 QR 內容，不自己組合
+        const qrString = userData?.qrString;
+        
+        if (!qrString) {
+            console.error("沒有取得 QR 內容");
+            document.getElementById("regGiftArea").style.display = "none";
+            return;
+        }
 
-        // 你 GAS 官方格式！！！
-        const qrString = "GIFT_BY_" + shopCode + "_" + shopKey + "_" + uid;
+        // 顯示優惠券名稱和內容
+        if (userData?.giftCouponName) {
+            document.getElementById("giftTitle").innerText = `🎁 你的好友 ${userData.myReferrer || "神祕好友"} 送你的${userData.giftCouponName}`;
+            document.getElementById("giftTitle").style.textAlign = "center";
+        }
+        if (userData?.giftQrContent) {
+            document.getElementById("giftTip").innerText = userData.giftQrContent;
+            document.getElementById("giftTip").style.textAlign = "center";
+        }
 
         const img = document.getElementById("regGiftQR");
         const giftArea = document.getElementById("regGiftArea");
 
-        // 顯示 QR
         giftArea.style.display = "block";
         img.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(qrString);
         img.style.display = "block";
 
     } catch (err) {
+        console.error("generateRegCode 錯誤:", err);
         document.getElementById("regGiftArea").style.display = "none";
     }
 }
