@@ -246,22 +246,43 @@ function parseScannedCode(scannedText) {
     // 移除可能的前綴
     if (clean.indexOf("##") === 0) clean = clean.substring(2);
 
-// ========== 情況0：優惠券 QR（GIFT_BY_ 開頭）==========
-    if (clean.startsWith("GIFT_BY_")) {
-        const couponCode = clean.substring(8); // 去掉 GIFT_BY_
-        const parts = couponCode.split("_");
-        if (parts.length === 3) {
-            const shopCode = parts[0];
-            const shopKey = parts[1];
-            const userId = parts[2];
-            return {
-                type: "coupon",  // 新的類型
-                shopCode: shopCode,
-                shopKey: shopKey,
-                userId: userId
-            };
-        }
+// ========== 情況0：優惠券 QR（動態比對所有可能前綴）==========
+// 所有可能的優惠券前綴（需與後端 getAllCouponPrefixes 保持一致）
+const COUPON_PREFIXES = ["GIFT_BY_OMP", "GIFT_BY_SWO"];  // 可根據工作表動態擴充
+
+let matchedPrefix = null;
+for (let i = 0; i < COUPON_PREFIXES.length; i++) {
+    if (clean.startsWith(COUPON_PREFIXES[i])) {
+        matchedPrefix = COUPON_PREFIXES[i];
+        break;
     }
+}
+
+if (matchedPrefix) {
+    let couponCode = clean.substring(matchedPrefix.length);
+    // 移除開頭的底線（如果有的話）
+    if (couponCode.startsWith("_")) {
+        couponCode = couponCode.substring(1);
+    }
+    const parts = couponCode.split("_");
+    if (parts.length === 2) {
+        const shopKey = parts[0];
+        const userId = parts[1];
+        // 從 matchedPrefix 判斷 shopCode
+        let shopCode = "";
+        if (matchedPrefix.indexOf("OMP") !== -1 || matchedPrefix.indexOf("omp") !== -1) {
+            shopCode = "omp";
+        } else if (matchedPrefix.indexOf("SWO") !== -1 || matchedPrefix.indexOf("swo") !== -1) {
+            shopCode = "swo";
+        }
+        return {
+            type: "coupon",
+            shopCode: shopCode,
+            shopKey: shopKey,
+            userId: userId
+        };
+    }
+}
     
     // ========== 情況1：招待 QR（新客）==========
     // 格式：shopCode_shopKey_newUserId_refUserId (4段)
