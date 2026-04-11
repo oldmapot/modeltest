@@ -535,21 +535,37 @@ async function submitData() {
     btn.disabled = true;
     showLoading("處理中...保持微笑");
 
-    const payload = {
-        action: "addPoints", customerId: customerId, branch: staff.branch,
-        staffName: staff.name, staffRole: staff.role, isTicketMode: isTicketMode,
-        totalSpend: Number(document.getElementById('totalSpend').value) || 0,
-        ticketSpend: Number(document.getElementById('ticketSpend').value) || 0,
-        redeemAmount: Number(document.getElementById('redeemAmount').value) || 0,
-        buyTicket: Number(document.getElementById('buyTicket').value) || 0,
-        earnRate: config.earnRate, ticketRate: config.ticketRate, levelRate: levelRate,
+    // 🔧 改用 GET 請求
+    const params = new URLSearchParams({
+        action: "addPoints",
+        customerId: customerId,
+        branch: staff.branch,
+        staffName: staff.name,
+        totalSpend: document.getElementById('totalSpend').value || 0,
+        ticketSpend: document.getElementById('ticketSpend').value || 0,
+        redeemAmount: document.getElementById('redeemAmount').value || 0,
+        earnRate: config.earnRate,
+        levelRate: levelRate,
         eventMultiplier: config.eventMultiplier
-    };
+    });
 
-    await fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-    hideLoading();
-    alert("✅ 集點作業完成");
-    resetMember();
+    try {
+        const response = await fetch(GAS_URL + "?" + params.toString());
+        const result = await response.json();
+        hideLoading();
+        
+        if (result.success) {
+            alert("✅ 集點作業完成");
+            resetMember();
+        } else {
+            alert("❌ 錯誤: " + (result.message || result.error));
+        }
+    } catch (error) {
+        hideLoading();
+        console.error("請求失敗:", error);
+        alert("❌ 網路錯誤，請稍後再試");
+    }
+    
     btn.disabled = false;
 }
 
