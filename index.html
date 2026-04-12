@@ -460,23 +460,24 @@ function generateRegCode() {
         }
 
         // ======================
-        // 【完全照你的 GAS 邏輯】
-        // 真正 QR 格式：GIFT_BY_shopCode_shopKey_userId
-        // ======================
-        const uid = userId || "";
-        const shopCode = (userData && userData.shopCode) || "omp";
-        const shopKey  = (userData && userData.shopKey)  || "DEFAULT";
+// ✅ 正確：直接使用工作表的 A 欄前綴
+// ======================
+const uid = userId || "";
+// 從 userData 取得完整前綴（來自工作表 A 欄）
+const prefix = (userData && userData.qrPrefix) || 
+               (currentFrom === 'so' ? 'GIFT_BY_SWO_K9X' : 'GIFT_BY_OMP');
+const shopKey = (userData && userData.shopKey) || "DEFAULT";
 
-        // 你 GAS 官方格式！！！
-        const qrString = "GIFT_BY_" + shopCode + "_" + shopKey + "_" + uid;
+// ✅ 正確格式：前綴 + 金鑰 + userId
+const qrString = prefix + "_" + shopKey + "_" + uid;
 
-        const img = document.getElementById("regGiftQR");
-        const giftArea = document.getElementById("regGiftArea");
+const img = document.getElementById("regGiftQR");
+const giftArea = document.getElementById("regGiftArea");
 
-        // 顯示 QR
-        giftArea.style.display = "block";
-        img.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(qrString);
-        img.style.display = "block";
+// 顯示 QR
+giftArea.style.display = "block";
+img.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(qrString);
+img.style.display = "block";
 
     } catch (err) {
         document.getElementById("regGiftArea").style.display = "none";
