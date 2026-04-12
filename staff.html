@@ -244,7 +244,7 @@ function parseScannedCode(scannedText) {
     if (clean.indexOf("##") === 0) clean = clean.substring(2);
 
     // 所有可能的前綴（與後端 getAllCouponPrefixes 一致）
-    const ALL_PREFIXES = ["GIFT_BY_OMP", "GIFT_BY_SWO_K9X"];
+    const ALL_PREFIXES = ["GIFT_BY_OMP", "GIFT_BY_SWO"];
     
     let matchedPrefix = null;
     for (let i = 0; i < ALL_PREFIXES.length; i++) {
