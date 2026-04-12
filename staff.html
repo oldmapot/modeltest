@@ -242,35 +242,55 @@ function parseScannedCode(scannedText) {
         clean = decodeURIComponent(clean);
     }
     if (clean.indexOf("##") === 0) clean = clean.substring(2);
-
-    // 所有可能的前綴（與後端 getAllCouponPrefixes 一致）
-    const ALL_PREFIXES = ["GIFT_BY_OMP", "GIFT_BY_SWO_K9X"];
     
-    let matchedPrefix = null;
-    for (let i = 0; i < ALL_PREFIXES.length; i++) {
-        if (clean.indexOf(ALL_PREFIXES[i]) === 0) {
-            matchedPrefix = ALL_PREFIXES[i];
-            break;
+    // ========== 判斷是否為優惠券 QR（以 GIFT_ 開頭）==========
+    if (clean.indexOf("GIFT_") === 0) {
+        // 優惠券 QR 格式：
+        // 3段：前綴_品牌代號_金鑰_userId
+        // 4段：前綴_品牌代號_金鑰_userId_referrerId
+        const parts = clean.split("_");
+        if (parts.length >= 4) {
+            const prefix = parts[0];
+            const shopCode = parts[1];
+            const shopKey = parts[2];
+            const userId = parts[3];
+            const referrerId = parts[4] || "";
+            
+            // 驗證品牌代號是否有效
+            if (shopCode === "omp" || shopCode === "swo") {
+                return { 
+                    type: "coupon",
+                    prefix: prefix,
+                    shopCode: shopCode,
+                    shopKey: shopKey,
+                    userId: userId,
+                    referrerId: referrerId
+                };
+            }
+        }
+        // 如果解析失敗，仍回傳 coupon 類型讓後端處理
+        return { type: "coupon", raw: clean };
+    }
+    
+    // ========== 會員 QR ==========
+    // 格式：品牌代號_金鑰_userId (3段)
+    const parts = clean.split("_");
+    if (parts.length === 3) {
+        const shopCode = parts[0];
+        const shopKey = parts[1];
+        const userId = parts[2];
+        
+        if (shopCode === "omp" || shopCode === "swo") {
+            return { 
+                type: "member", 
+                userId: userId, 
+                shopCode: shopCode,
+                shopKey: shopKey
+            };
         }
     }
     
-    if (matchedPrefix) {
-        let rest = clean.substring(matchedPrefix.length);
-        if (rest.indexOf("_") === 0) rest = rest.substring(1);
-        const parts = rest.split("_");
-        
-        let shopCode = matchedPrefix.indexOf("OMP") !== -1 ? "omp" : "swo";
-        
-        // 2段：會員 QR（前綴_金鑰_userId）
-        if (parts.length === 2) {
-            return { type: "member", userId: parts[1], shopCode: shopCode, shopKey: parts[0] };
-        }
-        // 3段：招待 QR（前綴_金鑰_newUserId_refUserId）
-        if (parts.length === 3) {
-            return { type: "invite", shopCode: shopCode, shopKey: parts[0], newUserId: parts[1], referrerId: parts[2] };
-        }
-    }
-    
+    // 備用：純文字 ID
     return { type: "member", userId: clean };
 }
     
