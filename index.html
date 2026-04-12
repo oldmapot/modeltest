@@ -418,17 +418,27 @@ function updateCountdownDisplay() {
 }
 
 // 產生 QR Code（使用動態金鑰）
-function generateMemberCode() {
-    if (!userId || !userData?.shopKey) return;
-    const shopCode = userData.shopCode;   // "omp" 或 "swo"
-    const randomKey = userData.shopKey;   // 後端給的隨機金鑰
-    const qrData = `${shopCode}_${randomKey}_${userId}`;
-    const qrImg = document.getElementById('qrcode');
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrData)}`;
-    // 重置倒數計時（60秒）
-    startCountdown(60);
+function generateRegCode() {
+    try {
+        if (!referrerParam || referrerParam === "undefined") {
+            document.getElementById("regGiftArea").style.display = "none";
+            return;
+        }
+        if (userData && (userData.alreadyScanned || userData.isMember)) {
+            document.getElementById("regGiftArea").style.display = "none";
+            return;
+        }
+        
+        var prefix = (userData && userData.qrPrefix) || (currentFrom === 'so' ? 'GIFT_BY_SWO_K9X' : 'GIFT_BY_OMP');
+        var shopKey = (userData && userData.shopKey) || "DEFAULT";
+        var qrString = prefix + "_" + shopKey + "_" + (userId || "");
+        
+        document.getElementById("regGiftArea").style.display = "block";
+        document.getElementById("regGiftQR").src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(qrString);
+    } catch(err) {
+        document.getElementById("regGiftArea").style.display = "none";
+    }
 }
-
 function generateRegCode() {
     try {
         // 沒有推薦連結 → 整個區塊隱藏（連框都不見）
