@@ -429,7 +429,7 @@ function generateRegCode() {
             return;
         }
         
-        var prefix = (userData && userData.qrPrefix) || (currentFrom === 'so' ? 'GIFT_BY_SWO_K9X' : 'GIFT_BY_OMP');
+        var prefix = (userData && userData.qrPrefix) || (currentFrom === 'so' ? 'GIFT_BY_SWO' : 'GIFT_BY_OMP');
         var shopKey = (userData && userData.shopKey) || "DEFAULT";
         var qrString = prefix + "_" + shopKey + "_" + (userId || "");
         
@@ -465,7 +465,7 @@ function generateRegCode() {
 const uid = userId || "";
 // 從 userData 取得完整前綴（來自工作表 A 欄）
 const prefix = (userData && userData.qrPrefix) || 
-               (currentFrom === 'so' ? 'GIFT_BY_SWO_K9X' : 'GIFT_BY_OMP');
+               (currentFrom === 'so' ? 'GIFT_BY_SWO' : 'GIFT_BY_OMP');
 const shopKey = (userData && userData.shopKey) || "DEFAULT";
 
 // ✅ 正確格式：前綴 + 金鑰 + userId
