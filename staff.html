@@ -243,24 +243,22 @@ function parseScannedCode(scannedText) {
     }
     if (clean.indexOf("##") === 0) clean = clean.substring(2);
 
-    // ========== 判斷是否為優惠券 QR（以 GIFT_ 開頭）==========
-    if (clean.indexOf("GIFT_") === 0) {
-        // 優惠券 QR 格式：
-        // 3段：前綴_品牌代號_金鑰_userId
-        // 4段：前綴_品牌代號_金鑰_userId_referrerId
-        const parts = clean.split("_");
-        if (parts.length >= 4) {
-            const prefix = parts[0];
-            const shopCode = parts[1];
-            const shopKey = parts[2];
-            const userId = parts[3];
-            const referrerId = parts[4] || "";
+    // ========== 判斷是否為優惠券 QR（以 GIFT_BY_ 開頭）==========
+    if (clean.indexOf("GIFT_BY_") === 0) {
+        // 移除前綴 "GIFT_BY_"，長度為 8
+        const rest = clean.substring(8);
+        const parts = rest.split("_");
+        
+        // 格式：品牌代號_金鑰_userId_referrerId
+        if (parts.length >= 3) {
+            const shopCode = parts[0];
+            const shopKey = parts[1];
+            const userId = parts[2];
+            const referrerId = parts[3] || "";
             
-            // 驗證品牌代號是否有效
             if (shopCode === "omp" || shopCode === "swo") {
                 return { 
                     type: "coupon",
-                    prefix: prefix,
                     shopCode: shopCode,
                     shopKey: shopKey,
                     userId: userId,
@@ -268,12 +266,10 @@ function parseScannedCode(scannedText) {
                 };
             }
         }
-        // 如果解析失敗，仍回傳 coupon 類型讓後端處理
         return { type: "coupon", raw: clean };
     }
     
     // ========== 會員 QR ==========
-    // 格式：品牌代號_金鑰_userId (3段)
     const parts = clean.split("_");
     if (parts.length === 3) {
         const shopCode = parts[0];
@@ -290,7 +286,6 @@ function parseScannedCode(scannedText) {
         }
     }
     
-    // 備用：純文字 ID
     return { type: "member", userId: clean };
 }
     
@@ -307,11 +302,12 @@ async function onScanSuccess(scannedText) {
         
         // ========== 優惠券兌換 ==========
         if (parsed.type === "coupon") {
-            const realStaffName = staff.name;
-            const realStaffBranch = staff.branch;
-            const clientIp = await getUserIP();
-            
-            const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(scannedText)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}`;
+    const realStaffName = staff.name;
+    const realStaffBranch = staff.branch;
+    const clientIp = await getUserIP();
+    
+    // 使用 parsed.userId 作為 customerId
+    const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}`;
             
             try {
                 const res = await fetch(url);
