@@ -341,7 +341,8 @@ async function onScanSuccess(scannedText) {
             const realStaffName = staff.name;
             const realStaffBranch = staff.branch;
             const clientIp = await getUserIP();
-            
+            console.log("準備傳送的 scannedText:", scannedText);
+            alert("掃到的內容: " + scannedText);
             const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(scannedText)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}`;
             
             try {
