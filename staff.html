@@ -316,11 +316,12 @@ async function onScanSuccess(scannedText) {
                 hideLoading();
                 
                 if (result.success) {
-                    showModal(`🎁 ${result.message || "此為新客招待，請處理"}`);
+                showModal(`🎁 ${result.message || "此為新客招待，請處理"}`);
                 } else {
-                    showModal(`⚠️ ${result.message || "兌換失敗"}`);
+                // GAS 錯誤訊息欄位是 error，不是 message
+                showModal(`⚠️ ${result.error || result.message || "兌換失敗"}`);
                 }
-            } catch (err) {
+                } catch (err) {
                 hideLoading();
                 showModal("連線失敗：" + err.message);
             }
