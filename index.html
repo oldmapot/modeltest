@@ -443,14 +443,24 @@ function generateRegCode() {
 
     let cleanRefId = rawRef.split('|')[0];
     
-    // ✅ QR 內容：分店_金鑰_新客ID_推薦人ID
-    const codeData = `${userData.shopCode}_${userData.shopKey}_${userId}_${cleanRefId}`;
+    // 從 userData 讀取前綴（後端已提供）
+    const prefix = userData.qrPrefix;
+    const shopCode = userData.shopCode;
+    const shopKey = userData.shopKey;
+    
+    if (!prefix || !shopKey) {
+        console.error("缺少前綴或金鑰");
+        return;
+    }
+    
+    // 優惠券 QR 格式：前綴_品牌代號_金鑰_userId_推薦人ID
+    const codeData = `${prefix}_${shopCode}_${shopKey}_${userId}_${cleanRefId}`;
     
     const qrImg = document.getElementById('regGiftQR');
     if (qrImg) {
         qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(codeData)}`;
         qrImg.style.display = "block";
-        console.log("QR 已產生，新客:", userId, "推薦人:", cleanRefId);
+        console.log("QR 已產生:", codeData);
     }
 }
 function openGiftBox() {
