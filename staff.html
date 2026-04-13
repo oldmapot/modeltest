@@ -243,10 +243,10 @@ function parseScannedCode(scannedText) {
     }
     if (clean.indexOf("##") === 0) clean = clean.substring(2);
 
-    // ========== 判斷是否為優惠券 QR（以 GIFT_BY_ 開頭）==========
-    if (clean.indexOf("GIFT_BY_") === 0) {
-        // 移除前綴 "GIFT_BY_"，長度為 8
-        const rest = clean.substring(8);
+    // ========== 判斷是否為優惠券 QR（以 GIFT_開頭）==========
+    if (clean.indexOf("GIFT_") === 0) {
+        // 移除前綴 "GIFT_"，長度為 5
+        const rest = clean.substring(5);
         const parts = rest.split("_");
         
         // 格式：品牌代號_金鑰_userId_referrerId
