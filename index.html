@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -32,15 +31,12 @@
         .side-menu-item { display: block; width: 100%; padding: 18px 24px; background: none; border: none; text-align: left; font-size: 18px; color: var(--text); cursor: pointer; border-bottom: 1px solid #f0f0f0; font-weight: bold; }
         .side-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; }
         .side-menu-overlay.show { display: block; }
-/* 讓側欄用flex布局，只改法務按鈕 */
 .side-menu-items {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 120px); /* 減去header高度，避免超出 */
-  padding-bottom: 20px; /* 底部留間距，不貼邊 */
+  height: calc(100vh - 120px);
+  padding-bottom: 20px;
 }
-
-/* 只針對法務免責（最後一個按鈕） */
 .side-menu-item:last-child {
   margin-top: auto !important;
   text-align: center !important;
@@ -98,6 +94,42 @@
         
         .shop-info-container { max-height: 60vh; overflow-y: auto; }
         .shop-info-item { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+
+        /* 新增大客歡迎頁樣式 */
+        #welcomeUI {
+            display: none;
+            padding: 60px 24px;
+            text-align: center;
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .welcome-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+        .welcome-desc {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            padding: 0 10px;
+        }
+        .welcome-gift-btn {
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -105,6 +137,17 @@
 <div id="loading">
     <div id="loader" class="loader-icon omp"></div>
     <div id="loading-text" style="font-weight: bold; color: var(--primary); font-size: 16px; text-align:center; padding:0 20px;"></div>
+</div>
+
+<!-- 新增大客歡迎頁 -->
+<div id="welcomeUI">
+    <div class="welcome-title">🎉 歡迎來到 老娘的一點心意</div>
+    <div class="welcome-desc">
+        完成註冊即可領取<br>
+        專屬新客好禮 🎁<br>
+        禮品將自動發送至 心意寶盒
+    </div>
+    <button class="welcome-gift-btn" onclick="goToRegister()">立即註冊領禮</button>
 </div>
 
 <div id="memberUI" style="display:none">
@@ -160,13 +203,6 @@
 </div>
 
 <div id="regUI">
-    <div id="regGiftArea" class="reg-qr-tip" style="display:none;">
-        <div id="giftTitle" style="color:var(--primary); font-weight:bold; margin-bottom:10px; font-size: 18px;"></div>
-        <div class="reg-gift-code-container">
-            <img id="regGiftQR" style="width: 160px; height: 160px;">
-        </div>
-        <div id="giftTip" style="font-size:12px; color:#8b0000; margin-top: 8px;">請先出示此碼給店員掃描領取招待<br>領完後記得完成下方註冊喔！</div>
-    </div>
     <h2 style="text-align:center; color:var(--primary); margin-bottom: 20px;">新會員註冊</h2>
     <input id="regName" class="reg-input" placeholder="姓名 *">
     <input id="regPhone" class="reg-input" placeholder="手機 09XX-XXX-XXX *" maxlength="12">
@@ -199,17 +235,20 @@
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec";
 const LIFF_ID = "2009761099-xXvMY51i";
-//const idToken = liff.getIDToken();
-//const url = `${GAS_URL}?action=checkID&idToken=${encodeURIComponent(idToken)}&branch=${branch}&t=${Date.now()}`;
 let userId = '', userData = null, currentFrom = 'omp', referrerParam = '', userToken = '', pendingCheckboxId = null;
 
-// QR Code 倒數計時相關變數
 let countdownInterval = null;
 let currentCountdown = 60;
 
 function showToast(msg) { let t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => { t.style.display = 'none'; }, 2000); }
 function openSideMenu() { document.getElementById('sideMenu').classList.add('open'); document.getElementById('sideMenuOverlay').classList.add('show'); }
 function closeSideMenu() { document.getElementById('sideMenu').classList.remove('open'); document.getElementById('sideMenuOverlay').classList.remove('show'); }
+
+// 新增大客歡迎頁跳轉
+function goToRegister() {
+    document.getElementById('welcomeUI').style.display = 'none';
+    document.getElementById('regUI').style.display = 'block';
+}
 
 function openRightsModal(e) { 
   if(e) e.stopPropagation(); 
@@ -231,7 +270,6 @@ function openRightsModal(e) {
         <div class="rule-title">◆ 點數價值</div>
         <div class="rule-body"> 1 點 = NT$1 元。</div>
       </div>
-
       <div class="rule-row">
         <div class="rule-title">◆ 個人集點</div>
         <div class="rule-body">
@@ -239,7 +277,6 @@ function openRightsModal(e) {
           <span class="sub-item">點數自取得日起 12 個月內有效。</span>
         </div>
       </div>
-
       <div class="rule-row">
         <div class="rule-title">◆ 推薦分紅</div>
         <div class="rule-body">
@@ -248,24 +285,20 @@ function openRightsModal(e) {
           <span class="sub-item"><b>資格限制</b>：若推薦人超過 <b>90 天</b>無消費紀錄，系統將暫停發放分紅。</span>
         </div>
       </div>
-
       <div class="rule-row">
         <div class="rule-title">◆ 生效時間</div>
         <div class="rule-body">取得日之「隔日」生效（明日 00:00 後方可使用）。</div>
       </div>
-
       <div class="rule-row">
         <div class="rule-title">◆ 購買餐券</div>
         <div class="rule-body">
           <span class="sub-item">購買餐券不適用集點及折抵活動。</span>
           </div>
       </div>
-
       <div class="rule-row">
         <div class="rule-title">◆ 餐券消費</div>
         <div class="rule-body">扣除面額後之「剩餘實付額」提撥 2% 點數。</div>
       </div>
-
       <div class="rule-row">
         <div class="rule-title">◆ 折抵限制</div>
         <div class="rule-body">
@@ -273,7 +306,6 @@ function openRightsModal(e) {
           <span class="sub-item">特殊檔期：指定活動、節慶檔期暫停折抵，僅可集點，實際依店內或系統公告為主。</span>
         </div>
       </div>
-
       <div class="rule-row">
         <div class="rule-title">◆ 未盡事宜</div>
         <div class="rule-body">依店內或系統最新公告為主。</div>
@@ -289,7 +321,7 @@ function openLegalModal(e) {
     <style>
       .legal-container { font-size: 14px; line-height: 1.6; color: #333; }
       .legal-row { display: flex; margin-bottom: 12px; align-items: flex-start; }
-      .legal-title { font-weight: bold; flex-shrink: 0; min-width: 105px; color: #d9534f; } /* 法務類用紅色調提醒 */
+      .legal-title { font-weight: bold; flex-shrink: 0; min-width: 105px; color: #d9534f; }
       .legal-body { flex-grow: 1; }
     </style>
 
@@ -300,29 +332,24 @@ function openLegalModal(e) {
         <div class="legal-title">◆ 禁止轉讓</div>
         <div class="legal-body">點數不開放轉讓予他人或合併帳號使用，僅限於本平台指定之店家進行消費折抵。</div>
       </div>
-
       <div class="legal-row">
         <div class="legal-title">◆ 非現金資產</div>
         <div class="legal-body">本平台發放之點數屬無償贈與之紅利，不具貨幣價值，不得要求兌換現金。</div>
       </div>
-
       <div class="legal-row">
         <div class="legal-title">◆ 活動終止權</div>
-        <div class="legal-body">本平台及所屬店家保有隨時修改、暫停或終止點數贈與及折抵活動之權利，相關異動將以官方公告為準。</div>
+        <div class="rule-body">本平台及所屬店家保有隨時修改、暫停或終止點數贈與及折抵活動之權利，相關異動將以官方公告為準。</div>
       </div>
-
       <div class="legal-row">
         <div class="legal-title">◆ 營運調整權</div>
         <div class="legal-body">若因系統升級、營運政策調整、店家歇業或不可抗力因素（如自然災害、系統受駭等），導致點數失效，會員不得要求補發或損害賠償。</div>
       </div>
-
       <div class="legal-row">
         <div class="legal-title">◆ 誠信原則</div>
         <div class="legal-body">
           為維護公平權益，系統將監測並判別<b>異常集點、虛假推薦、規避邏輯</b>等行為。若經查證屬實，店家有權逕行凍結帳號、作廢點數並取消資格，且不另行通知。
         </div>
       </div>
-
       <div class="legal-row">
         <div class="legal-title">◆ 最終解釋權</div>
         <div class="legal-body">本公司保有對所有活動規則與點數機制之最終解釋權。</div>
@@ -388,15 +415,12 @@ function openShopInfo() {
     openModal(html);
 }
 
-// 停止倒數計時
 function stopCountdown() {
     if (countdownInterval) {
         clearInterval(countdownInterval);
         countdownInterval = null;
     }
 }
-
-// 開始倒數計時
 function startCountdown(seconds) {
     stopCountdown();
     currentCountdown = seconds;
@@ -406,13 +430,10 @@ function startCountdown(seconds) {
         updateCountdownDisplay();
         if (currentCountdown <= 0) {
             stopCountdown();
-            // 倒數歸零，自動刷新
             refreshAll();
         }
     }, 1000);
 }
-
-// 更新倒數顯示
 function updateCountdownDisplay() {
     const timerEl = document.getElementById('countdownTimer');
     if (timerEl) {
@@ -420,51 +441,20 @@ function updateCountdownDisplay() {
     }
 }
 
-// 產生 QR Code（使用動態金鑰）
 function generateMemberCode() {
     if (!userId || !userData?.shopKey) return;
-    const shopCode = userData.shopCode;   // "omp" 或 "swo"
-    const randomKey = userData.shopKey;   // 後端給的隨機金鑰
+    const shopCode = userData.shopCode;
+    const randomKey = userData.shopKey;
     const qrData = `${shopCode}_${randomKey}_${userId}`;
     const qrImg = document.getElementById('qrcode');
     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrData)}`;
-    // 重置倒數計時（60秒）
     startCountdown(60);
 }
 
-function generateRegCode() {
-    if (!userData || !userData.shopCode) {
-        console.error("尚未取得店面金鑰資料");
-        return;
-    }
+// 已刪除舊的錯誤產生優惠券 QR 函式
+function generateRegCode(){}
 
-    let rawRef = referrerParam; 
-    if (!rawRef || rawRef === 'undefined') return;
-
-    let cleanRefId = rawRef.split('|')[0];
-    
-    // 從 userData 讀取前綴（後端已提供）
-    const prefix = userData.qrPrefix;
-    const shopCode = userData.shopCode;
-    const shopKey = userData.shopKey;
-    
-    if (!prefix || !shopKey) {
-        console.error("缺少前綴或金鑰");
-        return;
-    }
-    
-    // 優惠券 QR 格式：前綴_品牌代號_金鑰_userId_推薦人ID
-    const codeData = `${prefix}_${shopCode}_${shopKey}_${userId}_${cleanRefId}`;
-    
-    const qrImg = document.getElementById('regGiftQR');
-    if (qrImg) {
-        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(codeData)}`;
-        qrImg.style.display = "block";
-        console.log("QR 已產生:", codeData);
-    }
-}
 function openGiftBox() {
-    // 從 userData 中讀取優惠券資訊
     let coupon = userData?.coupon;
     
     if (!coupon) {
@@ -476,7 +466,6 @@ function openGiftBox() {
         return;
     }
     
-    // 檢查是否已使用或過期
     if (coupon.status === "已使用") {
         openModal(`<div style="text-align:center; padding:20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
@@ -486,7 +475,6 @@ function openGiftBox() {
         return;
     }
     
-    // 檢查過期
     let now = new Date();
     let expiresAt = new Date(coupon.expiresAt);
     if (now > expiresAt) {
@@ -498,7 +486,6 @@ function openGiftBox() {
         return;
     }
     
-    // 顯示可兌換的優惠券 QR Code
     let qrContent = coupon.qrContent;
     let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrContent)}`;
     let expireDate = new Date(coupon.expiresAt).toLocaleDateString('zh-TW');
@@ -515,18 +502,15 @@ function openGiftBox() {
         </div>
     `);
 }
-// 統一重新整理函數（同時更新 QR Code 和點數）
+
 async function refreshAll() {
     if (!userId) return;
     try {
-        // ✅ 加上 branch 參數
         const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
         const url = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
-        // 顯示載中（可選）
         const refreshBtn = document.querySelector('.asset-card button');
         if (refreshBtn) refreshBtn.disabled = true;
         
-        // 重新獲取會員資料
         let res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         let responseText = await res.text();
@@ -534,12 +518,9 @@ async function refreshAll() {
         try { newUserData = JSON.parse(responseText); } catch(e) { throw new Error("伺服器回應格式錯誤"); }
         
         if (newUserData && newUserData.isMember === true) {
-            // 更新點數顯示
             const displayPoints = newUserData.points !== undefined ? newUserData.points : (newUserData.profile?.points || 0);
             document.getElementById('pointsDisplay').innerText = displayPoints;
-            // 更新 userData
             userData = newUserData;
-            // 重新產生 QR Code
             generateMemberCode();
             showToast('✅ 資料已更新');
         } else {
@@ -560,50 +541,36 @@ async function initLiff() {
     
     let rawReferrer = urlParams.get('referrer');
     if (rawReferrer) {
-        try {
-            referrerParam = decodeURIComponent(rawReferrer);
-        } catch(e) {
-            referrerParam = rawReferrer;
-        }
-    } else {
-        referrerParam = '';
-    }
+        try { referrerParam = decodeURIComponent(rawReferrer); } catch(e) { referrerParam = rawReferrer; }
+    } else { referrerParam = ''; }
     referrerParam = referrerParam.trim();
     
     const loadingText = document.getElementById('loading-text');
-
-// 等候詞列表（可自由增減）
-const loadingTexts = {
-    omp: [
-        "老娘正在翻帳本，幫你算驚喜...",
-        "老娘正在火速趕來...",
-        "別催，老娘正在幫你算點數...",
-        "正在幫您端上熱騰騰的驚喜...",
-        "火鍋滾了，心意也快好了..."
-    ],
-    swo: [
-        "正在為你的生活，加入一點甜...",
-        "攪拌心意中，請稍候片刻...",
-        "正準備為您送上今日份的療癒...",
-        "心意準備中，等等來點甜的吧！",
-        "STAY SWEET！"
-    ]
-};
-
-const texts = currentFrom === 'so' ? loadingTexts.swo : loadingTexts.omp;
-const randomIndex = Math.floor(Math.random() * texts.length);
-loadingText.innerText = texts[randomIndex];
+    const loadingTexts = {
+        omp: [
+            "老娘正在翻帳本，幫你算驚喜...",
+            "老娘正在火速趕來...",
+            "別催，老娘正在幫你算點數...",
+            "正在幫您端上熱騰騰的驚喜...",
+            "火鍋滾了，心意也快好了..."
+        ],
+        swo: [
+            "正在為你的生活，加入一點甜...",
+            "攪拌心意中，請稍候片刻...",
+            "正準備為您送上今日份的療癒...",
+            "心意準備中，等等來點甜的吧！",
+            "STAY SWEET！"
+        ]
+    };
+    const texts = currentFrom === 'so' ? loadingTexts.swo : loadingTexts.omp;
+    const randomIndex = Math.floor(Math.random() * texts.length);
+    loadingText.innerText = texts[randomIndex];
+    
      try {
         await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) { 
-            console.log("未登入，跳轉登入");
-            liff.login(); 
-            return; 
-        }
+        if (!liff.isLoggedIn()) { liff.login(); return; }
         userId = (await liff.getProfile()).userId;
-        console.log("取得 userId:", userId);  // ✅ 加上這行
         await fetchData();
-        console.log("fetchData 完成");  // ✅ 加上這行
     } catch(e) { 
         console.error('LIFF init error:', e);
         showToast('初始化失敗，請重新開啟頁面'); 
@@ -618,10 +585,8 @@ async function fetchData(isReload = false) {
         let res = await fetch(url);
         if (!res.ok) { throw new Error(`HTTP ${res.status}`); }
         let responseText = await res.text();
-        
         try { userData = JSON.parse(responseText); } catch(e) { throw new Error("伺服器回應格式錯誤"); }
         
-        // 🔧 新增：更新載入畫面的等候詞（從後端隨機選一個）
         if (userData.loadingTexts && userData.loadingTexts.length > 0) {
             const randomIndex = Math.floor(Math.random() * userData.loadingTexts.length);
             document.getElementById('loading-text').innerText = userData.loadingTexts[randomIndex];
@@ -629,78 +594,49 @@ async function fetchData(isReload = false) {
         
         document.getElementById('loading').style.display = 'none';
 
-        // --- 1. 已是會員的情況 ---
         if (userData && userData.isMember === true) {
             document.getElementById('memberUI').style.display = 'block';
+            document.getElementById('welcomeUI').style.display = 'none';
             document.getElementById('regUI').style.display = 'none';
             const displayPoints = userData.points !== undefined ? userData.points : (userData.profile?.points || 0);
             document.getElementById('pointsDisplay').innerText = displayPoints;
-            // 歡迎詞列表（可自由增減）
-const welcomeQuotes = {
-    omp: [
-        "熟悉的位子，老娘幫你留好了",
-        "老娘這鍋湯，專治各種不開心",
-        "歡迎回家，今天想喝什麼湯",
-        "進了老娘的門，就是家裡人",
-        "每一口美味，都在累積心意。",
-        "沒什麼事是老娘一鍋解決不了的。",
-        "累積一點心意，換一口老娘美味",
-        "來老娘這，吃飽喝足最幸福"
-    ],
-    swo: [
-        "生活七八分苦？今天必須一點甜。",
-        "遇見你，就是一點甜...",
-         "點點心意，只為甜你的心。",
-         "生活苦甜參半，今天留給甜的那半。",
-         "生活苦甜參半，今天留給甜的那半。",
-        "給生活加點糖，一點甜正剛好。",
-        "一點甜，一點暖，一點幸福",
-        "今日宜加糖， 一點甜正好"
-    ]
-};
-
-const quotes = currentFrom === 'so' ? welcomeQuotes.swo : welcomeQuotes.omp;
-const randomQuoteIndex = Math.floor(Math.random() * quotes.length);
-document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
+            const welcomeQuotes = {
+                omp: [
+                    "熟悉的位子，老娘幫你留好了",
+                    "老娘這鍋湯，專治各種不開心",
+                    "歡迎回家，今天想喝什麼湯",
+                    "進了老娘的門，就是家裡人",
+                    "每一口美味，都在累積心意。",
+                    "沒什麼事是老娘一鍋解決不了的。",
+                    "累積一點心意，換一口老娘美味",
+                    "來老娘這，吃飽喝足最幸福"
+                ],
+                swo: [
+                    "生活七八分苦？今天必須一點甜。",
+                    "遇見你，就是一點甜...",
+                    "點點心意，只為甜你的心。",
+                    "生活苦甜參半，今天留給甜的那半。",
+                    "給生活加點糖，一點甜正剛好。",
+                    "一點甜，一點暖，一點幸福",
+                    "今日宜加糖， 一點甜正好"
+                ]
+            };
+            const quotes = currentFrom === 'so' ? welcomeQuotes.swo : welcomeQuotes.omp;
+            const randomQuoteIndex = Math.floor(Math.random() * quotes.length);
+            document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
             generateMemberCode();
             if (isReload) showToast('✅ 資料已更新');
 
-       // --- 2. 非會員（準備註冊）的情況 ---
         } else {
+            // 新客：顯示歡迎頁
             document.getElementById('memberUI').style.display = 'none';
-            document.getElementById('regUI').style.display = 'block';
-            
-            // 檢查有無推薦人參數
-            if (referrerParam && referrerParam !== 'undefined' && referrerParam !== '') {
-                
-                // 如果連結已過期 (GAS 回傳 expiredLink: true)
-                if (userData && userData.expiredLink === true) {
-                    document.getElementById('regGiftArea').style.display = 'none';
-                    showToast('⚠️ 此推薦連結已超過 14 天效期');
-                } else {
-                    // 連結有效，顯示招待區
-                    document.getElementById('regGiftArea').style.display = 'block';
-                    
-                    // 取得推薦人姓名
-                    let referrerName = (userData && userData.myReferrer && userData.myReferrer !== "無") ? userData.myReferrer : "神祕好友";
-                    
-                    document.getElementById('giftTitle').innerText = `🎁 你的好友 ${referrerName} 送你的專屬好禮`;
-                    document.getElementById('giftTitle').style.textAlign = "center";
-                    document.getElementById('giftTip').style.textAlign = "center";
-                    
-                    // 產生 QR Code (請確保 generateRegCode 裡面也有處理 split('|'))
-                    generateRegCode(); 
-                }
-            } else {
-                // 完全沒有推薦人參數的情況
-                document.getElementById('regGiftArea').style.display = 'none';
-            }
+            document.getElementById('regUI').style.display = 'none';
+            document.getElementById('welcomeUI').style.display = 'flex';
         }
     } catch(e) { 
-        console.error("Fetch Error 詳細:", e);  // ✅ 加上這行
+        console.error("Fetch Error:", e);
         showToast('資料載入失敗，請稍後再試');
     } finally {
-        // 無論成功失敗都關閉載入中動畫
         document.getElementById('loading').style.display = 'none';
     }
 }
@@ -726,12 +662,10 @@ async function doRegister() {
     document.getElementById('regUI').style.display = 'none';
     
    try {
-        // ✅ 加上 branch 參數
         const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
         let res = await fetch(`${GAS_URL}?action=register&userId=${userId}&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&birthday=${birthday}&referrerId=${encodeURIComponent(referrerParam)}&from=${currentFrom}&branch=${encodeURIComponent(branch)}`);
-const result = await res.json();
+        const result = await res.json();
 
-        
         if (result.success) {
             document.getElementById('loading').style.display = 'none';
             openModal(`<div class="welcome-card"><h2>🎉 註冊成功！</h2><p>歡迎加入老娘的一點心意🍲🍰<br><br>這是老娘留給你的偏心。<br>日子不一定天天完美<br>但一定要有一點甜 💕</p><div style="margin-top: 20px;">3秒後自動進入會員頁面...</div></div>`);
@@ -774,7 +708,7 @@ function openReferral() {
 
 function openPointHistory() {
     let html = `<h3 style="color:var(--primary); text-align:center;">📜 點數明細</h3>
-    <table class="history-table" style="width:100%; border-collapse:collapse; text-align:center; font-size:14px;">
+    <table style="width:100%; border-collapse:collapse; text-align:center; font-size:14px;">
         <thead>
             <tr style="color:#666; font-weight:bold;">
                 <th style="width:16%; padding:6px 2px;">日期</th>
@@ -814,13 +748,10 @@ function openProfile() {
   if(!p) return; 
 
   let birthday = p.birthday || "";
-
-  // 統一處理各種日期格式：只取 yyyy-MM-dd
   if (birthday) {
     try {
       let d = new Date(birthday);
       if (!isNaN(d.getTime())) {
-        // 用本地時區取得正確年月日（解決少一天問題）
         let y = d.getFullYear();
         let m = String(d.getMonth() + 1).padStart(2, '0');
         let day = String(d.getDate()).padStart(2, '0');
@@ -835,20 +766,13 @@ function openProfile() {
     <p>生日：${birthday}</p>`); 
 }
 function autoCopyShare() { 
-    // 1. 取得當前時間戳記 (例如: 1711939200000)
     const now = Date.now();
-    
-    // 2. 組合推薦資訊：UserID + 直槓 + 時間戳記
-    // 格式會變成：U123456...|1711939200000
     const rawReferrer = `${userId}|${now}`;
-    
-    // 3. 進行編碼，確保 | 符號在網址傳遞時不會出錯
     const encodedReferrer = encodeURIComponent(rawReferrer);
     
     const shareUrl = `https://liff.line.me/${LIFF_ID}?from=${currentFrom}&referrer=${encodedReferrer}`;
     const shareText = `✨ 發現高雄隱藏版美味 ✨\n立即加入領取新客禮：\n${shareUrl}`;
     
-    // 複製到剪貼簿
     navigator.clipboard.writeText(shareText)
         .then(() => {
             openModal(`
@@ -862,7 +786,6 @@ function autoCopyShare() {
             `);
         })
         .catch(() => {
-            // 如果瀏覽器不支援 clipboard API 的備案
             const textArea = document.createElement("textarea");
             textArea.value = shareText;
             document.body.appendChild(textArea);
