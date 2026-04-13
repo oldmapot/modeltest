@@ -527,6 +527,52 @@ function generateRegCodeWithKeys(uid, shopCode, shopKey) {
     img.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(qrString);
     img.style.display = "block";
 }
+
+// 新增：從後端取得 shopKey
+async function fetchShopKeyFromBackend(uid, shopCode) {
+    try {
+        const branch = (shopCode === "swo") ? "一點甜" : "老娘鍋";
+        const url = `${GAS_URL}?action=getNewGuestQR&userId=${encodeURIComponent(uid)}&shopCode=${encodeURIComponent(shopCode)}&branch=${encodeURIComponent(branch)}&t=${Date.now()}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.success && data.shopKey) {
+            return data.shopKey;
+        }
+        return null;
+    } catch(e) {
+        console.error("fetchShopKeyFromBackend 錯誤:", e);
+        return null;
+    }
+}
+
+// 新增：實際產生 QR 的函數
+function generateRegCodeWithKeys(uid, shopCode, shopKey) {
+    // 從 userData 讀取優惠券前綴和品牌代號
+    let prefix = (userData && userData.qrPrefix) || "GIFT_BY";
+    let brandCode = shopCode;  // omp 或 swo
+    
+    // 檢查是否需要包含推薦人 ID（從 userData.includeReferrer 讀取）
+    let needReferrer = (userData && userData.includeReferrer === "是");
+    let referrerId = referrerParam || "";
+    
+    let qrString = "";
+    if (needReferrer && referrerId) {
+        // 4 段格式：前綴_品牌代號_金鑰_userId_referrerId
+        qrString = prefix + "_" + brandCode + "_" + shopKey + "_" + uid + "_" + referrerId;
+    } else {
+        // 3 段格式：前綴_品牌代號_金鑰_userId
+        qrString = prefix + "_" + brandCode + "_" + shopKey + "_" + uid;
+    }
+    
+    console.log("🔍 產生 QR:", qrString);
+    
+    const img = document.getElementById("regGiftQR");
+    const giftArea = document.getElementById("regGiftArea");
+    
+    giftArea.style.display = "block";
+    img.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(qrString);
+    img.style.display = "block";
+}
 function openGiftBox() {
     // 從 userData 中讀取優惠券資訊
     let coupon = userData?.coupon;
