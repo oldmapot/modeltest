@@ -245,29 +245,12 @@ function parseScannedCode(scannedText) {
 
     // ========== 判斷是否為優惠券 QR（以 GIFT_開頭）==========
     if (clean.indexOf("GIFT_") === 0) {
-        // 移除前綴 "GIFT_"，長度為 5
-        const rest = clean.substring(5);
-        const parts = rest.split("_");
-        
-        // 格式：品牌代號_金鑰_userId_referrerId
-        if (parts.length >= 3) {
-            const shopCode = parts[0];
-            const shopKey = parts[1];
-            const userId = parts[2];
-            const referrerId = parts[3] || "";
-            
-            if (shopCode === "omp" || shopCode === "swo") {
-                return { 
-                    type: "coupon",
-                    shopCode: shopCode,
-                    shopKey: shopKey,
-                    userId: userId,
-                    referrerId: referrerId
-                };
-            }
-        }
-        return { type: "coupon", raw: clean };
-    }
+    // 直接回傳完整的 GIFT_... 給 GAS，不要自己切！
+    return { 
+        type: "coupon",
+        userId: clean   // 🔥 重點：完整編碼直接丟給 GAS 處理
+    };
+}
     
     // ========== 會員 QR ==========
     const parts = clean.split("_");
