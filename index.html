@@ -729,6 +729,8 @@ async function doRegister() {
         // ✅ 加上 branch 參數
         const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
         let res = await fetch(`${GAS_URL}?action=register&userId=${userId}&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&birthday=${birthday}&referrerId=${encodeURIComponent(referrerParam)}&from=${currentFrom}&branch=${encodeURIComponent(branch)}`);
+const result = await res.json();
+
         
         if (result.success) {
             document.getElementById('loading').style.display = 'none';
