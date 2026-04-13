@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -198,6 +199,8 @@
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzyYTgRv27kFU-xM2zXv2RQsakzH0aNETyqhTEY9McZ6913Xjnts9FYcWilUpISiuvs/exec";
 const LIFF_ID = "2009761099-xXvMY51i";
+//const idToken = liff.getIDToken();
+//const url = `${GAS_URL}?action=checkID&idToken=${encodeURIComponent(idToken)}&branch=${branch}&t=${Date.now()}`;
 let userId = '', userData = null, currentFrom = 'omp', referrerParam = '', userToken = '', pendingCheckboxId = null;
 
 // QR Code 倒數計時相關變數
@@ -299,7 +302,7 @@ function openLegalModal(e) {
       </div>
 
       <div class="legal-row">
-        <div class="rule-title">◆ 非現金資產</div>
+        <div class="legal-title">◆ 非現金資產</div>
         <div class="legal-body">本平台發放之點數屬無償贈與之紅利，不具貨幣價值，不得要求兌換現金。</div>
       </div>
 
@@ -430,102 +433,25 @@ function generateMemberCode() {
 }
 
 function generateRegCode() {
-    try {
-        // 沒有推薦連結 → 整個區塊隱藏（連框都不見）
-        if (!referrerParam || referrerParam === "undefined") {
-            document.getElementById("regGiftArea").style.display = "none";
-            return;
-        }
-
-        // 已經掃過 → 隱藏
-        if (userData && userData.alreadyScanned) {
-            document.getElementById("regGiftArea").style.display = "none";
-            return;
-        }
-
-        // 已經是會員 → 隱藏
-        if (userData && userData.isMember) {
-            document.getElementById("regGiftArea").style.display = "none";
-            return;
-        }
-
-        const uid = userId || "";
-        
-        // 從 userData 讀取 shopCode 和 shopKey
-        // 如果沒有 shopKey，呼叫後端重新取得
-        let shopCode = (userData && userData.shopCode) || "omp";
-        let shopKey = (userData && userData.shopKey);
-        
-        // 如果沒有 shopKey，嘗試從後端取得
-        if (!shopKey || shopKey === "DEFAULT") {
-            console.log("🔍 shopKey 為空，嘗試從後端取得...");
-            fetchShopKeyFromBackend(uid, shopCode).then(key => {
-                if (key) {
-                    shopKey = key;
-                    if (userData) userData.shopKey = key;
-                    generateRegCodeWithKeys(uid, shopCode, shopKey);
-                } else {
-                    document.getElementById("regGiftArea").style.display = "none";
-                }
-            }).catch(err => {
-                console.error("取得 shopKey 失敗:", err);
-                document.getElementById("regGiftArea").style.display = "none";
-            });
-            return;
-        }
-        
-        generateRegCodeWithKeys(uid, shopCode, shopKey);
-        
-    } catch (err) {
-        console.error("generateRegCode 錯誤:", err);
-        document.getElementById("regGiftArea").style.display = "none";
+    if (!userData || !userData.shopCode) {
+        console.error("尚未取得店面金鑰資料");
+        return;
     }
-}
 
-// 新增：從後端取得 shopKey
-async function fetchShopKeyFromBackend(uid, shopCode) {
-    try {
-        const branch = (shopCode === "swo") ? "一點甜" : "老娘鍋";
-        const url = `${GAS_URL}?action=getNewGuestQR&userId=${encodeURIComponent(uid)}&shopCode=${encodeURIComponent(shopCode)}&branch=${encodeURIComponent(branch)}&t=${Date.now()}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        if (data.success && data.shopKey) {
-            return data.shopKey;
-        }
-        return null;
-    } catch(e) {
-        console.error("fetchShopKeyFromBackend 錯誤:", e);
-        return null;
-    }
-}
+    let rawRef = referrerParam; 
+    if (!rawRef || rawRef === 'undefined') return;
 
-// 新增：實際產生 QR 的函數
-function generateRegCodeWithKeys(uid, shopCode, shopKey) {
-    // 從 userData 讀取優惠券前綴和品牌代號
-    let prefix = (userData && userData.qrPrefix) || "GIFT_BY";
-    let brandCode = shopCode;  // omp 或 swo
+    let cleanRefId = rawRef.split('|')[0];
     
-    // 檢查是否需要包含推薦人 ID（從 userData.includeReferrer 讀取）
-    let needReferrer = (userData && userData.includeReferrer === "是");
-    let referrerId = referrerParam || "";
+    // ✅ QR 內容：分店_金鑰_新客ID_推薦人ID
+    const codeData = `${userData.shopCode}_${userData.shopKey}_${userId}_${cleanRefId}`;
     
-    let qrString = "";
-    if (needReferrer && referrerId) {
-        // 4 段格式：前綴_品牌代號_金鑰_userId_referrerId
-        qrString = prefix + "_" + brandCode + "_" + shopKey + "_" + uid + "_" + referrerId;
-    } else {
-        // 3 段格式：前綴_品牌代號_金鑰_userId
-        qrString = prefix + "_" + brandCode + "_" + shopKey + "_" + uid;
+    const qrImg = document.getElementById('regGiftQR');
+    if (qrImg) {
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(codeData)}`;
+        qrImg.style.display = "block";
+        console.log("QR 已產生，新客:", userId, "推薦人:", cleanRefId);
     }
-    
-    console.log("🔍 產生 QR:", qrString);
-    
-    const img = document.getElementById("regGiftQR");
-    const giftArea = document.getElementById("regGiftArea");
-    
-    giftArea.style.display = "block";
-    img.src = "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=" + encodeURIComponent(qrString);
-    img.style.display = "block";
 }
 function openGiftBox() {
     // 從 userData 中讀取優惠券資訊
@@ -665,9 +591,9 @@ loadingText.innerText = texts[randomIndex];
             return; 
         }
         userId = (await liff.getProfile()).userId;
-        console.log("取得 userId:", userId);
+        console.log("取得 userId:", userId);  // ✅ 加上這行
         await fetchData();
-        console.log("fetchData 完成");
+        console.log("fetchData 完成");  // ✅ 加上這行
     } catch(e) { 
         console.error('LIFF init error:', e);
         showToast('初始化失敗，請重新開啟頁面'); 
@@ -678,95 +604,58 @@ loadingText.innerText = texts[randomIndex];
 async function fetchData(isReload = false) {
     try {
         const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
+        const url = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
+        let res = await fetch(url);
+        if (!res.ok) { throw new Error(`HTTP ${res.status}`); }
+        let responseText = await res.text();
         
-        // ========== 第一階段：輕量版 API（只載入基本資料） ==========
-        const basicUrl = `${GAS_URL}?action=getBasicMemberInfo&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&t=${Date.now()}`;
-        let basicRes = await fetch(basicUrl);
-        let basicData = await basicRes.json();
+        try { userData = JSON.parse(responseText); } catch(e) { throw new Error("伺服器回應格式錯誤"); }
         
-        // 🔧 等候詞改為前端寫死，不再從後端讀取
-        const loadingTexts = {
-            omp: [
-                "老娘正在翻帳本，幫你算驚喜...",
-                "老娘正在熬湯頭，請稍候...",
-                "老娘幫你查好康，馬上好...",
-                "老娘偷偷告訴你一個秘密...",
-                "老娘正在加湯，馬上來..."
-            ],
-            swo: [
-                "正在為你的生活，加入一點甜...",
-                "一點甜正在準備驚喜...",
-                "甜蜜計算中，請稍候...",
-                "馬上為你端上今日甜點...",
-                "一點甜，一點暖，請稍等..."
-            ]
-        };
-        const texts = currentFrom === 'so' ? loadingTexts.swo : loadingTexts.omp;
-        const randomIndex = Math.floor(Math.random() * texts.length);
-        document.getElementById('loading-text').innerText = texts[randomIndex];
+        // 🔧 新增：更新載入畫面的等候詞（從後端隨機選一個）
+        if (userData.loadingTexts && userData.loadingTexts.length > 0) {
+            const randomIndex = Math.floor(Math.random() * userData.loadingTexts.length);
+            document.getElementById('loading-text').innerText = userData.loadingTexts[randomIndex];
+        }
         
         document.getElementById('loading').style.display = 'none';
 
         // --- 1. 已是會員的情況 ---
-        if (basicData && basicData.isMember === true) {
+        if (userData && userData.isMember === true) {
             document.getElementById('memberUI').style.display = 'block';
             document.getElementById('regUI').style.display = 'none';
-            
-            // 顯示點數
-            const displayPoints = basicData.points || 0;
+            const displayPoints = userData.points !== undefined ? userData.points : (userData.profile?.points || 0);
             document.getElementById('pointsDisplay').innerText = displayPoints;
-            
-            // 歡迎詞列表（前端寫死）
-            const welcomeQuotes = {
-                omp: [
-                    "熟悉的位子，老娘幫你留好了",
-                    "老娘這鍋湯，專治各種不開心",
-                    "歡迎回家，今天想喝什麼湯",
-                    "進了老娘的門，就是家裡人",
-                    "每一口美味，都在累積心意。",
-                    "沒什麼事是老娘一鍋解決不了的。",
-                    "累積一點心意，換一口老娘美味",
-                    "來老娘這，吃飽喝足最幸福"
-                ],
-                swo: [
-                    "生活七八分苦？今天必須一點甜。",
-                    "遇見你，就是一點甜...",
-                    "點點心意，只為甜你的心。",
-                    "生活苦甜參半，今天留給甜的那半。",
-                    "給生活加點糖，一點甜正剛好。",
-                    "一點甜，一點暖，一點幸福",
-                    "今日宜加糖，一點甜正好"
-                ]
-            };
-            const quotes = currentFrom === 'so' ? welcomeQuotes.swo : welcomeQuotes.omp;
-            const randomQuoteIndex = Math.floor(Math.random() * quotes.length);
-            document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
-            
-            // 儲存基本資料
-            userData = basicData;
-            
-            // 產生 QR Code
+            // 歡迎詞列表（可自由增減）
+const welcomeQuotes = {
+    omp: [
+        "熟悉的位子，老娘幫你留好了",
+        "老娘這鍋湯，專治各種不開心",
+        "歡迎回家，今天想喝什麼湯",
+        "進了老娘的門，就是家裡人",
+        "每一口美味，都在累積心意。",
+        "沒什麼事是老娘一鍋解決不了的。",
+        "累積一點心意，換一口老娘美味",
+        "來老娘這，吃飽喝足最幸福"
+    ],
+    swo: [
+        "生活七八分苦？今天必須一點甜。",
+        "遇見你，就是一點甜...",
+         "點點心意，只為甜你的心。",
+         "生活苦甜參半，今天留給甜的那半。",
+         "生活苦甜參半，今天留給甜的那半。",
+        "給生活加點糖，一點甜正剛好。",
+        "一點甜，一點暖，一點幸福",
+        "今日宜加糖， 一點甜正好"
+    ]
+};
+
+const quotes = currentFrom === 'so' ? welcomeQuotes.swo : welcomeQuotes.omp;
+const randomQuoteIndex = Math.floor(Math.random() * quotes.length);
+document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
             generateMemberCode();
-            
             if (isReload) showToast('✅ 資料已更新');
-            
-            // ========== 第二階段：背景載入詳細資料 ==========
-            setTimeout(async () => {
-                try {
-                    const detailUrl = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
-                    let detailRes = await fetch(detailUrl);
-                    let detailData = await detailRes.json();
-                    
-                    if (detailData) {
-                        userData = { ...userData, ...detailData };
-                        console.log("詳細資料已載入完成");
-                    }
-                } catch(e) {
-                    console.error("載入詳細資料失敗:", e);
-                }
-            }, 500);
-            
-        // --- 2. 非會員（準備註冊）的情況 ---
+
+       // --- 2. 非會員（準備註冊）的情況 ---
         } else {
             document.getElementById('memberUI').style.display = 'none';
             document.getElementById('regUI').style.display = 'block';
@@ -774,28 +663,38 @@ async function fetchData(isReload = false) {
             // 檢查有無推薦人參數
             if (referrerParam && referrerParam !== 'undefined' && referrerParam !== '') {
                 
-                if (basicData && basicData.expiredLink === true) {
+                // 如果連結已過期 (GAS 回傳 expiredLink: true)
+                if (userData && userData.expiredLink === true) {
                     document.getElementById('regGiftArea').style.display = 'none';
                     showToast('⚠️ 此推薦連結已超過 14 天效期');
                 } else {
+                    // 連結有效，顯示招待區
                     document.getElementById('regGiftArea').style.display = 'block';
-                    let referrerName = (basicData && basicData.myReferrer && basicData.myReferrer !== "無") ? basicData.myReferrer : "神祕好友";
+                    
+                    // 取得推薦人姓名
+                    let referrerName = (userData && userData.myReferrer && userData.myReferrer !== "無") ? userData.myReferrer : "神祕好友";
+                    
                     document.getElementById('giftTitle').innerText = `🎁 你的好友 ${referrerName} 送你的專屬好禮`;
                     document.getElementById('giftTitle').style.textAlign = "center";
                     document.getElementById('giftTip').style.textAlign = "center";
+                    
+                    // 產生 QR Code (請確保 generateRegCode 裡面也有處理 split('|'))
                     generateRegCode(); 
                 }
             } else {
+                // 完全沒有推薦人參數的情況
                 document.getElementById('regGiftArea').style.display = 'none';
             }
         }
     } catch(e) { 
-        console.error("Fetch Error 詳細:", e);
+        console.error("Fetch Error 詳細:", e);  // ✅ 加上這行
         showToast('資料載入失敗，請稍後再試');
     } finally {
+        // 無論成功失敗都關閉載入中動畫
         document.getElementById('loading').style.display = 'none';
     }
 }
+
 async function doRegister() {
     let name = document.getElementById('regName').value.trim();
     let phone = document.getElementById('regPhone').value.trim();
@@ -816,12 +715,10 @@ async function doRegister() {
     document.getElementById('loading').style.display = 'flex';
     document.getElementById('regUI').style.display = 'none';
     
-    try {
+   try {
+        // ✅ 加上 branch 參數
         const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        const res = await fetch(`${GAS_URL}?action=register&userId=${userId}&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&birthday=${birthday}&referrerId=${encodeURIComponent(referrerParam)}&from=${currentFrom}&branch=${encodeURIComponent(branch)}`);
-        
-        // 🔧 修正：定義 result
-        const result = await res.json();
+        let res = await fetch(`${GAS_URL}?action=register&userId=${userId}&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&birthday=${birthday}&referrerId=${encodeURIComponent(referrerParam)}&from=${currentFrom}&branch=${encodeURIComponent(branch)}`);
         
         if (result.success) {
             document.getElementById('loading').style.display = 'none';
