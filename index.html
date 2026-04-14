@@ -476,7 +476,11 @@ function openGiftBox() {
     }
     
     let now = new Date();
-    let expiresAt = new Date(coupon.expiresAt);
+    let expireDate = new Date(coupon.expiresAt).toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+}).replace(/\//g, '/');
     if (now > expiresAt) {
         openModal(`<div style="text-align:center; padding:20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">⏰</div>
