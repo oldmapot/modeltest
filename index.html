@@ -488,7 +488,11 @@ function openGiftBox() {
     
     let qrContent = coupon.qrContent;
     let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrContent)}`;
-    let expireDate = new Date(coupon.expiresAt).toLocaleDateString('zh-TW');
+    let expireDate = new Date(coupon.expiresAt).toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+});
     
     openModal(`
         <div style="text-align:center; padding:10px;">
