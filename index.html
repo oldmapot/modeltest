@@ -485,7 +485,7 @@ function openGiftBox() {
         return;
     }
     
-    // ✅ 使用 qrString（完整 QR 格式），不是 qrContent
+    // ✅ 使用 qrString
     let qrString = coupon.qrString || "";
     if (!qrString) {
         openModal(`<div style="text-align:center; padding:20px;">
@@ -503,6 +503,7 @@ function openGiftBox() {
         day: '2-digit'
     });
     
+    // ✅ 顯示 QR Code，並開始監聽優惠券狀態
     openModal(`
         <div style="text-align:center; padding:10px;">
             <div style="font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 15px;">🎁 ${coupon.couponName || '新客招待禮'}</div>
@@ -515,8 +516,87 @@ function openGiftBox() {
             <div style="font-size: 12px; color: #999;">僅限使用一次，兌換後即失效</div>
         </div>
     `);
+    
+    // ✅ 開始監聽優惠券狀態（每 2 秒檢查一次）
+    startCouponStatusCheck(coupon.userId);
 }
 
+// ==================== 監聽優惠券兌換狀態 ====================
+let couponCheckInterval = null;
+
+function startCouponStatusCheck(userId) {
+    // 清除舊的監聽
+    if (couponCheckInterval) {
+        clearInterval(couponCheckInterval);
+        couponCheckInterval = null;
+    }
+    
+    couponCheckInterval = setInterval(async function() {
+        try {
+            // 查詢優惠券狀態
+            const url = `${GAS_URL}?action=getFirestoreDocument&collection=coupons&docId=${userId}&t=${Date.now()}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            console.log("🔍 檢查優惠券狀態:", data);
+            
+            // 如果優惠券已被使用
+            if (data && data.status === "已使用") {
+                // 停止監聽
+                clearInterval(couponCheckInterval);
+                couponCheckInterval = null;
+                
+                // 關閉當前的 Modal
+                closeModal();
+                
+                // ✅ 顯示「兌換成功」並自動關閉
+                showModalAutoClose(`
+                    <div style="text-align:center; padding:20px;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
+                        <div style="font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 10px;">兌換成功！</div>
+                        <div style="color: #666; font-size: 16px;">優惠券已使用完畢</div>
+                    </div>
+                `, 2000);
+                
+                // 更新會員資料
+                refreshAll();
+            }
+        } catch (err) {
+            console.error("檢查優惠券狀態錯誤:", err);
+        }
+    }, 2000); // 每 2 秒檢查一次
+}
+
+// ==================== 自動關閉的 Modal ====================
+let autoCloseTimer = null;
+
+function showModalAutoClose(html, delay) {
+    if (autoCloseTimer) {
+        clearTimeout(autoCloseTimer);
+        autoCloseTimer = null;
+    }
+    
+    document.getElementById('modalBody').innerHTML = html;
+    document.getElementById('modal').style.display = 'flex';
+    
+    autoCloseTimer = setTimeout(function() {
+        closeModal();
+        autoCloseTimer = null;
+    }, delay || 2000);
+}
+
+// ✅ 修改關閉 Modal 函數，清除監聽
+function closeModal() {
+    if (autoCloseTimer) {
+        clearTimeout(autoCloseTimer);
+        autoCloseTimer = null;
+    }
+    if (couponCheckInterval) {
+        clearInterval(couponCheckInterval);
+        couponCheckInterval = null;
+    }
+    document.getElementById('modal').style.display = 'none';
+}
 async function refreshAll() {
     if (!userId) return;
     try {
