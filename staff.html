@@ -346,7 +346,7 @@ async function onScanSuccess(scannedText) {
             return;
         }
         
-       // ========== 會員 QR（已註冊會員）==========
+     // ========== 會員 QR（已註冊會員）==========
 if (parsed.type === "member") {
     if (!parsed.userId) {
         hideLoading();
@@ -354,23 +354,63 @@ if (parsed.type === "member") {
         return;
     }
     
+    console.log("🔍 準備呼叫 getMemberInfo");
+    console.log("🔍 userId:", parsed.userId);
+    console.log("🔍 branch:", staff.branch);
+    
     const finalUrl = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(parsed.userId)}&branch=${encodeURIComponent(staff.branch)}&t=${new Date().getTime()}`;
-    const res = await fetch(finalUrl, { method: "GET", mode: "cors" });
-    const data = await res.json();
-    hideLoading();
+    console.log("🔍 完整 URL:", finalUrl);
     
-    // ✅ 詳細日誌
-    console.log("📊 getMemberInfo 完整回傳:", JSON.stringify(data));
-    console.log("📊 data.success:", data.success);
-    console.log("📊 data.member:", data.member);
-    console.log("📊 data.config:", data.config);
-    
-    if (data.success && data.member) {
-        // ... 後續處理 ...
-    } else {
-        // ✅ 顯示詳細錯誤
-        console.error("❌ getMemberInfo 失敗:", data);
-        showModal(`⚠️ 查無此會員！<br>請確認顧客是否已加入 LINE 好友並完成註冊。<br><br>🔍 除錯資訊：<br>userId: ${parsed.userId}<br>回傳: ${JSON.stringify(data)}`);
+    try {
+        const res = await fetch(finalUrl, { method: "GET", mode: "cors" });
+        console.log("🔍 HTTP 狀態:", res.status);
+        
+        const data = await res.json();
+        console.log("📊 getMemberInfo 回傳:", JSON.stringify(data));
+        hideLoading();
+        
+        if (data.success && data.member) {
+            // ==========================================
+            // ✅ 這裡是原本被刪除的處理邏輯，請補回去
+            // ==========================================
+            
+            // 儲存設定
+            config = data.config || {};
+            config.eventMultiplier = Number(config.eventMultiplier) || 1;
+            config.levelRate = Number(config.levelRate) || 1;
+            config.earnRate = Number(config.earnRate) || 0.03;
+            config.maxRate = Number(config.maxRate) || 0;
+            config.minSpend = Number(config.minSpend) || 0;
+            config.shopCode = config.shopCode || parsed.shopCode || "omp";
+            
+            // 儲存會員資料
+            customerId = data.member.userId;
+            currentPoints = data.member.points || 0;
+            memberLevel = data.member.level || "一般會員";
+            levelRate = data.member.levelRate || 1;
+            
+            // 顯示會員資訊
+            document.getElementById('member-ui').style.display = 'block';
+            document.getElementById('form-ui').classList.remove('locked');
+            document.getElementById('cus-name').innerText = data.member.name;
+            document.getElementById('member-level').innerText = memberLevel;
+            document.getElementById('cus-pts').innerText = currentPoints;
+            document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
+            
+            // 自動聚焦到消費金額輸入框
+            document.getElementById('totalSpend').focus();
+            
+            // 計算可折抵點數
+            doCalc();
+            
+        } else {
+            // 查無會員
+            showModal(`⚠️ 查無此會員！<br><br>🔍 除錯資訊：<br>userId: ${parsed.userId}<br>回傳: ${JSON.stringify(data)}`);
+        }
+    } catch (err) {
+        console.error("❌ fetch 錯誤:", err);
+        hideLoading();
+        showModal(`❌ 連線錯誤：${err.message}`);
     }
     return;
 }
