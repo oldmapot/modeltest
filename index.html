@@ -485,7 +485,7 @@ function openGiftBox() {
         return;
     }
     
-    // ✅ 重點：使用 qrString（完整 QR 格式），不是 qrContent（純文字）
+    // ✅ 使用 qrString（完整 QR 格式），不是 qrContent
     let qrString = coupon.qrString || "";
     if (!qrString) {
         openModal(`<div style="text-align:center; padding:20px;">
