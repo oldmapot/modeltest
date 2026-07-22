@@ -347,41 +347,48 @@ async function onScanSuccess(scannedText) {
         }
         
         // ========== 會員 QR（已註冊會員）==========
-        if (parsed.type === "member") {
-            if (!parsed.userId) {
-                hideLoading();
-                showModal("⚠️ 無效的 QR Code 格式");
-                return;
-            }
-            
-            const finalUrl = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(parsed.userId)}&branch=${encodeURIComponent(staff.branch)}&t=${new Date().getTime()}`;
-            const res = await fetch(finalUrl, { method: "GET", mode: "cors" });
-            const data = await res.json();
-            hideLoading();
-            
-            if (data.success && data.member) {
-                config = data.config;
-                customerId = data.member.userId;
-                currentPoints = data.member.points || 0;
-                memberLevel = data.member.level || "一般會員";
-                levelRate = data.member.levelRate || 1;
-                config.levelRate = levelRate;
-                config.shopCode = parsed.shopCode || "omp";
-                config.eventMultiplier = data.config.eventMultiplier || 1;
+if (parsed.type === "member") {
+    if (!parsed.userId) {
+        hideLoading();
+        showModal("⚠️ 無效的 QR Code 格式");
+        return;
+    }
+    
+    const finalUrl = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(parsed.userId)}&branch=${encodeURIComponent(staff.branch)}&t=${new Date().getTime()}`;
+    const res = await fetch(finalUrl, { method: "GET", mode: "cors" });
+    const data = await res.json();
+    hideLoading();
+    
+    console.log("📊 getMemberInfo 回傳:", JSON.stringify(data));  // ✅ 加入日誌
+    
+    if (data.success && data.member) {
+        config = data.config || {};
+        // ✅ 確保 eventMultiplier 有值
+        config.eventMultiplier = Number(config.eventMultiplier) || 1;
+        config.levelRate = Number(config.levelRate) || 1;
+        config.earnRate = Number(config.earnRate) || 0.03;
+        config.maxRate = Number(config.maxRate) || 0;
+        config.minSpend = Number(config.minSpend) || 0;
+        config.shopCode = config.shopCode || parsed.shopCode || "omp";
+        
+        customerId = data.member.userId;
+        currentPoints = data.member.points || 0;
+        memberLevel = data.member.level || "一般會員";
+        levelRate = data.member.levelRate || 1;
 
-                document.getElementById('member-ui').style.display = 'block';
-                document.getElementById('form-ui').classList.remove('locked');
-                document.getElementById('cus-name').innerText = data.member.name;
-                document.getElementById('member-level').innerText = memberLevel;
-                document.getElementById('cus-pts').innerText = currentPoints;
-                document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
-                document.getElementById('totalSpend').focus();
-                doCalc();
-            } else {
-                showModal("⚠️ 查無此會員！<br>請確認顧客是否已加入 LINE 好友並完成註冊。");
-            }
-            return;
-        }
+        document.getElementById('member-ui').style.display = 'block';
+        document.getElementById('form-ui').classList.remove('locked');
+        document.getElementById('cus-name').innerText = data.member.name;
+        document.getElementById('member-level').innerText = memberLevel;
+        document.getElementById('cus-pts').innerText = currentPoints;
+        document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
+        document.getElementById('totalSpend').focus();
+        doCalc();
+    } else {
+        showModal("⚠️ 查無此會員！<br>請確認顧客是否已加入 LINE 好友並完成註冊。");
+    }
+    return;
+}
         
         // 都不是
         hideLoading();
