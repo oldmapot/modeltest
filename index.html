@@ -461,7 +461,6 @@ function openGiftBox() {
         openModal(`<div style="text-align:center; padding:20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">🎁</div>
             <div style="font-weight: bold; margin-bottom: 10px;">暫無優惠券</div>
-            <div style="color: #999;">目前沒有可用的優惠券</div>
         </div>`);
         return;
     }
@@ -486,21 +485,32 @@ function openGiftBox() {
         return;
     }
     
-    let qrContent = coupon.qrContent;
-    let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrContent)}`;
+    // ✅ 重點：使用 qrString（完整 QR 格式），不是 qrContent（純文字）
+    let qrString = coupon.qrString || "";
+    if (!qrString) {
+        openModal(`<div style="text-align:center; padding:20px;">
+            <div style="font-size: 48px; margin-bottom: 15px;">❌</div>
+            <div style="font-weight: bold; margin-bottom: 10px;">優惠券格式錯誤</div>
+            <div style="color: #999;">請重新登入或聯繫客服</div>
+        </div>`);
+        return;
+    }
+    
+    let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrString)}`;
     let expireDate = new Date(coupon.expiresAt).toLocaleDateString('zh-TW', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-});
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
     
     openModal(`
         <div style="text-align:center; padding:10px;">
-            <div style="font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 15px;">🎁 新客招待禮</div>
+            <div style="font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 15px;">🎁 ${coupon.couponName || '新客招待禮'}</div>
             <div style="margin: 15px 0;">
                 <img src="${qrUrl}" style="width: 180px; height: 180px; border-radius: 12px;">
             </div>
             <div style="font-size: 14px; color: #666; margin: 10px 0;">請出示此 QR Code 給店員掃描</div>
+            <div style="font-size: 14px; color: #333; margin: 5px 0;">${coupon.qrContent || ''}</div>
             <div style="font-size: 12px; color: #d00; margin: 10px 0;">⚠️ 有效期至 ${expireDate}</div>
             <div style="font-size: 12px; color: #999;">僅限使用一次，兌換後即失效</div>
         </div>
