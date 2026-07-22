@@ -148,10 +148,36 @@ let customerId = "", currentPoints = 0, memberLevel = "", levelRate = 1;
 let cameraStream = null;
 let scanInterval = null;
 let isLoggedIn = true;
+let cachedPrefixes = null;
 
 function getUrlParam(name) {
     const url = new URLSearchParams(window.location.search);
     return url.get(name);
+}
+// ✅ 新增：從 GAS 取得優惠券前綴
+async function getCouponPrefixes() {
+    if (cachedPrefixes) {
+        return cachedPrefixes;
+    }
+    
+    try {
+        const url = `${GAS_URL}?action=getCouponPrefixes&t=${Date.now()}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && data.prefixes) {
+            cachedPrefixes = data.prefixes;
+            console.log("✅ 取得優惠券前綴:", cachedPrefixes);
+            return cachedPrefixes;
+        }
+        // 預設值
+        cachedPrefixes = ["GIFT_"];
+        return cachedPrefixes;
+    } catch (e) {
+        console.error("取得優惠券前綴失敗:", e);
+        cachedPrefixes = ["GIFT_"];
+        return cachedPrefixes;
+    }
 }
 
 function init() {
@@ -163,6 +189,9 @@ function init() {
     
     document.getElementById('staff-name').innerText = staff.name;
     document.getElementById('shop-name').innerText = staff.branch;
+    
+    // ✅ 預先載入優惠券前綴（不阻塞畫面）
+    getCouponPrefixes();
     
     hideLoading();
     setupScannerListener();
@@ -243,14 +272,21 @@ function parseScannedCode(scannedText) {
     }
     if (clean.indexOf("##") === 0) clean = clean.substring(2);
 
-    // ========== 判斷是否為優惠券 QR（以 GIFT_開頭）==========
-    if (clean.indexOf("GIFT_") === 0) {
-    // 直接回傳完整的 GIFT_... 給 GAS，不要自己切！
-    return { 
-        type: "coupon",
-        userId: clean   // 🔥 重點：完整編碼直接丟給 GAS 處理
-    };
-}
+    // ========== 判斷是否為優惠券 QR（動態從工作表讀取） ==========
+    if (cachedPrefixes) {
+        for (var p = 0; p < cachedPrefixes.length; p++) {
+            // 檢查是否以「前綴 + _」開頭
+            // 例如：GIFT_omp_01_、BIR_swo_B01_
+            var prefixCheck = cachedPrefixes[p] + "_";
+            if (clean.indexOf(prefixCheck) === 0) {
+                console.log("✅ 識別為優惠券，前綴:", cachedPrefixes[p]);
+                return { 
+                    type: "coupon",
+                    userId: clean
+                };
+            }
+        }
+    }
     
     // ========== 會員 QR ==========
     const parts = clean.split("_");
@@ -277,6 +313,9 @@ async function onScanSuccess(scannedText) {
     if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
     await closeCamera();
     if (navigator.vibrate) navigator.vibrate(200);
+    
+    // ✅ 先載入優惠券前綴（如果還沒載入）
+    await getCouponPrefixes();
     
     const parsed = parseScannedCode(scannedText);
     
