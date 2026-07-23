@@ -181,15 +181,26 @@ async function getCouponPrefixes() {
 }
 
 function init() {
-    const staffName = getUrlParam('name') || '未登入';
-    const branchName = getUrlParam('branch') || '請選擇分店';
+    const staffName = getUrlParam('name') || '';
+    const branchName = getUrlParam('branch') || '';
     const loginId = getUrlParam('loginId') || '';
-    const deviceId = getDeviceId(); // 從 localStorage 讀取
+    const deviceId = getDeviceId();
+    
+    // ✅ 檢查是否有登入資訊
+    if (!loginId || !staffName || !branchName) {
+        // 沒有登入資訊，跳回登入頁
+        showToast("⚠️ 請先登入");
+        setTimeout(() => {
+            window.location.href = 'staff_login.html';
+        }, 1000);
+        return;
+    }
     
     staff.name = staffName;
     staff.branch = branchName;
     staff.loginId = loginId;
     staff.deviceId = deviceId;
+    isLoggedIn = true;  // ✅ 只有驗證通過才設為 true
     
     document.getElementById('staff-name').innerText = staff.name;
     document.getElementById('shop-name').innerText = staff.branch;
@@ -513,6 +524,12 @@ if (parsed.type === "member") {
 }
 
 async function openCamera() {
+    // ✅ 雙重檢查
+    if (!isLoggedIn || !staff.loginId) {
+        showToast("⚠️ 請先登入");
+        setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
+        return;
+    }
     if (!isLoggedIn) { showToast("請先登入"); return; }
     try {
         if (cameraStream) await closeCamera();
