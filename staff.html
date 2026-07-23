@@ -142,7 +142,7 @@
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxlvZ-DzBBuZlqudFQF2RWTbVBD5GJwXdV0OYWxemjPaeq7aJxFN19kguOeOeGXLYM4uw/exec";
 
-let staff = { name: "", branch: "", role: "夥伴" };
+let staff = { name: "", branch: "", role: "夥伴", loginId: "", deviceId: "" };
 let config = { minSpend: 0, maxRate: 0, earnRate: 0, ticketRate: 0, shopCode: "", eventMultiplier: 1 };
 let customerId = "", currentPoints = 0, memberLevel = "", levelRate = 1;
 let cameraStream = null;
@@ -180,24 +180,39 @@ async function getCouponPrefixes() {
     }
 }
 
-function init() {
+ffunction init() {
     const staffName = getUrlParam('name') || '未登入';
     const branchName = getUrlParam('branch') || '請選擇分店';
+    const loginId = getUrlParam('loginId') || '';
+    const deviceId = getDeviceId(); // 從 localStorage 讀取
     
     staff.name = staffName;
     staff.branch = branchName;
+    staff.loginId = loginId;
+    staff.deviceId = deviceId;
     
     document.getElementById('staff-name').innerText = staff.name;
     document.getElementById('shop-name').innerText = staff.branch;
     
-    // ✅ 預先載入優惠券前綴（不阻塞畫面）
+    // ✅ 預先載入優惠券前綴
     getCouponPrefixes();
     
     hideLoading();
     setupScannerListener();
 }
 
-let idleTimer;
+// ✅ 取得設備 ID（與登入頁一致）
+function getDeviceId() {
+    let deviceId = localStorage.getItem('device_id');
+    if (!deviceId) {
+        const screenInfo = `${screen.width}x${screen.height}`;
+        const timeStamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(2, 15);
+        deviceId = btoa(`${screenInfo}_${timeStamp}_${randomStr}`).substring(0, 32);
+        localStorage.setItem('device_id', deviceId);
+    }
+    return deviceId;
+}
 function resetIdleTimer() {
     if (!isLoggedIn) return;
     clearTimeout(idleTimer);
@@ -322,33 +337,40 @@ async function onScanSuccess(scannedText) {
     try {
         showLoading("連線中...");
         
-        // ========== 優惠券兌換 ==========
-        if (parsed.type === "coupon") {
+     // ========== 優惠券兌換 ==========
+if (parsed.type === "coupon") {
     const realStaffName = staff.name;
     const realStaffBranch = staff.branch;
     const clientIp = await getUserIP();
+    const loginId = staff.loginId || "";
+    const deviceId = staff.deviceId || "";
     
-    // 使用 parsed.userId 作為 customerId
-    const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}`;
-            
-            try {
-                const res = await fetch(url);
-                const result = await res.json();
-                console.log("完整回應：", JSON.stringify(result));  // ← 確認有沒有這一行
-                hideLoading();
-                
-                if (result.success) {
-                showModal(`🎁 ${result.message || "此為新客招待，請處理"}`);
-                } else {
-                // GAS 錯誤訊息欄位是 error，不是 message
-                showModal(`⚠️ ${result.error || result.message || "兌換失敗"}`);
-                }
-                } catch (err) {
-                hideLoading();
-                showModal("連線失敗：" + err.message);
-            }
+    const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
+    
+    try {
+        const res = await fetch(url);
+        const result = await res.json();
+        console.log("完整回應：", JSON.stringify(result));
+        hideLoading();
+        
+        // ✅ 檢查是否被強制登出
+        if (result.logout) {
+            showToast("⏰ 登入已過期，請重新登入");
+            setTimeout(() => { logout(); }, 2000);
             return;
         }
+        
+        if (result.success) {
+            showModal(`🎁 ${result.message || "此為新客招待，請處理"}`);
+        } else {
+            showModal(`⚠️ ${result.error || result.message || "兌換失敗"}`);
+        }
+    } catch (err) {
+        hideLoading();
+        showModal("連線失敗：" + err.message);
+    }
+    return;
+}
         
         // ========== 招待 QR（新客）==========
         if (parsed.type === "invite") {
@@ -385,7 +407,7 @@ async function onScanSuccess(scannedText) {
             return;
         }
         
-     // ========== 會員 QR（已註冊會員）==========
+    // ========== 會員 QR（已註冊會員）==========
 if (parsed.type === "member") {
     if (!parsed.userId) {
         hideLoading();
@@ -396,8 +418,11 @@ if (parsed.type === "member") {
     console.log("🔍 準備呼叫 getMemberInfo");
     console.log("🔍 userId:", parsed.userId);
     console.log("🔍 branch:", staff.branch);
+    const loginId = staff.loginId || "";
+    const deviceId = staff.deviceId || "";
     
-    const finalUrl = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(parsed.userId)}&branch=${encodeURIComponent(staff.branch)}&t=${new Date().getTime()}`;
+    // ✅ URL 加入 loginId 和 deviceId
+    const finalUrl = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(parsed.userId)}&branch=${encodeURIComponent(staff.branch)}&t=${new Date().getTime()}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
     console.log("🔍 完整 URL:", finalUrl);
     
     try {
@@ -407,6 +432,13 @@ if (parsed.type === "member") {
         const data = await res.json();
         console.log("📊 getMemberInfo 回傳:", JSON.stringify(data));
         hideLoading();
+        
+        // ✅ 檢查是否被強制登出
+        if (data.logout) {
+            showToast("⏰ 登入已過期，請重新登入");
+            setTimeout(() => { logout(); }, 2000);
+            return;
+        }
         
         if (data.success && data.member) {
             // ==========================================
