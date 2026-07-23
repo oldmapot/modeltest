@@ -456,72 +456,70 @@ function generateRegCode(){}
 
 function openGiftBox() {
     var coupons = userData?.coupons || [];
-    let coupon = userData?.coupon;
     
-    if (!coupon) {
+    if (!coupons || coupons.length === 0) {
         openModal(`<div style="text-align:center; padding:20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">🎁</div>
             <div style="font-weight: bold; margin-bottom: 10px;">暫無優惠券</div>
+            <div style="font-size: 14px; color: #999; margin-top: 10px;">目前沒有可用的優惠券</div>
         </div>`);
         return;
     }
     
-    if (coupon.status === "已使用") {
-        openModal(`<div style="text-align:center; padding:20px;">
-            <div style="font-size: 48px; margin-bottom: 15px;">✅</div>
-            <div style="font-weight: bold; margin-bottom: 10px;">優惠券已使用</div>
-            <div style="color: #999;">兌換時間：${coupon.redeemedAt || ''}</div>
-        </div>`);
-        return;
-    }
-    
-    let now = new Date();
-    let expiresAt = new Date(coupon.expiresAt);
-    if (now > expiresAt) {
-        openModal(`<div style="text-align:center; padding:20px;">
-            <div style="font-size: 48px; margin-bottom: 15px;">⏰</div>
-            <div style="font-weight: bold; margin-bottom: 10px;">優惠券已過期</div>
-            <div style="color: #999;">有效期已過，無法兌換</div>
-        </div>`);
-        return;
-    }
-    
-    // ✅ 使用 qrString
-    let qrString = coupon.qrString || "";
-    if (!qrString) {
-        openModal(`<div style="text-align:center; padding:20px;">
-            <div style="font-size: 48px; margin-bottom: 15px;">❌</div>
-            <div style="font-weight: bold; margin-bottom: 10px;">優惠券格式錯誤</div>
-            <div style="color: #999;">請重新登入或聯繫客服</div>
-        </div>`);
-        return;
-    }
-    
-    let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrString)}`;
-    let expireDate = new Date(coupon.expiresAt).toLocaleDateString('zh-TW', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit'
+    // ✅ 過濾未使用且未過期的優惠券
+    var now = new Date();
+    var validCoupons = coupons.filter(function(c) {
+        if (c.status !== "未使用") return false;
+        var expiresAt = new Date(c.expiresAt);
+        return now <= expiresAt;
     });
     
-    // ✅ 顯示 QR Code，並開始監聽優惠券狀態
-    openModal(`
-        <div style="text-align:center; padding:10px;">
-            <div style="font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 15px;">🎁 ${coupon.couponName || '新客招待禮'}</div>
-            <div style="margin: 15px 0;">
-                <img src="${qrUrl}" style="width: 180px; height: 180px; border-radius: 12px;">
-            </div>
-            <div style="font-size: 14px; color: #666; margin: 10px 0;">請出示此 QR Code 給店員掃描</div>
-            <div style="font-size: 14px; color: #333; margin: 5px 0;">${coupon.qrContent || ''}</div>
-            <div style="font-size: 12px; color: #d00; margin: 10px 0;">⚠️ 有效期至 ${expireDate}</div>
-            <div style="font-size: 12px; color: #999;">僅限使用一次，兌換後即失效</div>
-        </div>
-    `);
+    if (validCoupons.length === 0) {
+        openModal(`<div style="text-align:center; padding:20px;">
+            <div style="font-size: 48px; margin-bottom: 15px;">🎁</div>
+            <div style="font-weight: bold; margin-bottom: 10px;">暫無可用優惠券</div>
+            <div style="font-size: 14px; color: #999; margin-top: 10px;">優惠券可能已過期或已使用</div>
+        </div>`);
+        return;
+    }
     
-    // ✅ 開始監聽優惠券狀態（每 2 秒檢查一次）
-    startCouponStatusCheck(coupon.userId);
+    // ✅ 條列顯示所有優惠券
+    var html = `<div style="text-align:center; padding:10px;">
+        <div style="font-size: 22px; font-weight: bold; color: var(--primary); margin-bottom: 20px;">🎁 心意寶盒</div>
+        <div style="display: flex; flex-direction: column; gap: 15px;">`;
+    
+    for (var i = 0; i < validCoupons.length; i++) {
+        var c = validCoupons[i];
+        var expireDate = new Date(c.expiresAt).toLocaleDateString('zh-TW', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        var qrString = c.qrString || "";
+        var qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrString)}`;
+        
+        html += `
+            <div style="background: #f8f9fa; border-radius: 16px; padding: 15px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="flex-shrink: 0;">
+                        <img src="${qrUrl}" style="width: 80px; height: 80px; border-radius: 8px;">
+                    </div>
+                    <div style="flex: 1; text-align: left;">
+                        <div style="font-size: 18px; font-weight: bold; color: var(--primary);">${c.couponName || '優惠券'}</div>
+                        <div style="font-size: 14px; color: #666; margin-top: 4px;">${c.qrContent || ''}</div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px;">⏰ 有效至 ${expireDate}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `</div>
+        <div style="font-size: 12px; color: #999; margin-top: 20px;">請出示對應 QR Code 給店員掃描</div>
+    </div>`;
+    
+    openModal(html);
 }
-
 // ==================== 監聽優惠券兌換狀態 ====================
 let couponCheckInterval = null;
 
