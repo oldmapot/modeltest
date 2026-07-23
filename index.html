@@ -895,8 +895,11 @@ async function fetchData(isReload = false) {
             document.getElementById('memberUI').style.display = 'block';
             document.getElementById('welcomeUI').style.display = 'none';
             document.getElementById('regUI').style.display = 'none';
-            const displayPoints = userData.points !== undefined ? userData.points : (userData.profile?.points || 0);
+            
+            // ✅ 修正：讀取「目前剩餘點」（與 Firebase 欄位名稱一致）
+            const displayPoints = userData["目前剩餘點"] || userData["`目前剩餘點`"] || userData.points || 0;
             document.getElementById('pointsDisplay').innerText = displayPoints;
+            
             const welcomeQuotes = {
                 omp: [
                     "熟悉的位子，老娘幫你留好了",
@@ -937,7 +940,6 @@ async function fetchData(isReload = false) {
         document.getElementById('loading').style.display = 'none';
     }
 }
-
 async function doRegister() {
     let name = document.getElementById('regName').value.trim();
     let phone = document.getElementById('regPhone').value.trim();
