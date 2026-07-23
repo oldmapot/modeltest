@@ -348,7 +348,11 @@ async function onScanSuccess(scannedText) {
     try {
         showLoading("連線中...");
         
-        // ========== 優惠券兌換 ==========
+       // ==================== 修改 onScanSuccess 中的優惠券處理部分 ====================
+// 找到 onScanSuccess 函數中處理優惠券的區塊（約第 180-220 行）
+// 將原本的優惠券處理程式碼替換為以下增強版：
+
+        // ========== 優惠券兌換（增強版） ==========
         if (parsed.type === "coupon") {
             const realStaffName = staff.name;
             const realStaffBranch = staff.branch;
@@ -356,28 +360,66 @@ async function onScanSuccess(scannedText) {
             const loginId = staff.loginId || "";
             const deviceId = staff.deviceId || "";
             
-            const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
+            // 顯示處理中
+            showLoading("🔄 處理優惠券兌換中...");
             
-            try {
-                const res = await fetch(url);
-                const result = await res.json();
-                console.log("完整回應：", JSON.stringify(result));
-                hideLoading();
-                
-                if (result.logout) {
-                    showToast("⏰ 登入已過期，請重新登入");
-                    setTimeout(() => { logout(); }, 2000);
-                    return;
+            // 嘗試兌換，最多重試 3 次
+            let maxRetries = 3;
+            let attempt = 0;
+            let success = false;
+            let lastError = "";
+            
+            while (attempt < maxRetries && !success) {
+                attempt++;
+                try {
+                    console.log(`🔄 優惠券兌換嘗試 ${attempt}/${maxRetries}`);
+                    
+                    const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&t=${Date.now()}`;
+                    
+                    const res = await fetch(url);
+                    const result = await res.json();
+                    console.log(`📊 優惠券兌換回應 (嘗試${attempt}):`, JSON.stringify(result));
+                    
+                    if (result.logout) {
+                        hideLoading();
+                        showToast("⏰ 登入已過期，請重新登入");
+                        setTimeout(() => { logout(); }, 2000);
+                        return;
+                    }
+                    
+                    if (result.success) {
+                        success = true;
+                        hideLoading();
+                        showModal(`🎉 ${result.message || "優惠券兌換成功！"}`);
+                        return;
+                    } else {
+                        lastError = result.error || result.message || "兌換失敗";
+                        console.warn(`⚠️ 嘗試 ${attempt} 失敗:`, lastError);
+                        
+                        // 如果是最後一次嘗試，顯示錯誤
+                        if (attempt >= maxRetries) {
+                            hideLoading();
+                            showModal(`❌ 優惠券兌換失敗（已重試 ${maxRetries} 次）<br><br>錯誤訊息：${lastError}<br><br>💡 請確認優惠券是否已被使用或已過期`);
+                            return;
+                        }
+                        
+                        // 等待 1 秒後重試
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        showLoading(`🔄 重試中 (${attempt}/${maxRetries})...`);
+                    }
+                } catch (err) {
+                    lastError = err.message;
+                    console.error(`❌ 優惠券兌換錯誤 (嘗試${attempt}):`, err);
+                    
+                    if (attempt >= maxRetries) {
+                        hideLoading();
+                        showModal(`❌ 連線錯誤（已重試 ${maxRetries} 次）<br><br>錯誤訊息：${lastError}<br><br>💡 請檢查網路連線後再試`);
+                        return;
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    showLoading(`🔄 重試中 (${attempt}/${maxRetries})...`);
                 }
-                
-                if (result.success) {
-                    showModal(`🎁 ${result.message || "此為新客招待，請處理"}`);
-                } else {
-                    showModal(`⚠️ ${result.error || result.message || "兌換失敗"}`);
-                }
-            } catch (err) {
-                hideLoading();
-                showModal("連線失敗：" + err.message);
             }
             return;
         }
@@ -563,6 +605,7 @@ function doCalc() {
     document.getElementById('new-pts').innerText = newPts;
     document.getElementById('after-pts').innerText = currentPoints - redeem + newPts;
 }
+// ==================== 修改 submitData 函數 ====================
 async function submitData() {
     // ✅ 檢查登入狀態
     if (!isLoggedIn || !staff.loginId) {
@@ -591,28 +634,62 @@ async function submitData() {
         deviceId: staff.deviceId || ""
     });
 
-    try {
-        const response = await fetch(GAS_URL + "?" + params.toString());
-        const result = await response.json();
-        hideLoading();
-        
-        if (result.logout) {
-            showToast("⏰ 登入已過期，請重新登入");
-            setTimeout(() => { logout(); }, 2000);
-            return;
+    // 重試機制
+    let maxRetries = 3;
+    let attempt = 0;
+    let success = false;
+    let lastError = "";
+
+    while (attempt < maxRetries && !success) {
+        attempt++;
+        try {
+            console.log(`🔄 提交集點嘗試 ${attempt}/${maxRetries}`);
+            const response = await fetch(GAS_URL + "?" + params.toString() + "&t=" + Date.now());
+            const result = await response.json();
+            hideLoading();
+            
+            if (result.logout) {
+                showToast("⏰ 登入已過期，請重新登入");
+                setTimeout(() => { logout(); }, 2000);
+                btn.disabled = false;
+                return;
+            }
+            
+            if (result.success) {
+                success = true;
+                alert("✅ 集點作業完成");
+                resetMember();
+                btn.disabled = false;
+                return;
+            } else {
+                lastError = result.message || result.error || "未知錯誤";
+                console.warn(`⚠️ 集點提交失敗 (嘗試${attempt}):`, lastError);
+                
+                if (attempt >= maxRetries) {
+                    alert(`❌ 集點失敗（已重試 ${maxRetries} 次）\n\n錯誤訊息：${lastError}\n\n請稍後再試或聯絡管理員`);
+                    btn.disabled = false;
+                    return;
+                }
+                
+                showLoading(`🔄 重試中 (${attempt}/${maxRetries})...`);
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+        } catch (error) {
+            hideLoading();
+            console.error("請求失敗:", error);
+            lastError = error.message;
+            
+            if (attempt >= maxRetries) {
+                alert(`❌ 網路錯誤（已重試 ${maxRetries} 次）\n\n錯誤訊息：${lastError}\n\n請檢查網路連線後再試`);
+                btn.disabled = false;
+                return;
+            }
+            
+            showLoading(`🔄 重試中 (${attempt}/${maxRetries})...`);
+            await new Promise(resolve => setTimeout(resolve, 1500));
         }
-        
-        if (result.success) {
-            alert("✅ 集點作業完成");
-            resetMember();
-        } else {
-            alert("❌ 錯誤: " + (result.message || result.error));
-        }
-    } catch (error) {
-        hideLoading();
-        console.error("請求失敗:", error);
-        alert("❌ 網路錯誤，請稍後再試");
     }
+    
     btn.disabled = false;
 }
 
