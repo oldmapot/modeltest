@@ -466,7 +466,7 @@ function openGiftBox() {
         return;
     }
     
-    // ✅ 過濾未使用且未過期的優惠券
+    // 過濾未使用且未過期的優惠券
     var now = new Date();
     var validCoupons = coupons.filter(function(c) {
         if (c.status !== "未使用") return false;
@@ -483,11 +483,116 @@ function openGiftBox() {
         return;
     }
     
-    // ✅ 條列顯示所有優惠券
-    var html = `<div style="text-align:center; padding:10px;">
-        <div style="font-size: 22px; font-weight: bold; color: var(--primary); margin-bottom: 20px;">🎁 心意寶盒</div>
-        <div style="display: flex; flex-direction: column; gap: 15px;">`;
+    // ===== 條列式標題，點擊後顯示 QR Code =====
+    var html = `
+        <style>
+            .giftbox-list { 
+                display: flex; 
+                flex-direction: column; 
+                gap: 10px; 
+                max-height: 60vh; 
+                overflow-y: auto; 
+                padding: 5px 0;
+            }
+            .gift-item {
+                background: #f8f9fa;
+                border-radius: 14px;
+                border: 1px solid #eee;
+                overflow: hidden;
+                transition: all 0.2s;
+            }
+            .gift-item.active {
+                border-color: var(--primary);
+                background: #fff;
+                box-shadow: 0 2px 12px rgba(139,0,0,0.08);
+            }
+            .gift-title {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 14px 16px;
+                cursor: pointer;
+                user-select: none;
+            }
+            .gift-title:hover {
+                background: #f0f0f0;
+            }
+            .gift-title .left {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+                flex: 1;
+            }
+            .gift-title .left .name {
+                font-size: 16px;
+                font-weight: bold;
+                color: var(--primary);
+            }
+            .gift-title .left .desc {
+                font-size: 13px;
+                color: #888;
+            }
+            .gift-title .left .expire {
+                font-size: 12px;
+                color: #999;
+            }
+            .gift-title .right {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: #999;
+                font-size: 13px;
+                flex-shrink: 0;
+                padding-left: 10px;
+            }
+            .gift-title .right .arrow {
+                font-size: 20px;
+                transition: transform 0.25s;
+            }
+            .gift-item.active .gift-title .right .arrow {
+                transform: rotate(180deg);
+            }
+            .gift-qr-section {
+                display: none;
+                padding: 4px 16px 18px 16px;
+                text-align: center;
+                animation: fadeSlide 0.25s ease;
+            }
+            .gift-item.active .gift-qr-section {
+                display: block;
+            }
+            @keyframes fadeSlide {
+                0% { opacity: 0.3; transform: translateY(-5px); }
+                100% { opacity: 1; transform: translateY(0); }
+            }
+            .gift-qr-section img {
+                width: 120px;
+                height: 120px;
+                border-radius: 10px;
+                border: 1px solid #eee;
+                background: #fff;
+                padding: 8px;
+            }
+            .gift-qr-hint {
+                font-size: 12px;
+                color: #999;
+                margin-top: 6px;
+                display: block;
+            }
+            .giftbox-header {
+                text-align: center;
+                font-size: 20px;
+                font-weight: bold;
+                color: var(--primary);
+                margin-bottom: 16px;
+            }
+        </style>
+        
+        <div class="giftbox-header">🎁 心意寶盒</div>
+        <div class="giftbox-list" id="giftboxList">
+    `;
     
+    // 產生每個優惠券的條列項目
     for (var i = 0; i < validCoupons.length; i++) {
         var c = validCoupons[i];
         var expireDate = new Date(c.expiresAt).toLocaleDateString('zh-TW', {
@@ -495,30 +600,53 @@ function openGiftBox() {
             month: '2-digit',
             day: '2-digit'
         });
-        var qrString = c.qrString || "";
+        var qrString = c.qrString || c.qrContent || "";
         var qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrString)}`;
+        var itemId = 'giftItem_' + i;
         
         html += `
-            <div style="background: #f8f9fa; border-radius: 16px; padding: 15px; border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="flex-shrink: 0;">
-                        <img src="${qrUrl}" style="width: 80px; height: 80px; border-radius: 8px;">
+            <div class="gift-item" id="${itemId}" data-index="${i}">
+                <div class="gift-title" onclick="toggleGiftItem('${itemId}')">
+                    <div class="left">
+                        <span class="name">${c.couponName || '優惠券'}</span>
+                        <span class="desc">${c.qrContent || ''}</span>
+                        <span class="expire">🔒 有效至 ${expireDate}</span>
                     </div>
-                    <div style="flex: 1; text-align: left;">
-                        <div style="font-size: 18px; font-weight: bold; color: var(--primary);">${c.couponName || '優惠券'}</div>
-                        <div style="font-size: 14px; color: #666; margin-top: 4px;">${c.qrContent || ''}</div>
-                        <div style="font-size: 12px; color: #999; margin-top: 4px;">⏰ 有效至 ${expireDate}</div>
+                    <div class="right">
+                        <span>點擊</span>
+                        <span class="arrow">▾</span>
                     </div>
+                </div>
+                <div class="gift-qr-section">
+                    <img src="${qrUrl}" alt="QR Code">
+                    <span class="gift-qr-hint">📱 請出示此 QR Code 給店員掃描</span>
                 </div>
             </div>
         `;
     }
     
-    html += `</div>
-        <div style="font-size: 12px; color: #999; margin-top: 20px;">請出示對應 QR Code 給店員掃描</div>
-    </div>`;
+    html += `</div>`;
     
     openModal(html);
+}
+
+// ===== 新增：切換優惠券展開/收合 =====
+function toggleGiftItem(itemId) {
+    var current = document.getElementById(itemId);
+    if (!current) return;
+    
+    var isActive = current.classList.contains('active');
+    
+    // 關閉所有其他項目
+    var allItems = document.querySelectorAll('#giftboxList .gift-item');
+    allItems.forEach(function(el) {
+        el.classList.remove('active');
+    });
+    
+    // 如果原本是關閉的，就打開它
+    if (!isActive) {
+        current.classList.add('active');
+    }
 }
 // ==================== 監聽優惠券兌換狀態 ====================
 let couponCheckInterval = null;
