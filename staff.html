@@ -42,7 +42,7 @@
         
         .header-top { display: flex; justify-content: flex-end; gap:6px; margin-bottom:5px; }
         .header-btn { font-size:12px; padding:3px 6px; border:none; border-radius:4px; cursor:pointer; }
-        .btn- { background:#ff4444; color:#fff; }
+        .btn-logout { background:#ff4444; color:#fff; }
 
         .redeem-tip {
             margin-top:8px;
@@ -147,14 +147,14 @@ let config = { minSpend: 0, maxRate: 0, earnRate: 0, ticketRate: 0, shopCode: ""
 let customerId = "", currentPoints = 0, memberLevel = "", levelRate = 1;
 let cameraStream = null;
 let scanInterval = null;
-let isLoggedIn = true;
+let isLoggedIn = false;  // ✅ 預設為 false
 let cachedPrefixes = null;
 
 function getUrlParam(name) {
     const url = new URLSearchParams(window.location.search);
     return url.get(name);
 }
-// ✅ 新增：從 GAS 取得優惠券前綴
+
 async function getCouponPrefixes() {
     if (cachedPrefixes) {
         return cachedPrefixes;
@@ -170,7 +170,6 @@ async function getCouponPrefixes() {
             console.log("✅ 取得優惠券前綴:", cachedPrefixes);
             return cachedPrefixes;
         }
-        // 預設值
         cachedPrefixes = ["GIFT_"];
         return cachedPrefixes;
     } catch (e) {
@@ -188,7 +187,6 @@ function init() {
     
     // ✅ 檢查是否有登入資訊
     if (!loginId || !staffName || !branchName) {
-        // 沒有登入資訊，跳回登入頁
         showToast("⚠️ 請先登入");
         setTimeout(() => {
             window.location.href = 'staff_login.html';
@@ -200,19 +198,16 @@ function init() {
     staff.branch = branchName;
     staff.loginId = loginId;
     staff.deviceId = deviceId;
-    isLoggedIn = true;  // ✅ 只有驗證通過才設為 true
+    isLoggedIn = true;
     
     document.getElementById('staff-name').innerText = staff.name;
     document.getElementById('shop-name').innerText = staff.branch;
     
-    // ✅ 預先載入優惠券前綴
     getCouponPrefixes();
-    
     hideLoading();
     setupScannerListener();
 }
 
-// ✅ 取得設備 ID（與登入頁一致）
 function getDeviceId() {
     let deviceId = localStorage.getItem('device_id');
     if (!deviceId) {
@@ -224,6 +219,7 @@ function getDeviceId() {
     }
     return deviceId;
 }
+
 function resetIdleTimer() {
     if (!isLoggedIn) return;
     clearTimeout(idleTimer);
@@ -233,36 +229,24 @@ document.addEventListener("mousemove", resetIdleTimer);
 document.addEventListener("keydown", resetIdleTimer);
 document.addEventListener("click", resetIdleTimer);
 
-// ==================== 登出函數 ====================
 async function logout() {
-    // 1. 先顯示登出中提示
     showToast("正在登出...");
-    
-    // 2. 取得登入 ID
     const loginId = getUrlParam('loginId');
     const deviceId = getDeviceId();
     
-    // 3. 如果有登入 ID，通知後端清除 session（可選）
     if (loginId) {
         try {
             const url = `${GAS_URL}?action=staffLogout&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
-            // 使用 fetch 但不等待結果，避免延遲
             fetch(url, { mode: 'no-cors' }).catch(e => console.log("登出記錄已發送"));
         } catch (e) { 
             console.log("登出記錄發送失敗:", e); 
         }
     }
     
-    // 4. 設定登出狀態
     isLoggedIn = false;
-    
-    // 5. 清除本地儲存的 device_id（可選，避免重複綁定問題）
-    // localStorage.removeItem('device_id');
-    
-    // 6. 跳轉到登入頁面
     window.location.href = 'staff_login.html';
 }
-// 取得使用者真實 IP（透過第三方服務）
+
 async function getUserIP() {
   try {
     const response = await fetch('https://api.ipify.org?format=json');
@@ -273,10 +257,12 @@ async function getUserIP() {
     return "";
   }
 }
+
 function showLoading(text) { const el = document.getElementById('loadingText'); if (text) el.innerText = text; document.getElementById('loadingOverlay').style.display = 'flex'; }
 function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; }
 function showModal(html) { document.getElementById('modalText').innerHTML = html; document.getElementById('customModal').style.display = 'flex'; }
 function closeModal() { document.getElementById('customModal').style.display = 'none'; }
+
 function showToast(msg) {
     const toast = document.createElement('div');
     toast.innerText = msg;
@@ -315,11 +301,8 @@ function parseScannedCode(scannedText) {
     }
     if (clean.indexOf("##") === 0) clean = clean.substring(2);
 
-    // ========== 判斷是否為優惠券 QR（動態從工作表讀取） ==========
     if (cachedPrefixes) {
         for (var p = 0; p < cachedPrefixes.length; p++) {
-            // 檢查是否以「前綴 + _」開頭
-            // 例如：GIFT_omp_01_、BIR_swo_B01_
             var prefixCheck = cachedPrefixes[p] + "_";
             if (clean.indexOf(prefixCheck) === 0) {
                 console.log("✅ 識別為優惠券，前綴:", cachedPrefixes[p]);
@@ -331,13 +314,11 @@ function parseScannedCode(scannedText) {
         }
     }
     
-    // ========== 會員 QR ==========
     const parts = clean.split("_");
     if (parts.length === 3) {
         const shopCode = parts[0];
         const shopKey = parts[1];
         const userId = parts[2];
-        
         if (shopCode === "omp" || shopCode === "swo") {
             return { 
                 type: "member", 
@@ -347,92 +328,52 @@ function parseScannedCode(scannedText) {
             };
         }
     }
-    
     return { type: "member", userId: clean };
 }
     
 async function onScanSuccess(scannedText) {
-    // ✅ 雙重檢查
+    // ✅ 檢查登入狀態
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
         setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
         return;
     }
-    if (!isLoggedIn) { showToast("請先登入"); return; }
     if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
     await closeCamera();
     if (navigator.vibrate) navigator.vibrate(200);
     
-    // ✅ 先載入優惠券前綴（如果還沒載入）
     await getCouponPrefixes();
-    
     const parsed = parseScannedCode(scannedText);
     
     try {
         showLoading("連線中...");
         
-     // ========== 優惠券兌換 ==========
-if (parsed.type === "coupon") {
-    const realStaffName = staff.name;
-    const realStaffBranch = staff.branch;
-    const clientIp = await getUserIP();
-    const loginId = staff.loginId || "";
-    const deviceId = staff.deviceId || "";
-    
-    const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
-    
-    try {
-        const res = await fetch(url);
-        const result = await res.json();
-        console.log("完整回應：", JSON.stringify(result));
-        hideLoading();
-        
-        // ✅ 檢查是否被強制登出
-        if (result.logout) {
-            showToast("⏰ 登入已過期，請重新登入");
-            setTimeout(() => { logout(); }, 2000);
-            return;
-        }
-        
-        if (result.success) {
-            showModal(`🎁 ${result.message || "此為新客招待，請處理"}`);
-        } else {
-            showModal(`⚠️ ${result.error || result.message || "兌換失敗"}`);
-        }
-    } catch (err) {
-        hideLoading();
-        showModal("連線失敗：" + err.message);
-    }
-    return;
-}
-        
-        // ========== 招待 QR（新客）==========
-        if (parsed.type === "invite") {
-            const newUserId = parsed.newUserId;
-            
-            if (!newUserId) {
-                hideLoading();
-                showModal("⚠️ 招待碼格式錯誤，缺少新客編號");
-                return;
-            }
-            
+        // ========== 優惠券兌換 ==========
+        if (parsed.type === "coupon") {
             const realStaffName = staff.name;
             const realStaffBranch = staff.branch;
             const clientIp = await getUserIP();
-            console.log("準備傳送的 scannedText:", scannedText);
-            alert("掃到的內容: " + scannedText);
-            const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(scannedText)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}`;
+            const loginId = staff.loginId || "";
+            const deviceId = staff.deviceId || "";
+            
+            const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
             
             try {
                 const res = await fetch(url);
                 const result = await res.json();
-                console.log("完整回應：", JSON.stringify(result));  // ← 確認有沒有這一行
+                console.log("完整回應：", JSON.stringify(result));
                 hideLoading();
                 
+                if (result.logout) {
+                    showToast("⏰ 登入已過期，請重新登入");
+                    setTimeout(() => { logout(); }, 2000);
+                    return;
+                }
+                
                 if (result.success) {
-                    showModal(`🎁 ${result.message || "招待成功！請給新客招待禮物"}`);
+                    showModal(`🎁 ${result.message || "此為新客招待，請處理"}`);
                 } else {
-                    showModal(`⚠️ 招待失敗：${result.message || "未知錯誤"}`);
+                    showModal(`⚠️ ${result.error || result.message || "兌換失敗"}`);
                 }
             } catch (err) {
                 hideLoading();
@@ -441,85 +382,69 @@ if (parsed.type === "coupon") {
             return;
         }
         
-    // ========== 會員 QR（已註冊會員）==========
-if (parsed.type === "member") {
-    if (!parsed.userId) {
-        hideLoading();
-        showModal("⚠️ 無效的 QR Code 格式");
-        return;
-    }
-    
-    console.log("🔍 準備呼叫 getMemberInfo");
-    console.log("🔍 userId:", parsed.userId);
-    console.log("🔍 branch:", staff.branch);
-    const loginId = staff.loginId || "";
-    const deviceId = staff.deviceId || "";
-    
-    // ✅ URL 加入 loginId 和 deviceId
-    const finalUrl = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(parsed.userId)}&branch=${encodeURIComponent(staff.branch)}&t=${new Date().getTime()}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
-    console.log("🔍 完整 URL:", finalUrl);
-    
-    try {
-        const res = await fetch(finalUrl, { method: "GET", mode: "cors" });
-        console.log("🔍 HTTP 狀態:", res.status);
-        
-        const data = await res.json();
-        console.log("📊 getMemberInfo 回傳:", JSON.stringify(data));
-        hideLoading();
-        
-        // ✅ 檢查是否被強制登出
-        if (data.logout) {
-            showToast("⏰ 登入已過期，請重新登入");
-            setTimeout(() => { logout(); }, 2000);
+        // ========== 會員 QR ==========
+        if (parsed.type === "member") {
+            if (!parsed.userId) {
+                hideLoading();
+                showModal("⚠️ 無效的 QR Code 格式");
+                return;
+            }
+            
+            console.log("🔍 準備呼叫 getMemberInfo");
+            console.log("🔍 userId:", parsed.userId);
+            console.log("🔍 branch:", staff.branch);
+            const loginId = staff.loginId || "";
+            const deviceId = staff.deviceId || "";
+            
+            const finalUrl = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(parsed.userId)}&branch=${encodeURIComponent(staff.branch)}&t=${new Date().getTime()}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
+            console.log("🔍 完整 URL:", finalUrl);
+            
+            try {
+                const res = await fetch(finalUrl, { method: "GET", mode: "cors" });
+                console.log("🔍 HTTP 狀態:", res.status);
+                const data = await res.json();
+                console.log("📊 getMemberInfo 回傳:", JSON.stringify(data));
+                hideLoading();
+                
+                if (data.logout) {
+                    showToast("⏰ 登入已過期，請重新登入");
+                    setTimeout(() => { logout(); }, 2000);
+                    return;
+                }
+                
+                if (data.success && data.member) {
+                    config = data.config || {};
+                    config.eventMultiplier = Number(config.eventMultiplier) || 1;
+                    config.levelRate = Number(config.levelRate) || 1;
+                    config.earnRate = Number(config.earnRate) || 0.03;
+                    config.maxRate = Number(config.maxRate) || 0;
+                    config.minSpend = Number(config.minSpend) || 0;
+                    config.shopCode = config.shopCode || parsed.shopCode || "omp";
+                    
+                    customerId = data.member.userId;
+                    currentPoints = data.member.points || 0;
+                    memberLevel = data.member.level || "一般會員";
+                    levelRate = data.member.levelRate || 1;
+                    
+                    document.getElementById('member-ui').style.display = 'block';
+                    document.getElementById('form-ui').classList.remove('locked');
+                    document.getElementById('cus-name').innerText = data.member.name;
+                    document.getElementById('member-level').innerText = memberLevel;
+                    document.getElementById('cus-pts').innerText = currentPoints;
+                    document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
+                    document.getElementById('totalSpend').focus();
+                    doCalc();
+                } else {
+                    showModal(`⚠️ 查無此會員！<br><br>🔍 除錯資訊：<br>userId: ${parsed.userId}<br>回傳: ${JSON.stringify(data)}`);
+                }
+            } catch (err) {
+                console.error("❌ fetch 錯誤:", err);
+                hideLoading();
+                showModal(`❌ 連線錯誤：${err.message}`);
+            }
             return;
         }
         
-        if (data.success && data.member) {
-            // ==========================================
-            // ✅ 這裡是原本被刪除的處理邏輯，請補回去
-            // ==========================================
-            
-            // 儲存設定
-            config = data.config || {};
-            config.eventMultiplier = Number(config.eventMultiplier) || 1;
-            config.levelRate = Number(config.levelRate) || 1;
-            config.earnRate = Number(config.earnRate) || 0.03;
-            config.maxRate = Number(config.maxRate) || 0;
-            config.minSpend = Number(config.minSpend) || 0;
-            config.shopCode = config.shopCode || parsed.shopCode || "omp";
-            
-            // 儲存會員資料
-            customerId = data.member.userId;
-            currentPoints = data.member.points || 0;
-            memberLevel = data.member.level || "一般會員";
-            levelRate = data.member.levelRate || 1;
-            
-            // 顯示會員資訊
-            document.getElementById('member-ui').style.display = 'block';
-            document.getElementById('form-ui').classList.remove('locked');
-            document.getElementById('cus-name').innerText = data.member.name;
-            document.getElementById('member-level').innerText = memberLevel;
-            document.getElementById('cus-pts').innerText = currentPoints;
-            document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
-            
-            // 自動聚焦到消費金額輸入框
-            document.getElementById('totalSpend').focus();
-            
-            // 計算可折抵點數
-            doCalc();
-            
-        } else {
-            // 查無會員
-            showModal(`⚠️ 查無此會員！<br><br>🔍 除錯資訊：<br>userId: ${parsed.userId}<br>回傳: ${JSON.stringify(data)}`);
-        }
-    } catch (err) {
-        console.error("❌ fetch 錯誤:", err);
-        hideLoading();
-        showModal(`❌ 連線錯誤：${err.message}`);
-    }
-    return;
-}
-        // 都不是
         hideLoading();
         showModal("⚠️ 無法識別的 QR Code 類型");
         
@@ -530,13 +455,12 @@ if (parsed.type === "member") {
 }
 
 async function openCamera() {
-    // ✅ 雙重檢查
+    // ✅ 檢查登入狀態
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
         setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
         return;
     }
-    if (!isLoggedIn) { showToast("請先登入"); return; }
     try {
         if (cameraStream) await closeCamera();
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: 1280, height: 720 } });
@@ -586,7 +510,7 @@ function toggleMode() {
     doCalc();
 }
 
-// 🔥 絕對正確的doCalc()（含活動倍率、低消、折抵）
+// 🔥 doCalc()（含活動倍率、低消、折抵）
 function doCalc() {
     if (!config.earnRate) return;
     
@@ -639,16 +563,19 @@ function doCalc() {
     document.getElementById('new-pts').innerText = newPts;
     document.getElementById('after-pts').innerText = currentPoints - redeem + newPts;
 }
-
 async function submitData() {
-    if (!isLoggedIn) { showToast("請先登入"); return; }
+    // ✅ 檢查登入狀態
+    if (!isLoggedIn || !staff.loginId) {
+        showToast("⚠️ 請先登入");
+        setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
+        return;
+    }
     if (!customerId) return alert("請先掃描會員！");
-    const isTicketMode = document.getElementById('ticketMode').checked;
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     showLoading("處理中...保持微笑");
 
-    // 🔧 改用 GET 請求
+    // ✅ 加入 loginId 和 deviceId
     const params = new URLSearchParams({
         action: "addPoints",
         customerId: customerId,
@@ -659,13 +586,21 @@ async function submitData() {
         redeemAmount: document.getElementById('redeemAmount').value || 0,
         earnRate: config.earnRate,
         levelRate: levelRate,
-        eventMultiplier: config.eventMultiplier
+        eventMultiplier: config.eventMultiplier,
+        loginId: staff.loginId || "",
+        deviceId: staff.deviceId || ""
     });
 
     try {
         const response = await fetch(GAS_URL + "?" + params.toString());
         const result = await response.json();
         hideLoading();
+        
+        if (result.logout) {
+            showToast("⏰ 登入已過期，請重新登入");
+            setTimeout(() => { logout(); }, 2000);
+            return;
+        }
         
         if (result.success) {
             alert("✅ 集點作業完成");
@@ -678,7 +613,6 @@ async function submitData() {
         console.error("請求失敗:", error);
         alert("❌ 網路錯誤，請稍後再試");
     }
-    
     btn.disabled = false;
 }
 
