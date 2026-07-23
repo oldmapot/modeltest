@@ -167,10 +167,7 @@
     <button class="side-menu-item" onclick="openPointHistory(); closeSideMenu()">📜 點數明細</button>
     <button class="side-menu-item" onclick="openShopInfo(); closeSideMenu()">🏪 店面資訊</button>
     <button class="side-menu-item" onclick="openRightsDetail(); closeSideMenu()">📋 會員權益</button>
-    <button class="side-menu-item" onclick="openLegalDetail(); closeSideMenu()">⚖️ 法務免責及管控聲明</button>
-     <button class="side-menu-item" onclick="forceLogout(); closeSideMenu()" style="color:#d00; border-top: 2px solid #f0f0f0; margin-top: 10px; padding-top: 16px;">
-        🚪 登出（切換帳號）
-    </button>        
+    <button class="side-menu-item" onclick="openLegalDetail(); closeSideMenu()">⚖️ 法務免責及管控聲明</button>      
 </div>
     </div>
     
@@ -761,6 +758,19 @@ async function refreshAll() {
 
 async function initLiff() {
     // ============================================================
+    // ✅ 檢測是否為電腦版 LINE（放在最前面！）
+    // ============================================================
+    const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+    const isLinePC = !isMobile && /line/i.test(navigator.userAgent.toLowerCase());
+    
+    if (isLinePC) {
+        console.log('💻 偵測到電腦版 LINE，顯示引導畫面');
+        document.getElementById('loading').style.display = 'none';
+        showPCMessage();
+        return;  // ✅ 直接結束，不執行任何 LIFF 相關代碼
+    }
+    
+    // ============================================================
     // ✅ 檢查是否為「登出後重新載入」
     // ============================================================
     const urlParams = new URLSearchParams(window.location.search);
@@ -768,7 +778,6 @@ async function initLiff() {
     
     if (isLogout === 'true') {
         console.log('🚪 登出完成，清除快取並重新導向...');
-        // ✅ 清除所有快取
         sessionStorage.clear();
         localStorage.clear();
         document.cookie.split(";").forEach(function(c) { 
@@ -815,17 +824,7 @@ async function initLiff() {
             liff.login(); 
             return; 
         }
-        
-        // ============================================================
-        // ✅ 手機版隱藏登出鍵
-        // ============================================================
-        const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-        const logoutBtn = document.querySelector('.side-menu-item[onclick*="forceLogout"]');
-        if (logoutBtn) {
-            logoutBtn.style.display = isMobile ? 'none' : 'block';
-            console.log(isMobile ? '📱 手機版，登出鍵已隱藏' : '💻 電腦版，登出鍵已顯示');
-        }
-        
+                     
         // ============================================================
         // ✅ 強制帳號驗證（防止快取污染）
         // ============================================================
@@ -839,13 +838,11 @@ async function initLiff() {
         console.log('   └─ 快取中的 from:', storedFrom || '(無)');
         console.log('   └─ 當前 from:', currentFrom);
         
-        // ✅ 如果快取中的 userId 和當前不同，強制清除所有快取
         if (storedUserId && storedUserId !== currentUserId) {
             console.log('🔄 偵測到帳號切換！強制清除所有快取');
             console.log('   └─ 舊帳號:', storedUserId);
             console.log('   └─ 新帳號:', currentUserId);
             
-            // ✅ 清除所有快取
             sessionStorage.clear();
             localStorage.clear();
             document.cookie.split(";").forEach(function(c) { 
@@ -861,7 +858,6 @@ async function initLiff() {
             return;
         }
         
-        // ✅ 如果沒有快取，但用戶已登入，儲存 userId
         if (!storedUserId) {
             console.log('✅ 首次登入，儲存 userId:', currentUserId);
             sessionStorage.setItem('liff_user_id', currentUserId);
@@ -889,6 +885,96 @@ async function initLiff() {
         showToast('初始化失敗，請重新開啟頁面'); 
         document.getElementById('loading').style.display = 'none';
     }
+}
+// ============================================================
+// ✅ 電腦版 LINE 引導畫面
+// ============================================================
+function showPCMessage() {
+    var html = `
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px 24px;
+            background: #fdf5e6;
+            text-align: center;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        ">
+            <div style="
+                font-size: 64px;
+                margin-bottom: 20px;
+                animation: bounce 1.5s ease infinite;
+            ">📱</div>
+            
+            <div style="
+                font-size: 24px;
+                font-weight: bold;
+                color: #8b0000;
+                margin-bottom: 12px;
+            ">
+                請使用手機操作
+            </div>
+            
+            <div style="
+                font-size: 15px;
+                color: #666;
+                line-height: 1.8;
+                max-width: 380px;
+                margin-bottom: 30px;
+            ">
+                老娘的一點心意 目前僅支援<br>
+                <b>手機 LINE APP</b> 開啟使用<br><br>
+                請在手機上打開此連結<br>
+                享受完整的會員服務 🎁
+            </div>
+            
+            <div style="
+                background: #fff5f5;
+                border-radius: 16px;
+                padding: 20px;
+                max-width: 380px;
+                width: 100%;
+                border: 1px solid #ffd0d0;
+                text-align: left;
+                margin-bottom: 20px;
+            ">
+                <div style="font-weight: bold; color: #8b0000; margin-bottom: 10px;">
+                    📌 如何使用：
+                </div>
+                <div style="font-size: 14px; color: #666; line-height: 1.8;">
+                    <div>1️⃣ 在手機上開啟 LINE</div>
+                    <div>2️⃣ 搜尋 <b>老娘的一點心意</b> 官方帳號</div>
+                    <div>3️⃣ 點擊選單中的會員入口</div>
+                </div>
+            </div>
+            
+            <button onclick="window.location.href='https://line.me/R/ti/p/@your_line_id'" style="
+                width: 100%;
+                max-width: 380px;
+                padding: 16px;
+                background: #8b0000;
+                color: #fff;
+                border: none;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+            ">
+                🔗 前往官方帳號
+            </button>
+        </div>
+        
+        <style>
+            @keyframes bounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-15px); }
+            }
+        </style>
+    `;
+    
+    document.body.innerHTML = html;
 }
 async function fetchData(isReload = false) {
     try {
@@ -1064,40 +1150,6 @@ function openPointHistory() {
     openModal(html);
 }
 
- function forceLogout() {
-    if (confirm('⚠️ 確定要登出嗎？\n\n登出後將清除所有快取資料，並重新導向 LINE 登入頁面。')) {
-        // 顯示提示
-        showToast('🔄 正在登出，請稍候...');
-        
-        // 1. 清除所有瀏覽器快取
-        sessionStorage.clear();
-        localStorage.clear();
-        
-        // 2. 清除所有 Cookies
-        document.cookie.split(";").forEach(function(c) { 
-            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-        });
-        
-        // 3. 清除 LIFF 登入狀態
-        try {
-            if (typeof liff !== 'undefined' && liff.isLoggedIn()) {
-                liff.logout();
-            }
-        } catch(e) {
-            console.log('LIFF logout error:', e);
-        }
-        
-        // 4. 等待 1 秒後重新導向（加上強制刷新參數）
-        setTimeout(() => {
-            const url = new URL(window.location.href);
-            // 加入時間戳，強制重新載入
-            url.searchParams.set('t', Date.now());
-            // 加入 logout 標記，讓頁面知道是主動登出
-            url.searchParams.set('logout', 'true');
-            window.location.href = url.toString();
-        }, 500);
-    }
-}
 function openProfile() { 
   let p = userData?.profile; 
   if(!p) return; 
