@@ -352,6 +352,12 @@ function parseScannedCode(scannedText) {
 }
     
 async function onScanSuccess(scannedText) {
+    // ✅ 雙重檢查
+    if (!isLoggedIn || !staff.loginId) {
+        showToast("⚠️ 請先登入");
+        setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
+        return;
+    }
     if (!isLoggedIn) { showToast("請先登入"); return; }
     if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
     await closeCamera();
