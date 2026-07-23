@@ -830,10 +830,13 @@ function openPointHistory() {
     } else { 
         html += `<tr><td colspan="4" style="padding:25px; color:#999;">目前尚無紀錄<\/td><\/tr>`; 
     }
-    html += `</tbody><\/table>
-    <div style="margin-top:20px; padding:15px; background:#fff5f5; border-radius:12px; border:1px dashed #ab545a; text-align:center;">
-        <div style="font-size:14px; color:#666;">⏳ 即將過期點數 (近期)</div>
-        <div style="font-size:24px; font-weight:900; color:#d00; margin-top:5px;">${totalExpiredSoon} <span style="font-size:14px;">點</span></div>
+    html += `</tbody><\/table>`;
+    
+    // ✅ 使用 userData.expiringPoints 顯示即將到期點數
+    let expiringPoints = userData?.expiringPoints || 0;
+    html += `<div style="margin-top:20px; padding:15px; background:#fff5f5; border-radius:12px; border:1px dashed #ab545a; text-align:center;">
+        <div style="font-size:14px; color:#666;">⏳ 即將過期點數 (30天內)</div>
+        <div style="font-size:24px; font-weight:900; color:#d00; margin-top:5px;">${expiringPoints} <span style="font-size:14px;">點</span></div>
         <div style="font-size:11px; color:#999; margin-top:5px;">* 點數寶貴，記得趕快來店內折抵唷！ *</div>
     </div>`;
     openModal(html);
