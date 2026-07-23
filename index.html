@@ -768,6 +768,12 @@ async function initLiff() {
     
     if (isLogout === 'true') {
         console.log('🚪 登出完成，清除快取並重新導向...');
+        // ✅ 清除所有快取
+        sessionStorage.clear();
+        localStorage.clear();
+        document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
         const url = new URL(window.location.href);
         url.searchParams.delete('logout');
         window.location.href = url.toString();
@@ -821,7 +827,7 @@ async function initLiff() {
         }
         
         // ============================================================
-        // ✅ 帳號切換檢測
+        // ✅ 強制帳號驗證（防止快取污染）
         // ============================================================
         const currentUserId = (await liff.getProfile()).userId;
         const storedUserId = sessionStorage.getItem('liff_user_id');
@@ -833,14 +839,18 @@ async function initLiff() {
         console.log('   └─ 快取中的 from:', storedFrom || '(無)');
         console.log('   └─ 當前 from:', currentFrom);
         
+        // ✅ 如果快取中的 userId 和當前不同，強制清除所有快取
         if (storedUserId && storedUserId !== currentUserId) {
-            console.log('🔄 偵測到帳號切換！');
+            console.log('🔄 偵測到帳號切換！強制清除所有快取');
             console.log('   └─ 舊帳號:', storedUserId);
             console.log('   └─ 新帳號:', currentUserId);
             
+            // ✅ 清除所有快取
             sessionStorage.clear();
-            localStorage.removeItem('liff_user_id');
-            localStorage.removeItem('userData');
+            localStorage.clear();
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
             
             showToast('🔄 偵測到帳號變更，重新整理中...');
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -849,6 +859,12 @@ async function initLiff() {
             url.searchParams.set('t', Date.now());
             window.location.href = url.toString();
             return;
+        }
+        
+        // ✅ 如果沒有快取，但用戶已登入，儲存 userId
+        if (!storedUserId) {
+            console.log('✅ 首次登入，儲存 userId:', currentUserId);
+            sessionStorage.setItem('liff_user_id', currentUserId);
         }
         
         if (storedFrom && storedFrom !== currentFrom) {
@@ -874,7 +890,6 @@ async function initLiff() {
         document.getElementById('loading').style.display = 'none';
     }
 }
-
 async function fetchData(isReload = false) {
     try {
         const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
