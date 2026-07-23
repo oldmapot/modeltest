@@ -22,6 +22,8 @@
         .menu-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 28px; cursor: pointer; background: none; border: none; color: #fff; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .welcome-quote { font-size: 4.5vw; opacity: 0.95; margin-bottom: 8px; min-height: 24px; }
         .main-title { font-size: 8.5vw; font-weight: 900; }
+        .logout-btn { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 14px; cursor: pointer; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 14px; border-radius: 20px; z-index: 10; transition: background 0.2s; font-weight: bold; letter-spacing: 0.5px; }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
 
         .side-menu { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg); box-shadow: 2px 0 12px rgba(0,0,0,0.15); z-index: 10000; transition: left 0.3s ease; overflow-y: auto; }
         .side-menu.open { left: 0; }
@@ -31,41 +33,35 @@
         .side-menu-item { display: block; width: 100%; padding: 18px 24px; background: none; border: none; text-align: left; font-size: 18px; color: var(--text); cursor: pointer; border-bottom: 1px solid #f0f0f0; font-weight: bold; }
         .side-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; }
         .side-menu-overlay.show { display: block; }
-.side-menu-items {
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 120px);
-  padding-bottom: 20px;
-}
-.side-menu-item:last-child {
-  margin-top: auto !important;
-  text-align: center !important;
-  font-size: 14px !important;
-  color: #999 !important;
-  font-weight: normal !important;
-  border: none !important;
-  padding: 12px 0 !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  width: auto !important;
-  display: inline-block !important;
-}
-        .asset-card { 
-            background: #fff; border-radius: 15px; padding: 4vw 5vw; margin: 20px 20px 10px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; align-items: center; 
-            justify-content: center; gap: 5vw; flex-wrap: nowrap;
+        .side-menu-items {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 120px);
+            padding-bottom: 20px;
+        }
+        .side-menu-item:last-child {
+            margin-top: auto !important;
+            text-align: center !important;
+            font-size: 14px !important;
+            color: #999 !important;
+            font-weight: normal !important;
+            border: none !important;
+            padding: 12px 0 !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            width: auto !important;
+            display: inline-block !important;
         }
 
+        .asset-card { background: #fff; border-radius: 15px; padding: 4vw 5vw; margin: 20px 20px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; gap: 5vw; flex-wrap: nowrap; }
         .code-section { background: var(--card-bg); margin:0 20px 20px; padding:28px 20px; border-radius:20px; text-align:center; }
         .code-container { display: flex; justify-content: center; align-items: center; min-height: 200px; margin-bottom: 12px; }
         #qrcode { width: 55vw; height: 55vw; max-width: 220px; max-height: 220px; }
         .code-hint { font-size: 12px; color: #999; margin-top: 12px; }
         .countdown-timer { font-size: 14px; color: #d00; font-weight: bold; margin-top: 8px; }
-
         .brand-actions { display: flex; gap: 10px; margin: 0 20px 20px; }
         .event-brand-btn { flex: 1; padding: 15px; border-radius: 16px; background: var(--brand-btn); color: #fff; font-weight: bold; font-size: 4.2vw; border: none; cursor: pointer; }
         .share-btn { display: block; width: calc(100% - 40px); margin: 0 auto; padding: 18px; border-radius: 20px; background: var(--success); color: #fff; font-weight: bold; font-size: 4.8vw; border: none; cursor: pointer; }
-
         @media screen and (min-width: 450px) {
             .welcome-quote { font-size: 18px; }
             .main-title { font-size: 32px; }
@@ -76,12 +72,10 @@
         #regUI { display: none; padding: 40px 24px; }
         .reg-input { width: 100%; padding: 16px; border-radius: 14px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; margin-top: 10px; height: 55px; }
         .reg-btn { width: 100%; padding: 18px; background: var(--primary); color: #fff; border: none; border-radius: 16px; font-weight: bold; margin-top: 30px; cursor: pointer; }
-        
         .terms-section { background: #fef9f0; border-radius: 16px; padding: 16px; margin-top: 20px; border: 1px solid #ffe0b5; }
         .terms-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #ffe0b5; }
         .terms-item:last-child { border-bottom: none; }
         .terms-item label .red-text { color: #d00; font-weight: bold; cursor: pointer; }
-
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 30000; }
         .modal-card { background: var(--card-bg); width: 92%; max-width: 420px; border-radius: 24px; overflow: hidden; }
         .modal-body { padding: 24px; max-height: 65vh; overflow-y: auto; }
@@ -89,13 +83,9 @@
         .share-modal-content { text-align: center; padding: 10px; }
         .share-title { font-size: 22px; color: var(--primary); font-weight: 900; margin-bottom: 15px; }
         .toast { position: fixed; left: 50%; bottom: 60px; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: #fff; padding: 12px 20px; border-radius: 12px; z-index: 9999; display: none; }
-        
         .reg-gift-code-container { display: flex; justify-content: center; align-items: center; margin-bottom: 8px; }
-        
         .shop-info-container { max-height: 60vh; overflow-y: auto; }
         .shop-info-item { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-
-        /* 新增大客歡迎頁樣式 */
         #welcomeUI {
             display: none;
             padding: 60px 24px;
@@ -106,30 +96,9 @@
             justify-content: center;
             align-items: center;
         }
-        .welcome-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 16px;
-        }
-        .welcome-desc {
-            font-size: 15px;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 40px;
-            padding: 0 10px;
-        }
-        .welcome-gift-btn {
-            width: 100%;
-            padding: 18px;
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            border-radius: 16px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        .welcome-title { font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 16px; }
+        .welcome-desc { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 40px; padding: 0 10px; }
+        .welcome-gift-btn { width: 100%; padding: 18px; background: var(--primary); color: #fff; border: none; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -155,20 +124,22 @@
         <button class="menu-icon" onclick="openSideMenu()">☰</button>
         <div class="welcome-quote" id="welcomeQuote"></div>
         <div class="main-title">老娘的一點心意</div>
+        <!-- ✅ 右上角登出按鈕 -->
+        <button class="logout-btn" onclick="logout()">🚪 登出</button>
     </div>
 
     <div id="sideMenuOverlay" class="side-menu-overlay" onclick="closeSideMenu()"></div>
     <div id="sideMenu" class="side-menu">
         <div class="side-menu-header"><h3>心意盒</h3></div>
         <div class="side-menu-items">
-    <button class="side-menu-item" onclick="openProfile(); closeSideMenu()">👤 個人資料</button>
-    <button class="side-menu-item" onclick="openGiftBox(); closeSideMenu()">🎁 心意寶盒</button>
-    <button class="side-menu-item" onclick="openReferral(); closeSideMenu()">👥 推薦名單</button>
-    <button class="side-menu-item" onclick="openPointHistory(); closeSideMenu()">📜 點數明細</button>
-    <button class="side-menu-item" onclick="openShopInfo(); closeSideMenu()">🏪 店面資訊</button>
-    <button class="side-menu-item" onclick="openRightsDetail(); closeSideMenu()">📋 會員權益</button>
-    <button class="side-menu-item" onclick="openLegalDetail(); closeSideMenu()">⚖️ 法務免責及管控聲明</button>      
-</div>
+            <button class="side-menu-item" onclick="openProfile(); closeSideMenu()">👤 個人資料</button>
+            <button class="side-menu-item" onclick="openGiftBox(); closeSideMenu()">🎁 心意寶盒</button>
+            <button class="side-menu-item" onclick="openReferral(); closeSideMenu()">👥 推薦名單</button>
+            <button class="side-menu-item" onclick="openPointHistory(); closeSideMenu()">📜 點數明細</button>
+            <button class="side-menu-item" onclick="openShopInfo(); closeSideMenu()">🏪 店面資訊</button>
+            <button class="side-menu-item" onclick="openRightsDetail(); closeSideMenu()">📋 會員權益</button>
+            <button class="side-menu-item" onclick="openLegalDetail(); closeSideMenu()">⚖️ 法務免責及管控聲明</button>
+        </div>
     </div>
     
     <div class="asset-card">
@@ -176,20 +147,14 @@
             <div style="font-size: 4vw; max-font-size: 16px; font-weight: bold; color: #666; letter-spacing: 1px;">可用資產</div>
             <div style="font-size: 4vw; max-font-size: 16px; font-weight: bold; color: #666; letter-spacing: 6px; margin-top: 2px;">點數</div>
         </div>
-
         <div style="text-align: center; display: flex; flex-direction: column; align-items: center; flex: 1.2;">
             <div id="pointsDisplay" style="font-size: 10vw; max-font-size: 38px; font-weight: bold; color: var(--primary); line-height: 1.2;">--</div>
-            
-            <button onclick="refreshAll()" style="margin-top: 8px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 2px 10px; color: #888; font-size: 12px; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
-                🔄 重新整理
-            </button>
+            <button onclick="refreshAll()" style="margin-top: 8px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 2px 10px; color: #888; font-size: 12px; display: flex; align-items: center; gap: 4px; white-space: nowrap;">🔄 重新整理</button>
         </div>
     </div>
 
     <div class="code-section">
-        <div class="code-container">
-            <img id="qrcode">
-        </div>
+        <div class="code-container"><img id="qrcode"></div>
         <div class="code-hint">結帳時請出示此碼，結帳後離開櫃台恕不補集點</div>
         <div class="countdown-timer" id="countdownTimer">⏱️ 有效期限：60 秒後失效</div>
     </div>
@@ -198,7 +163,6 @@
         <button class="event-brand-btn" onclick="openEvents('omp')">老娘精選</button>
         <button class="event-brand-btn" onclick="openEvents('so')">一點甜好康</button>
     </div>
-    
     <button class="share-btn" onclick="autoCopyShare()">🚀 分享推薦碼，享好友消費回饋</button>
 </div>
 
@@ -212,14 +176,8 @@
         <div style="font-size:12px; color:#ab545a; margin-top: 8px; line-height: 1.4; background: #fff1f1; padding: 10px; border-radius: 10px; border: 1px solid #ffebeb;">⚠️ 註記：享生日專屬優惠，註冊後不可修改。</div>
     </div>
     <div class="terms-section">
-        <div class="terms-item">
-            <input type="checkbox" id="agreeRights">
-            <label>我已閱讀並理解 <span class="red-text" onclick="openRightsModal(event)">「會員權益」</span>*</label>
-        </div>
-        <div class="terms-item">
-            <input type="checkbox" id="agreeLegal">
-            <label>我已閱讀並同意遵守 <span class="red-text" onclick="openLegalModal(event)">「法務免責及管控聲明」</span>*</label>
-        </div>
+        <div class="terms-item"><input type="checkbox" id="agreeRights"><label>我已閱讀並理解 <span class="red-text" onclick="openRightsModal(event)">「會員權益」</span>*</label></div>
+        <div class="terms-item"><input type="checkbox" id="agreeLegal"><label>我已閱讀並同意遵守 <span class="red-text" onclick="openLegalModal(event)">「法務免責及管控聲明」</span>*</label></div>
     </div>
     <button class="reg-btn" onclick="doRegister()">完成註冊</button>
 </div>
@@ -236,546 +194,136 @@
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec";
 const LIFF_ID = "2009761099-xXvMY51i";
 let userId = '', userData = null, currentFrom = 'omp', referrerParam = '', userToken = '', pendingCheckboxId = null;
-
 let countdownInterval = null;
 let currentCountdown = 60;
+let idleTimer = null;
+const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 分鐘
 
-function showToast(msg) { let t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => { t.style.display = 'none'; }, 2000); }
+// ============================================================
+// ✅ 登出函數
+// ============================================================
+function logout() {
+    if (confirm('⚠️ 確定要登出嗎？\n\n登出後將清除所有資料，請重新登入。')) {
+        showToast('🔄 正在登出...');
+        performLogout();
+    }
+}
+
+function performLogout() {
+    sessionStorage.clear();
+    localStorage.clear();
+    document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
+    try {
+        if (typeof liff !== 'undefined' && liff.isLoggedIn()) {
+            liff.logout();
+        }
+    } catch(e) { console.log('LIFF logout error:', e); }
+    
+    setTimeout(function() {
+        document.body.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px;background:#fdf5e6;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+                <div style="font-size:64px;margin-bottom:20px;">👋</div>
+                <div style="font-size:24px;font-weight:bold;color:#8b0000;margin-bottom:10px;">已登出</div>
+                <div style="font-size:15px;color:#666;margin-bottom:30px;line-height:1.8;">感謝您的使用<br>點擊下方按鈕重新登入</div>
+                <button onclick="location.reload()" style="width:100%;max-width:300px;padding:16px;background:#8b0000;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;">🔄 重新登入</button>
+                <div style="margin-top:20px;font-size:12px;color:#ccc;">老娘的一點心意 v1.0</div>
+            </div>
+        `;
+    }, 500);
+}
+
+// ============================================================
+// ✅ 閒置登出計時器
+// ============================================================
+function resetIdleTimer() {
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+    idleTimer = setTimeout(function() {
+        console.log('⏰ 閒置 5 分鐘，自動登出');
+        showToast('⏰ 已閒置 5 分鐘，自動登出');
+        autoLogout();
+    }, IDLE_TIMEOUT);
+}
+
+function setupIdleDetection() {
+    var events = ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'];
+    events.forEach(function(event) {
+        document.addEventListener(event, function() { resetIdleTimer(); });
+    });
+    resetIdleTimer();
+}
+
+function autoLogout() {
+    sessionStorage.clear();
+    localStorage.clear();
+    document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
+    try {
+        if (typeof liff !== 'undefined' && liff.isLoggedIn()) { liff.logout(); }
+    } catch(e) {}
+    document.body.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px;background:#fdf5e6;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+            <div style="font-size:64px;margin-bottom:20px;">⏰</div>
+            <div style="font-size:24px;font-weight:bold;color:#8b0000;margin-bottom:10px;">已自動登出</div>
+            <div style="font-size:15px;color:#666;margin-bottom:30px;line-height:1.8;">為保護您的帳號安全<br>因閒置過久已自動登出<br><br>請重新登入繼續使用</div>
+            <button onclick="location.reload()" style="width:100%;max-width:300px;padding:16px;background:#8b0000;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;">🔄 重新登入</button>
+        </div>
+    `;
+}
+
+// ============================================================
+// ✅ 電腦版 LINE 引導畫面
+// ============================================================
+function showPCMessage() {
+    document.body.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px;background:#fdf5e6;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
+            <div style="font-size:64px;margin-bottom:20px;animation:bounce 1.5s ease infinite;">📱</div>
+            <div style="font-size:24px;font-weight:bold;color:#8b0000;margin-bottom:12px;">請使用手機操作</div>
+            <div style="font-size:15px;color:#666;line-height:1.8;max-width:380px;margin-bottom:30px;">
+                老娘的一點心意 目前僅支援<br><b>手機 LINE APP</b> 開啟使用<br><br>
+                請在手機上打開此連結<br>享受完整的會員服務 🎁
+            </div>
+            <div style="background:#fff5f5;border-radius:16px;padding:20px;max-width:380px;width:100%;border:1px solid #ffd0d0;text-align:left;margin-bottom:20px;">
+                <div style="font-weight:bold;color:#8b0000;margin-bottom:10px;">📌 如何使用：</div>
+                <div style="font-size:14px;color:#666;line-height:1.8;">
+                    <div>1️⃣ 在手機上開啟 LINE</div>
+                    <div>2️⃣ 搜尋 <b>老娘的一點心意</b> 官方帳號</div>
+                    <div>3️⃣ 點擊選單中的會員入口</div>
+                </div>
+            </div>
+            <button onclick="window.location.href='https://line.me/R/ti/p/@your_line_id'" style="width:100%;max-width:380px;padding:16px;background:#8b0000;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;">🔗 前往官方帳號</button>
+        </div>
+        <style>@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-15px)}}</style>
+    `;
+}
+
+// ============================================================
+// ✅ 其他函數
+// ============================================================
+function showToast(msg) { let t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block'; setTimeout(function() { t.style.display = 'none'; }, 2000); }
 function openSideMenu() { document.getElementById('sideMenu').classList.add('open'); document.getElementById('sideMenuOverlay').classList.add('show'); }
 function closeSideMenu() { document.getElementById('sideMenu').classList.remove('open'); document.getElementById('sideMenuOverlay').classList.remove('show'); }
 
-// 新增大客歡迎頁跳轉
-function goToRegister() {
-    document.getElementById('welcomeUI').style.display = 'none';
-    document.getElementById('regUI').style.display = 'block';
-}
+// ... 中間函數保持不變（openRightsModal, openLegalModal, openShopInfo, openGiftBox, refreshAll, fetchData, doRegister, openEvents, openReferral, openPointHistory, openProfile, autoCopyShare, openModal, closeModal 等）...
 
-function openRightsModal(e) { 
-  if(e) e.stopPropagation(); 
-  pendingCheckboxId = 'agreeRights'; 
-  
-  openModal(`
-    <style>
-      .rights-container { font-size: 14px; line-height: 1.6; color: #333; }
-      .rule-row { display: flex; margin-bottom: 12px; }
-      .rule-title { font-weight: bold; flex-shrink: 0; min-width: 105px; color: #000; }
-      .rule-body { flex-grow: 1; }
-      .sub-item { margin-bottom: 4px; display: block; }
-    </style>
-
-    <h3 style="color:var(--primary); text-align:center; margin-bottom:15px;">📋 會員權益</h3>
-    
-    <div class="rights-container">
-      <div class="rule-row">
-        <div class="rule-title">◆ 點數價值</div>
-        <div class="rule-body"> 1 點 = NT$1 元。</div>
-      </div>
-      <div class="rule-row">
-        <div class="rule-title">◆ 個人集點</div>
-        <div class="rule-body">
-          <span class="sub-item">「實付金額（折抵後）」之 5% 計算。</span>
-          <span class="sub-item">點數自取得日起 12 個月內有效。</span>
-        </div>
-      </div>
-      <div class="rule-row">
-        <div class="rule-title">◆ 推薦分紅</div>
-        <div class="rule-body">
-          <span class="sub-item">以被推薦人「實付金額」之 2% 計算。</span>
-          <span class="sub-item">點數自取得日起 6 個月內有效。</span>
-          <span class="sub-item"><b>資格限制</b>：若推薦人超過 <b>90 天</b>無消費紀錄，系統將暫停發放分紅。</span>
-        </div>
-      </div>
-      <div class="rule-row">
-        <div class="rule-title">◆ 生效時間</div>
-        <div class="rule-body">取得日之「隔日」生效（明日 00:00 後方可使用）。</div>
-      </div>
-      <div class="rule-row">
-        <div class="rule-title">◆ 購買餐券</div>
-        <div class="rule-body">
-          <span class="sub-item">購買餐券不適用集點及折抵活動。</span>
-          </div>
-      </div>
-      <div class="rule-row">
-        <div class="rule-title">◆ 餐券消費</div>
-        <div class="rule-body">扣除面額後之「剩餘實付額」提撥 2% 點數。</div>
-      </div>
-      <div class="rule-row">
-        <div class="rule-title">◆ 折抵限制</div>
-        <div class="rule-body">
-          <span class="sub-item">頻次限制：每帳號每日每店限折抵一次。</span>
-          <span class="sub-item">特殊檔期：指定活動、節慶檔期暫停折抵，僅可集點，實際依店內或系統公告為主。</span>
-        </div>
-      </div>
-      <div class="rule-row">
-        <div class="rule-title">◆ 未盡事宜</div>
-        <div class="rule-body">依店內或系統最新公告為主。</div>
-      </div>
-    </div>
-  `); 
-};
-function openLegalModal(e) { 
-  if(e) e.stopPropagation(); 
-  pendingCheckboxId = 'agreeLegal'; 
-  
-  openModal(`
-    <style>
-      .legal-container { font-size: 14px; line-height: 1.6; color: #333; }
-      .legal-row { display: flex; margin-bottom: 12px; align-items: flex-start; }
-      .legal-title { font-weight: bold; flex-shrink: 0; min-width: 105px; color: #d9534f; }
-      .legal-body { flex-grow: 1; }
-    </style>
-
-    <h3 style="color:var(--primary); text-align:center; margin-bottom:15px;">⚖️ 法務免責及管控聲明</h3>
-    
-    <div class="legal-container">
-      <div class="legal-row">
-        <div class="legal-title">◆ 禁止轉讓</div>
-        <div class="legal-body">點數不開放轉讓予他人或合併帳號使用，僅限於本平台指定之店家進行消費折抵。</div>
-      </div>
-      <div class="legal-row">
-        <div class="legal-title">◆ 非現金資產</div>
-        <div class="legal-body">本平台發放之點數屬無償贈與之紅利，不具貨幣價值，不得要求兌換現金。</div>
-      </div>
-      <div class="legal-row">
-        <div class="legal-title">◆ 活動終止權</div>
-        <div class="rule-body">本平台及所屬店家保有隨時修改、暫停或終止點數贈與及折抵活動之權利，相關異動將以官方公告為準。</div>
-      </div>
-      <div class="legal-row">
-        <div class="legal-title">◆ 營運調整權</div>
-        <div class="legal-body">若因系統升級、營運政策調整、店家歇業或不可抗力因素（如自然災害、系統受駭等），導致點數失效，會員不得要求補發或損害賠償。</div>
-      </div>
-      <div class="legal-row">
-        <div class="legal-title">◆ 誠信原則</div>
-        <div class="legal-body">
-          為維護公平權益，系統將監測並判別<b>異常集點、虛假推薦、規避邏輯</b>等行為。若經查證屬實，店家有權逕行凍結帳號、作廢點數並取消資格，且不另行通知。
-        </div>
-      </div>
-      <div class="legal-row">
-        <div class="legal-title">◆ 最終解釋權</div>
-        <div class="legal-body">本公司保有對所有活動規則與點數機制之最終解釋權。</div>
-      </div>
-    </div>
-  `); 
-}
-function openRightsDetail() { pendingCheckboxId = null; openRightsModal(); }
-function openLegalDetail() { pendingCheckboxId = null; openLegalModal(); }
-
-function openShopInfo() {
-    if (!userData?.shopInfo?.length) { 
-        openModal(`<p style="text-align:center;">店面資訊載入中...</p>`); 
-        return; 
-    }
-    
-    let html = `<h3 style="color:var(--primary); text-align:center; margin-bottom:20px;">🏪 店面資訊</h3><div class="shop-info-container">`;
-    
-    userData.shopInfo.forEach(shop => {
-        html += `<div class="shop-info-item" style="background:#fff; padding:15px; border-radius:12px; margin-bottom:15px; border:1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">`;
-        html += `<div style="font-size:20px; font-weight:bold; color:var(--primary); margin-bottom:15px; border-left:4px solid var(--primary); padding-left:10px;">${shop.name}</div>`;
-        
-        let socialButtons = [];
-        
-        if (shop.details && shop.details.length) {
-            shop.details.forEach(detail => {
-                let val = detail.value ? detail.value.trim() : "";
-                let label = detail.label || "";
-                
-                if (val.toLowerCase().startsWith('http')) {
-                    let logo = "";
-                    if (label.toUpperCase().includes("IG") || label.includes("Instagram")) {
-                        logo = `<img src="https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg" style="width:16px; vertical-align:middle; margin-right:5px;">`;
-                    } else if (label.toUpperCase().includes("FB") || label.includes("Facebook")) {
-                        logo = `<img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" style="width:16px; vertical-align:middle; margin-right:5px;">`;
-                    }
-                    socialButtons.push({ label: label, url: val, logo: logo });
-                } else {
-                    html += `<div style="margin-bottom:12px;">`;
-                    html += `<div style="font-weight:bold; color:#888; font-size:12px; margin-bottom:4px;">${label}</div>`;
-                    html += `<div style="color:var(--text); line-height:1.5; font-size:15px; white-space: pre-wrap; padding-left: 20px;">${val || '暫無資訊'}</div>`;
-                    html += `</div>`;
-                }
-            });
-        }
-        
-        if (socialButtons.length > 0) {
-            html += `<div style="display: flex; gap: 10px; margin-top: 15px;">`;
-            socialButtons.forEach(btn => {
-                html += `
-                <div style="flex: 1;">
-                    <div style="font-weight:bold; color:#888; font-size:12px; margin-bottom:6px; text-align:center;">${btn.label}</div>
-                    <a href="${btn.url}" target="_blank" style="display:flex; align-items:center; justify-content:center; background:#f8f9fa; color:#333; text-decoration:none; font-weight:bold; padding:10px 5px; border-radius:8px; font-size:13px; border:1px solid #ddd; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        ${btn.logo}點我前往
-                    </a>
-                </div>`;
-            });
-            html += `</div>`;
-        }
-        html += `</div>`;
-    });
-    html += `</div>`;
-    openModal(html);
-}
-
-function stopCountdown() {
-    if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-    }
-}
-function startCountdown(seconds) {
-    stopCountdown();
-    currentCountdown = seconds;
-    updateCountdownDisplay();
-    countdownInterval = setInterval(() => {
-        currentCountdown--;
-        updateCountdownDisplay();
-        if (currentCountdown <= 0) {
-            stopCountdown();
-            refreshAll();
-        }
-    }, 1000);
-}
-function updateCountdownDisplay() {
-    const timerEl = document.getElementById('countdownTimer');
-    if (timerEl) {
-        timerEl.innerHTML = `⏱️ 有效期限：${currentCountdown} 秒後失效`;
-    }
-}
-
-function generateMemberCode() {
-    if (!userId || !userData?.shopKey) return;
-    const shopCode = userData.shopCode;
-    const randomKey = userData.shopKey;
-    const qrData = `${shopCode}_${randomKey}_${userId}`;
-    const qrImg = document.getElementById('qrcode');
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(qrData)}`;
-    startCountdown(60);
-}
-
-// 已刪除舊的錯誤產生優惠券 QR 函式
-function generateRegCode(){}
-
-function openGiftBox() {
-    var coupons = userData?.coupons || [];
-    
-    if (!coupons || coupons.length === 0) {
-        openModal(`<div style="text-align:center; padding:20px;">
-            <div style="font-size: 48px; margin-bottom: 15px;">🎁</div>
-            <div style="font-weight: bold; margin-bottom: 10px;">暫無優惠券</div>
-            <div style="font-size: 14px; color: #999; margin-top: 10px;">目前沒有可用的優惠券</div>
-        </div>`);
-        return;
-    }
-    
-    // 過濾未使用且未過期的優惠券
-    var now = new Date();
-    var validCoupons = coupons.filter(function(c) {
-        if (c.status !== "未使用") return false;
-        var expiresAt = new Date(c.expiresAt);
-        return now <= expiresAt;
-    });
-    
-    if (validCoupons.length === 0) {
-        openModal(`<div style="text-align:center; padding:20px;">
-            <div style="font-size: 48px; margin-bottom: 15px;">🎁</div>
-            <div style="font-weight: bold; margin-bottom: 10px;">暫無可用優惠券</div>
-            <div style="font-size: 14px; color: #999; margin-top: 10px;">優惠券可能已過期或已使用</div>
-        </div>`);
-        return;
-    }
-    
-    // ===== 條列式標題，點擊後顯示 QR Code =====
-    var html = `
-        <style>
-            .giftbox-list { 
-                display: flex; 
-                flex-direction: column; 
-                gap: 10px; 
-                max-height: 60vh; 
-                overflow-y: auto; 
-                padding: 5px 0;
-            }
-            .gift-item {
-                background: #f8f9fa;
-                border-radius: 14px;
-                border: 1px solid #eee;
-                overflow: hidden;
-                transition: all 0.2s;
-            }
-            .gift-item.active {
-                border-color: var(--primary);
-                background: #fff;
-                box-shadow: 0 2px 12px rgba(139,0,0,0.08);
-            }
-            .gift-title {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 14px 16px;
-                cursor: pointer;
-                user-select: none;
-            }
-            .gift-title:hover {
-                background: #f0f0f0;
-            }
-            .gift-title .left {
-                display: flex;
-                flex-direction: column;
-                gap: 2px;
-                flex: 1;
-            }
-            .gift-title .left .name {
-                font-size: 16px;
-                font-weight: bold;
-                color: var(--primary);
-            }
-            .gift-title .left .desc {
-                font-size: 13px;
-                color: #888;
-            }
-            .gift-title .left .expire {
-                font-size: 12px;
-                color: #999;
-            }
-            .gift-title .right {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                color: #999;
-                font-size: 13px;
-                flex-shrink: 0;
-                padding-left: 10px;
-            }
-            .gift-title .right .arrow {
-                font-size: 20px;
-                transition: transform 0.25s;
-            }
-            .gift-item.active .gift-title .right .arrow {
-                transform: rotate(180deg);
-            }
-            .gift-qr-section {
-                display: none;
-                padding: 4px 16px 18px 16px;
-                text-align: center;
-                animation: fadeSlide 0.25s ease;
-            }
-            .gift-item.active .gift-qr-section {
-                display: block;
-            }
-            @keyframes fadeSlide {
-                0% { opacity: 0.3; transform: translateY(-5px); }
-                100% { opacity: 1; transform: translateY(0); }
-            }
-            .gift-qr-section img {
-                width: 120px;
-                height: 120px;
-                border-radius: 10px;
-                border: 1px solid #eee;
-                background: #fff;
-                padding: 8px;
-            }
-            .gift-qr-hint {
-                font-size: 12px;
-                color: #999;
-                margin-top: 6px;
-                display: block;
-            }
-            .giftbox-header {
-                text-align: center;
-                font-size: 20px;
-                font-weight: bold;
-                color: var(--primary);
-                margin-bottom: 16px;
-            }
-        </style>
-        
-        <div class="giftbox-header">🎁 心意寶盒</div>
-        <div class="giftbox-list" id="giftboxList">
-    `;
-    
-    // 產生每個優惠券的條列項目
-    for (var i = 0; i < validCoupons.length; i++) {
-        var c = validCoupons[i];
-        var expireDate = new Date(c.expiresAt).toLocaleDateString('zh-TW', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
-        var qrString = c.qrString || c.qrContent || "";
-        var qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrString)}`;
-        var itemId = 'giftItem_' + i;
-        
-        html += `
-            <div class="gift-item" id="${itemId}" data-index="${i}">
-                <div class="gift-title" onclick="toggleGiftItem('${itemId}')">
-                    <div class="left">
-                        <span class="name">${c.couponName || '優惠券'}</span>
-                        <span class="desc">${c.qrContent || ''}</span>
-                        <span class="expire">🔒 有效至 ${expireDate}</span>
-                    </div>
-                    <div class="right">
-                        <span>點擊</span>
-                        <span class="arrow">▾</span>
-                    </div>
-                </div>
-                <div class="gift-qr-section">
-                    <img src="${qrUrl}" alt="QR Code">
-                    <span class="gift-qr-hint">📱 請出示此 QR Code 給店員掃描</span>
-                </div>
-            </div>
-        `;
-    }
-    
-    html += `</div>`;
-    
-    openModal(html);
-}
-
-// ===== 新增：切換優惠券展開/收合 =====
-function toggleGiftItem(itemId) {
-    var current = document.getElementById(itemId);
-    if (!current) return;
-    
-    var isActive = current.classList.contains('active');
-    
-    // 關閉所有其他項目
-    var allItems = document.querySelectorAll('#giftboxList .gift-item');
-    allItems.forEach(function(el) {
-        el.classList.remove('active');
-    });
-    
-    // 如果原本是關閉的，就打開它
-    if (!isActive) {
-        current.classList.add('active');
-    }
-}
-// ==================== 監聽優惠券兌換狀態 ====================
-let couponCheckInterval = null;
-
-function startCouponStatusCheck(userId) {
-    // 清除舊的監聽
-    if (couponCheckInterval) {
-        clearInterval(couponCheckInterval);
-        couponCheckInterval = null;
-    }
-    
-    couponCheckInterval = setInterval(async function() {
-        try {
-            // 查詢優惠券狀態
-            const url = `${GAS_URL}?action=getFirestoreDocument&collection=coupons&docId=${userId}&t=${Date.now()}`;
-            const res = await fetch(url);
-            const data = await res.json();
-            
-            console.log("🔍 檢查優惠券狀態:", data);
-            
-            // 如果優惠券已被使用
-            if (data && data.status === "已使用") {
-                // 停止監聽
-                clearInterval(couponCheckInterval);
-                couponCheckInterval = null;
-                
-                // 關閉當前的 Modal
-                closeModal();
-                
-                // ✅ 顯示「兌換成功」並自動關閉
-                showModalAutoClose(`
-                    <div style="text-align:center; padding:20px;">
-                        <div style="font-size: 48px; margin-bottom: 15px;">🎉</div>
-                        <div style="font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 10px;">兌換成功！</div>
-                        <div style="color: #666; font-size: 16px;">優惠券已使用完畢</div>
-                    </div>
-                `, 2000);
-                
-                // 更新會員資料
-                refreshAll();
-            }
-        } catch (err) {
-            console.error("檢查優惠券狀態錯誤:", err);
-        }
-    }, 2000); // 每 2 秒檢查一次
-}
-
-// ==================== 自動關閉的 Modal ====================
-let autoCloseTimer = null;
-
-function showModalAutoClose(html, delay) {
-    if (autoCloseTimer) {
-        clearTimeout(autoCloseTimer);
-        autoCloseTimer = null;
-    }
-    
-    document.getElementById('modalBody').innerHTML = html;
-    document.getElementById('modal').style.display = 'flex';
-    
-    autoCloseTimer = setTimeout(function() {
-        closeModal();
-        autoCloseTimer = null;
-    }, delay || 2000);
-}
-
-// ✅ 修改關閉 Modal 函數，清除監聽
-function closeModal() {
-    if (autoCloseTimer) {
-        clearTimeout(autoCloseTimer);
-        autoCloseTimer = null;
-    }
-    if (couponCheckInterval) {
-        clearInterval(couponCheckInterval);
-        couponCheckInterval = null;
-    }
-    document.getElementById('modal').style.display = 'none';
-}
-async function refreshAll() {
-    if (!userId) return;
-    try {
-        const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        const url = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
-        const refreshBtn = document.querySelector('.asset-card button');
-        if (refreshBtn) refreshBtn.disabled = true;
-        
-        let res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        let responseText = await res.text();
-        let newUserData;
-        try { newUserData = JSON.parse(responseText); } catch(e) { throw new Error("伺服器回應格式錯誤"); }
-        
-        if (newUserData && newUserData.isMember === true) {
-            const displayPoints = newUserData.points !== undefined ? newUserData.points : (newUserData.profile?.points || 0);
-            document.getElementById('pointsDisplay').innerText = displayPoints;
-            userData = newUserData;
-            generateMemberCode();
-            showToast('✅ 資料已更新');
-        } else {
-            showToast('資料更新失敗，請稍後再試');
-        }
-    } catch(e) {
-        console.error("Refresh Error:", e);
-        showToast('重新整理失敗，請稍後再試');
-    } finally {
-        const refreshBtn = document.querySelector('.asset-card button');
-        if (refreshBtn) refreshBtn.disabled = false;
-    }
-}
-
+// ============================================================
+// ✅ initLiff
+// ============================================================
 async function initLiff() {
-    // ============================================================
-    // ✅ 檢測是否為電腦版 LINE（放在最前面！）
-    // ============================================================
-    const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-    const isLinePC = !isMobile && /line/i.test(navigator.userAgent.toLowerCase());
-    
+    // 檢測電腦版
+    var isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+    var isLinePC = !isMobile && /line/i.test(navigator.userAgent.toLowerCase());
     if (isLinePC) {
         console.log('💻 偵測到電腦版 LINE，顯示引導畫面');
         document.getElementById('loading').style.display = 'none';
         showPCMessage();
-        return;  // ✅ 直接結束，不執行任何 LIFF 相關代碼
+        return;
     }
     
-    // ============================================================
-    // ✅ 檢查是否為「登出後重新載入」
-    // ============================================================
-    const urlParams = new URLSearchParams(window.location.search);
-    const isLogout = urlParams.get('logout');
-    
+    var urlParams = new URLSearchParams(window.location.search);
+    var isLogout = urlParams.get('logout');
     if (isLogout === 'true') {
         console.log('🚪 登出完成，清除快取並重新導向...');
         sessionStorage.clear();
@@ -783,76 +331,50 @@ async function initLiff() {
         document.cookie.split(";").forEach(function(c) { 
             document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
         });
-        const url = new URL(window.location.href);
+        var url = new URL(window.location.href);
         url.searchParams.delete('logout');
         window.location.href = url.toString();
         return;
     }
     
     currentFrom = urlParams.get('from') || 'omp';
-    
-    let rawReferrer = urlParams.get('referrer');
+    var rawReferrer = urlParams.get('referrer');
     if (rawReferrer) {
         try { referrerParam = decodeURIComponent(rawReferrer); } catch(e) { referrerParam = rawReferrer; }
     } else { referrerParam = ''; }
     referrerParam = referrerParam.trim();
     
-    const loadingText = document.getElementById('loading-text');
-    const loadingTexts = {
-        omp: [
-            "老娘正在翻帳本，幫你算驚喜...",
-            "老娘正在火速趕來...",
-            "別催，老娘正在幫你算點數...",
-            "正在幫您端上熱騰騰的驚喜...",
-            "火鍋滾了，心意也快好了..."
-        ],
-        swo: [
-            "正在為你的生活，加入一點甜...",
-            "攪拌心意中，請稍候片刻...",
-            "正準備為您送上今日份的療癒...",
-            "心意準備中，等等來點甜的吧！",
-            "STAY SWEET！"
-        ]
+    var loadingText = document.getElementById('loading-text');
+    var loadingTexts = {
+        omp: ["老娘正在翻帳本，幫你算驚喜...", "老娘正在火速趕來...", "別催，老娘正在幫你算點數...", "正在幫您端上熱騰騰的驚喜...", "火鍋滾了，心意也快好了..."],
+        swo: ["正在為你的生活，加入一點甜...", "攪拌心意中，請稍候片刻...", "正準備為您送上今日份的療癒...", "心意準備中，等等來點甜的吧！", "STAY SWEET！"]
     };
-    const texts = currentFrom === 'so' ? loadingTexts.swo : loadingTexts.omp;
-    const randomIndex = Math.floor(Math.random() * texts.length);
+    var texts = currentFrom === 'so' ? loadingTexts.swo : loadingTexts.omp;
+    var randomIndex = Math.floor(Math.random() * texts.length);
     loadingText.innerText = texts[randomIndex];
     
     try {
         await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) { 
-            liff.login(); 
-            return; 
-        }
-                     
-        // ============================================================
-        // ✅ 強制帳號驗證（防止快取污染）
-        // ============================================================
-        const currentUserId = (await liff.getProfile()).userId;
-        const storedUserId = sessionStorage.getItem('liff_user_id');
-        const storedFrom = sessionStorage.getItem('liff_from');
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        
+        var currentUserId = (await liff.getProfile()).userId;
+        var storedUserId = sessionStorage.getItem('liff_user_id');
+        var storedFrom = sessionStorage.getItem('liff_from');
         
         console.log('🔍 帳號檢測：');
         console.log('   └─ 當前 LINE userId:', currentUserId);
         console.log('   └─ 快取中的 userId:', storedUserId || '(無)');
-        console.log('   └─ 快取中的 from:', storedFrom || '(無)');
-        console.log('   └─ 當前 from:', currentFrom);
         
         if (storedUserId && storedUserId !== currentUserId) {
             console.log('🔄 偵測到帳號切換！強制清除所有快取');
-            console.log('   └─ 舊帳號:', storedUserId);
-            console.log('   └─ 新帳號:', currentUserId);
-            
             sessionStorage.clear();
             localStorage.clear();
             document.cookie.split(";").forEach(function(c) { 
                 document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
             });
-            
             showToast('🔄 偵測到帳號變更，重新整理中...');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            const url = new URL(window.location.href);
+            await new Promise(function(resolve) { setTimeout(resolve, 1000); });
+            var url = new URL(window.location.href);
             url.searchParams.set('t', Date.now());
             window.location.href = url.toString();
             return;
@@ -865,8 +387,6 @@ async function initLiff() {
         
         if (storedFrom && storedFrom !== currentFrom) {
             console.log('🔄 偵測到品牌切換！');
-            console.log('   └─ 舊品牌:', storedFrom);
-            console.log('   └─ 新品牌:', currentFrom);
             sessionStorage.setItem('liff_from', currentFrom);
         }
         
@@ -880,337 +400,26 @@ async function initLiff() {
         
         await fetchData();
         
+        // ✅ 啟動閒置檢測
+        setupIdleDetection();
+        console.log('⏰ 閒置登出計時器已啟動（5 分鐘）');
+        
     } catch(e) { 
         console.error('LIFF init error:', e);
         showToast('初始化失敗，請重新開啟頁面'); 
         document.getElementById('loading').style.display = 'none';
     }
 }
+
 // ============================================================
-// ✅ 電腦版 LINE 引導畫面
+// ✅ 頁面加載完成後執行
 // ============================================================
-function showPCMessage() {
-    var html = `
-        <div style="
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 40px 24px;
-            background: #fdf5e6;
-            text-align: center;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        ">
-            <div style="
-                font-size: 64px;
-                margin-bottom: 20px;
-                animation: bounce 1.5s ease infinite;
-            ">📱</div>
-            
-            <div style="
-                font-size: 24px;
-                font-weight: bold;
-                color: #8b0000;
-                margin-bottom: 12px;
-            ">
-                請使用手機操作
-            </div>
-            
-            <div style="
-                font-size: 15px;
-                color: #666;
-                line-height: 1.8;
-                max-width: 380px;
-                margin-bottom: 30px;
-            ">
-                老娘的一點心意 目前僅支援<br>
-                <b>手機 LINE APP</b> 開啟使用<br><br>
-                請在手機上打開此連結<br>
-                享受完整的會員服務 🎁
-            </div>
-            
-            <div style="
-                background: #fff5f5;
-                border-radius: 16px;
-                padding: 20px;
-                max-width: 380px;
-                width: 100%;
-                border: 1px solid #ffd0d0;
-                text-align: left;
-                margin-bottom: 20px;
-            ">
-                <div style="font-weight: bold; color: #8b0000; margin-bottom: 10px;">
-                    📌 如何使用：
-                </div>
-                <div style="font-size: 14px; color: #666; line-height: 1.8;">
-                    <div>1️⃣ 在手機上開啟 LINE</div>
-                    <div>2️⃣ 搜尋 <b>老娘的一點心意</b> 官方帳號</div>
-                    <div>3️⃣ 點擊選單中的會員入口</div>
-                </div>
-            </div>
-            
-            <button onclick="window.location.href='https://line.me/R/ti/p/@your_line_id'" style="
-                width: 100%;
-                max-width: 380px;
-                padding: 16px;
-                background: #8b0000;
-                color: #fff;
-                border: none;
-                border-radius: 12px;
-                font-size: 16px;
-                font-weight: bold;
-                cursor: pointer;
-            ">
-                🔗 前往官方帳號
-            </button>
-        </div>
-        
-        <style>
-            @keyframes bounce {
-                0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-15px); }
-            }
-        </style>
-    `;
-    
-    document.body.innerHTML = html;
-}
-async function fetchData(isReload = false) {
-    try {
-        const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        const url = `${GAS_URL}?action=checkID&userId=${userId}&from=${currentFrom}&branch=${encodeURIComponent(branch)}&referrerId=${encodeURIComponent(referrerParam)}&t=${Date.now()}`;
-        let res = await fetch(url);
-        if (!res.ok) { throw new Error(`HTTP ${res.status}`); }
-        let responseText = await res.text();
-        try { userData = JSON.parse(responseText); } catch(e) { throw new Error("伺服器回應格式錯誤"); }
-        
-        if (userData.loadingTexts && userData.loadingTexts.length > 0) {
-            const randomIndex = Math.floor(Math.random() * userData.loadingTexts.length);
-            document.getElementById('loading-text').innerText = userData.loadingTexts[randomIndex];
-        }
-        
-        document.getElementById('loading').style.display = 'none';
-
-        if (userData && userData.isMember === true) {
-            document.getElementById('memberUI').style.display = 'block';
-            document.getElementById('welcomeUI').style.display = 'none';
-            document.getElementById('regUI').style.display = 'none';
-            
-            // ✅ 修正：讀取「目前剩餘點」（與 Firebase 欄位名稱一致）
-            const displayPoints = userData["目前剩餘點"] || userData["`目前剩餘點`"] || userData.points || 0;
-            document.getElementById('pointsDisplay').innerText = displayPoints;
-            
-            const welcomeQuotes = {
-                omp: [
-                    "熟悉的位子，老娘幫你留好了",
-                    "老娘這鍋湯，專治各種不開心",
-                    "歡迎回家，今天想喝什麼湯",
-                    "進了老娘的門，就是家裡人",
-                    "每一口美味，都在累積心意。",
-                    "沒什麼事是老娘一鍋解決不了的。",
-                    "累積一點心意，換一口老娘美味",
-                    "來老娘這，吃飽喝足最幸福"
-                ],
-                swo: [
-                    "生活七八分苦？今天必須一點甜。",
-                    "遇見你，就是一點甜...",
-                    "點點心意，只為甜你的心。",
-                    "生活苦甜參半，今天留給甜的那半。",
-                    "給生活加點糖，一點甜正剛好。",
-                    "一點甜，一點暖，一點幸福",
-                    "今日宜加糖， 一點甜正好"
-                ]
-            };
-            const quotes = currentFrom === 'so' ? welcomeQuotes.swo : welcomeQuotes.omp;
-            const randomQuoteIndex = Math.floor(Math.random() * quotes.length);
-            document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
-            generateMemberCode();
-            if (isReload) showToast('✅ 資料已更新');
-
-        } else {
-            // 新客：顯示歡迎頁
-            document.getElementById('memberUI').style.display = 'none';
-            document.getElementById('regUI').style.display = 'none';
-            document.getElementById('welcomeUI').style.display = 'flex';
-        }
-    } catch(e) { 
-        console.error("Fetch Error:", e);
-        showToast('資料載入失敗，請稍後再試');
-    } finally {
-        document.getElementById('loading').style.display = 'none';
-    }
-}
-async function doRegister() {
-    let name = document.getElementById('regName').value.trim();
-    let phone = document.getElementById('regPhone').value.trim();
-    let birthday = document.getElementById('regBirthday').value;
-    let agreeRights = document.getElementById('agreeRights').checked;
-    let agreeLegal = document.getElementById('agreeLegal').checked;
-
-    const phonePattern = /^09\d{2}-\d{3}-\d{3}$/;
-    if (!phonePattern.test(phone)) {
-        return showToast('請輸入正確格式：09xx-xxx-xxx');
-    }
-
-    if (!name) return showToast('請填寫姓名');
-    if (!birthday) return showToast('請選擇生日');
-    if (!agreeRights) return showToast('請先閱讀並同意【會員權益】');
-    if (!agreeLegal) return showToast('請先閱讀並同意【法務免責及管控聲明】');
-    
-    document.getElementById('loading').style.display = 'flex';
-    document.getElementById('regUI').style.display = 'none';
-    
-   try {
-        const branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        let res = await fetch(`${GAS_URL}?action=register&userId=${userId}&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}&birthday=${birthday}&referrerId=${encodeURIComponent(referrerParam)}&from=${currentFrom}&branch=${encodeURIComponent(branch)}`);
-        const result = await res.json();
-
-        if (result.success) {
-            document.getElementById('loading').style.display = 'none';
-            openModal(`<div class="welcome-card"><h2>🎉 註冊成功！</h2><p>歡迎加入老娘的一點心意🍲🍰<br><br>這是老娘留給你的偏心。<br>日子不一定天天完美<br>但一定要有一點甜 💕</p><div style="margin-top: 20px;">3秒後自動進入會員頁面...</div></div>`);
-            setTimeout(() => { closeModal(); location.reload(); }, 3000);
-        } else {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('regUI').style.display = 'block';
-            showToast(result.message || '註冊失敗');
-        }
-    } catch(e) { 
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('regUI').style.display = 'block';
-        showToast('網路連線錯誤，請稍後再試'); 
-    }
-}
-
-function openEvents(brand) { let events = brand === 'so' ? (userData.soEvents || []) : (userData.ompEvents || []); openModal(`<h3 style="color:var(--primary); text-align:center;">🔥 活動資訊</h3>` + (events.length ? events.map(e => `<div style="padding:10px 0;">✨ ${e}</div>`).join('') : '<p>目前暫無活動</p>')); }
-
-function openReferral() {
-    let html = `<h3 style="color:var(--primary); text-align:center;">👥 推薦名單</h3>
-    <div style="margin-bottom:15px;"><b>推薦您的好友：</b> ${userData?.myReferrer || '無'}</div>
-    <div style="margin-top:15px;"><b>您推薦的好友：</b></div>
-    <table style="width:100%; border-collapse:collapse; margin-top:10px;">
-        <tbody>`;
-    
-    if (userData?.myReferrals?.length) {
-        html += userData.myReferrals.map((r,i)=>`
-            <tr>
-                <td style="width:45%; padding:6px 0; text-align:left; vertical-align:top;">${i+1}. ${r.name}</td>
-                <td style="width:55%; padding:6px 0; text-align:left; vertical-align:top;">加入日期 ${r.date}</td>
-             </tr>
-        `).join('');
-    } else {
-        html += `<tr><td colspan="2" style="padding:10px 0; color:#999;">尚無好友加入<\/td><\/tr>`;
-    }
-    
-    html += `</tbody><\/table>`;
-    openModal(html);
-}
-
-function openPointHistory() {
-    let html = `<h3 style="color:var(--primary); text-align:center;">📜 點數明細</h3>
-    <table style="width:100%; border-collapse:collapse; text-align:center; font-size:14px;">
-        <thead>
-            <tr style="color:#666; font-weight:bold;">
-                <th style="width:20%; padding:6px 2px;">日期</th>
-                <th style="padding:6px 2px;">本　人<br>獲取點</th>
-                <th style="padding:6px 2px;">推  薦<br>回饋點</th>
-                <th style="padding:6px 2px;">當日<br>折抵</th>
-                <th style="padding:6px 2px;">過期<br>點數</th>
-             <\/tr>
-        </thead>
-        <tbody>`;
-    let totalExpiredSoon = 0;
-    if (userData && userData.history && userData.history.length > 0) {
-        html += userData.history.map(h => {
-            const shortDate = (h.date || "").split(" ")[0];
-            const expiredValue = h.expired != null && h.expired !== 'undefined' ? h.expired : '';
-            const expiredNum = Number(h.expired) || 0;
-            totalExpiredSoon += expiredNum;
-            return `
-            <tr style="border-top:1px solid #eee;">
-            <td style="padding:8px 2px;">${shortDate}<\/td>
-            <td style="padding:8px 2px;">${h.gain || ''}<\/td>
-            <td style="padding:8px 2px; color:#0066cc;">${h.recommend || ''}</td>   <!-- ✅ 推薦回饋點 -->
-            <td style="padding:8px 2px; color:#d00;">${h.spend || ''}</td>          <!-- ✅ 當日折抵 -->
-            <td style="padding:8px 2px; color:#d00;">${expiredValue}</td>           <!-- ✅ 過期點數 -->
-    </tr>`;
-}).join('');
-    } else { 
-        html += `<tr><td colspan="4" style="padding:25px; color:#999;">目前尚無紀錄<\/td><\/tr>`; 
-    }
-    html += `</tbody><\/table>`;
-    
-    // ✅ 使用 userData.expiringPoints 顯示即將到期點數
-    let expiringPoints = userData?.expiringPoints || 0;
-    html += `<div style="margin-top:20px; padding:15px; background:#fff5f5; border-radius:12px; border:1px dashed #ab545a; text-align:center;">
-        <div style="font-size:14px; color:#666;">⏳ 即將過期點數 (30天內)</div>
-        <div style="font-size:24px; font-weight:900; color:#d00; margin-top:5px;">${expiringPoints} <span style="font-size:14px;">點</span></div>
-        <div style="font-size:11px; color:#999; margin-top:5px;">* 點數寶貴，記得趕快來店內折抵唷！ *</div>
-    </div>`;
-    openModal(html);
-}
-
-function openProfile() { 
-  let p = userData?.profile; 
-  if(!p) return; 
-
-  let birthday = p.birthday || "";
-  if (birthday) {
-    try {
-      let d = new Date(birthday);
-      if (!isNaN(d.getTime())) {
-        let y = d.getFullYear();
-        let m = String(d.getMonth() + 1).padStart(2, '0');
-        let day = String(d.getDate()).padStart(2, '0');
-        birthday = `${y}-${m}-${day}`;
-      }
-    } catch (e) {}
-  }
-
-  openModal(`<h3 style="color:var(--primary); text-align:center;">👤 個人資料</h3>
-    <p>姓名：${p.name}</p>
-    <p>電話：${p.phone}</p>
-    <p>生日：${birthday}</p>`); 
-}
-function autoCopyShare() { 
-    const now = Date.now();
-    const rawReferrer = `${userId}|${now}`;
-    const encodedReferrer = encodeURIComponent(rawReferrer);
-    
-    const shareUrl = `https://liff.line.me/${LIFF_ID}?from=${currentFrom}&referrer=${encodedReferrer}`;
-    const shareText = `✨ 發現高雄隱藏版美味 ✨\n立即加入領取新客禮：\n${shareUrl}`;
-    
-    navigator.clipboard.writeText(shareText)
-        .then(() => {
-            openModal(`
-                <div class="share-modal-content">
-                    <div class="share-title">✅ 推薦連結已複製！</div>
-                    <div class="share-body">
-                        連結有效期為 14 天<br>
-                        趕快發給好友領取新客招待禮吧 💕
-                    </div>
-                </div>
-            `);
-        })
-        .catch(() => {
-            const textArea = document.createElement("textarea");
-            textArea.value = shareText;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showToast('✅ 推薦碼已複製');
-            } catch (err) {
-                showToast('複製失敗，請手動截圖分享');
-            }
-            document.body.removeChild(textArea);
-        }); 
-}
-
-function openModal(html) { document.getElementById('modalBody').innerHTML = html; document.getElementById('modal').style.display = 'flex'; }
-function closeModal() { document.getElementById('modal').style.display = 'none'; if (pendingCheckboxId) { document.getElementById(pendingCheckboxId).checked = true; pendingCheckboxId = null; } }
-
-document.getElementById('regPhone').addEventListener('input', function(e) { let v = e.target.value.replace(/\D/g, '').slice(0, 10); if (v.length > 7) v = v.slice(0,4)+'-'+v.slice(4,7)+'-'+v.slice(7); else if (v.length > 4) v = v.slice(0,4)+'-'+v.slice(4); e.target.value = v; });
+document.getElementById('regPhone').addEventListener('input', function(e) {
+    var v = e.target.value.replace(/\D/g, '').slice(0, 10);
+    if (v.length > 7) v = v.slice(0,4)+'-'+v.slice(4,7)+'-'+v.slice(7);
+    else if (v.length > 4) v = v.slice(0,4)+'-'+v.slice(4);
+    e.target.value = v;
+});
 
 initLiff();
 </script>
