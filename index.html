@@ -949,12 +949,13 @@ function openPointHistory() {
             totalExpiredSoon += expiredNum;
             return `
             <tr style="border-top:1px solid #eee;">
-                <td style="padding:8px 2px;">${shortDate}<\/td>
-                <td style="padding:8px 2px;">${h.gain || ''}<\/td>
-                <td style="padding:8px 2px; color:#d00;">${h.spend || ''}<\/td>
-                <td style="padding:8px 2px; color:#d00;">${expiredValue}<\/td>
-              <\/tr>`;
-        }).join('');
+            <td style="padding:8px 2px;">${shortDate}<\/td>
+            <td style="padding:8px 2px;">${h.gain || ''}<\/td>
+            <td style="padding:8px 2px; color:#0066cc;">${h.recommend || ''}</td>   <!-- ✅ 推薦回饋點 -->
+            <td style="padding:8px 2px; color:#d00;">${h.spend || ''}</td>          <!-- ✅ 當日折抵 -->
+            <td style="padding:8px 2px; color:#d00;">${expiredValue}</td>           <!-- ✅ 過期點數 -->
+    </tr>`;
+}).join('');
     } else { 
         html += `<tr><td colspan="4" style="padding:25px; color:#999;">目前尚無紀錄<\/td><\/tr>`; 
     }
