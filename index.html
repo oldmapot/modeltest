@@ -168,6 +168,9 @@
     <button class="side-menu-item" onclick="openShopInfo(); closeSideMenu()">🏪 店面資訊</button>
     <button class="side-menu-item" onclick="openRightsDetail(); closeSideMenu()">📋 會員權益</button>
     <button class="side-menu-item" onclick="openLegalDetail(); closeSideMenu()">⚖️ 法務免責及管控聲明</button>
+     <button class="side-menu-item" onclick="forceLogout(); closeSideMenu()" style="color:#d00; border-top: 2px solid #f0f0f0; margin-top: 10px; padding-top: 16px;">
+        🚪 登出（切換帳號）
+    </button>        
 </div>
     </div>
     
@@ -757,7 +760,20 @@ async function refreshAll() {
 }
 
 async function initLiff() {
+    // ============================================================
+    // ✅ 檢查是否為「登出後重新載入」
+    // ============================================================
     const urlParams = new URLSearchParams(window.location.search);
+    const isLogout = urlParams.get('logout');
+    
+    if (isLogout === 'true') {
+        console.log('🚪 登出完成，清除快取並重新導向...');
+        const url = new URL(window.location.href);
+        url.searchParams.delete('logout');
+        window.location.href = url.toString();
+        return;
+    }
+    
     currentFrom = urlParams.get('from') || 'omp';
     
     let rawReferrer = urlParams.get('referrer');
@@ -795,7 +811,17 @@ async function initLiff() {
         }
         
         // ============================================================
-        // ✅ 新增：帳號切換檢測（防止不同 LINE 帳號共用 Session）
+        // ✅ 手機版隱藏登出鍵
+        // ============================================================
+        const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+        const logoutBtn = document.querySelector('.side-menu-item[onclick*="forceLogout"]');
+        if (logoutBtn) {
+            logoutBtn.style.display = isMobile ? 'none' : 'block';
+            console.log(isMobile ? '📱 手機版，登出鍵已隱藏' : '💻 電腦版，登出鍵已顯示');
+        }
+        
+        // ============================================================
+        // ✅ 帳號切換檢測
         // ============================================================
         const currentUserId = (await liff.getProfile()).userId;
         const storedUserId = sessionStorage.getItem('liff_user_id');
@@ -807,54 +833,39 @@ async function initLiff() {
         console.log('   └─ 快取中的 from:', storedFrom || '(無)');
         console.log('   └─ 當前 from:', currentFrom);
         
-        // 檢查是否換帳號（快取中的 userId 存在且與當前不同）
         if (storedUserId && storedUserId !== currentUserId) {
             console.log('🔄 偵測到帳號切換！');
             console.log('   └─ 舊帳號:', storedUserId);
             console.log('   └─ 新帳號:', currentUserId);
             
-            // 清除所有快取資料
             sessionStorage.clear();
             localStorage.removeItem('liff_user_id');
             localStorage.removeItem('userData');
             
-            // 顯示提示訊息
             showToast('🔄 偵測到帳號變更，重新整理中...');
-            
-            // 等待 1 秒後強制重新整理（讓 toast 顯示）
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            // 重新整理頁面（保留 from 和 referrer 參數）
             const url = new URL(window.location.href);
-            url.searchParams.set('t', Date.now()); // 加入時間戳防止快取
+            url.searchParams.set('t', Date.now());
             window.location.href = url.toString();
             return;
         }
         
-        // 檢查是否換品牌（from 改變）
         if (storedFrom && storedFrom !== currentFrom) {
             console.log('🔄 偵測到品牌切換！');
             console.log('   └─ 舊品牌:', storedFrom);
             console.log('   └─ 新品牌:', currentFrom);
-            // 品牌切換不需要清除 userId，但可以記錄新的 from
             sessionStorage.setItem('liff_from', currentFrom);
         }
         
-        // ============================================================
-        // ✅ 儲存當前登入狀態
-        // ============================================================
         sessionStorage.setItem('liff_user_id', currentUserId);
         sessionStorage.setItem('liff_from', currentFrom);
         
-        // 如果 userId 尚未設定，或和快取不同，更新 userId
         if (!userId || userId !== currentUserId) {
             userId = currentUserId;
             console.log('✅ 設定 userId:', userId);
         }
         
-        // ============================================================
-        // ✅ 載入資料
-        // ============================================================
         await fetchData();
         
     } catch(e) { 
@@ -1034,6 +1045,41 @@ function openPointHistory() {
         <div style="font-size:11px; color:#999; margin-top:5px;">* 點數寶貴，記得趕快來店內折抵唷！ *</div>
     </div>`;
     openModal(html);
+}
+
+ function forceLogout() {
+    if (confirm('⚠️ 確定要登出嗎？\n\n登出後將清除所有快取資料，並重新導向 LINE 登入頁面。')) {
+        // 顯示提示
+        showToast('🔄 正在登出，請稍候...');
+        
+        // 1. 清除所有瀏覽器快取
+        sessionStorage.clear();
+        localStorage.clear();
+        
+        // 2. 清除所有 Cookies
+        document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
+        
+        // 3. 清除 LIFF 登入狀態
+        try {
+            if (typeof liff !== 'undefined' && liff.isLoggedIn()) {
+                liff.logout();
+            }
+        } catch(e) {
+            console.log('LIFF logout error:', e);
+        }
+        
+        // 4. 等待 1 秒後重新導向（加上強制刷新參數）
+        setTimeout(() => {
+            const url = new URL(window.location.href);
+            // 加入時間戳，強制重新載入
+            url.searchParams.set('t', Date.now());
+            // 加入 logout 標記，讓頁面知道是主動登出
+            url.searchParams.set('logout', 'true');
+            window.location.href = url.toString();
+        }, 500);
+    }
 }
 function openProfile() { 
   let p = userData?.profile; 
