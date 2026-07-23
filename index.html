@@ -455,6 +455,7 @@ function generateMemberCode() {
 function generateRegCode(){}
 
 function openGiftBox() {
+    var coupons = userData?.coupons || [];
     let coupon = userData?.coupon;
     
     if (!coupon) {
