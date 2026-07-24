@@ -610,22 +610,21 @@ function showBlockPage(message) {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
+            justify-content: center;
             min-height: 100vh;
-            padding: 40px 24px 30px 24px;
+            padding: 24px 24px 40px 24px;
             background: #fdf5e6;
             text-align: center;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
             box-sizing: border-box;
         ">
-            <!-- LOGO 區塊：上方保留較多空間，方框往下推 -->
+            <!-- LOGO 區塊 -->
             <div style="
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 width: 100%;
-                margin-top: 20px;
-                margin-bottom: 30px;
+                margin-bottom: 32px;
             ">
                 <div style="
                     width: 120px;
@@ -644,29 +643,28 @@ function showBlockPage(message) {
                 </div>
                 
                 <div style="
-                    font-size: 24px;
+                    font-size: 22px;
                     font-weight: bold;
                     color: #8b0000;
                     margin-top: 4px;
                     margin-bottom: 2px;
-                    line-height: 1.4;
+                    line-height: 1.3;
                 ">
                     老娘的一點心意<br>會員系統
                 </div>
                 
                 <div style="
-                    font-size: 15px;
-                    color: #666;
-                    line-height: 1.8;
+                    font-size: 14px;
+                    color: #888;
+                    line-height: 1.6;
                     max-width: 380px;
                     margin-top: 4px;
-                    margin-bottom: 0px;
                 ">
                     ${message || '📱 僅支援手機 LINE App 開啟使用'}
                 </div>
             </div>
             
-            <!-- ✅ 方框：往下移，但下方留白減少 -->
+            <!-- ✅ 使用說明方框：在畫面中央偏下，不貼底 -->
             <div style="
                 background: #fff5f5;
                 border-radius: 16px;
@@ -675,10 +673,9 @@ function showBlockPage(message) {
                 width: 100%;
                 border: 1px solid #ffd0d0;
                 text-align: left;
-                margin-bottom: 16px;
-                margin-top: 16px;
+                margin-bottom: 24px;
             ">
-                <div style="font-weight: bold; color: #8b0000; margin-bottom: 10px;">
+                <div style="font-weight: bold; color: #8b0000; margin-bottom: 10px; font-size: 15px;">
                     📌 如何使用：
                 </div>
                 <div style="font-size: 14px; color: #666; line-height: 1.8;">
@@ -688,7 +685,7 @@ function showBlockPage(message) {
                 </div>
             </div>
             
-            <div style="font-size: 12px; color: #ccc; margin-top: 4px;">
+            <div style="font-size: 12px; color: #ccc;">
                 老娘的一點心意 v1.0
             </div>
         </div>
