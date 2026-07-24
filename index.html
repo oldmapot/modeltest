@@ -630,7 +630,7 @@ function showBlockPage(message) {
                 color: #8b0000;
                 margin-bottom: 12px;
             ">
-                請使用手機操作
+                老娘的一點心意 會員系統
             </div>
             
             <div style="
@@ -687,7 +687,7 @@ async function initLiff() {
         // ✅ 檢查是否在 LINE App 內
         if (!liff.isInClient()) {
             console.log('❌ 請在 LINE App 內開啟');
-            showBlockPage('📱 請在 LINE App 內開啟');
+            showBlockPage('📱 僅支援手機 LINE App 開啟使用');
             return;
         }
         
@@ -695,7 +695,7 @@ async function initLiff() {
         const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
         if (!isMobile) {
             console.log('❌ 請使用手機 LINE App');
-            showBlockPage('📱 請使用手機 LINE App 開啟');
+            showBlockPage('📱 僅支援手機 LINE App 開啟使用');
             return;
         }
         
@@ -706,26 +706,7 @@ async function initLiff() {
         showBlockPage('初始化失敗，請在 LINE App 中開啟');
         return;
     }
-    
-    // ============================================================
-    // ✅ 檢查是否為「登出後重新載入」
-    // ============================================================
-    const urlParams = new URLSearchParams(window.location.search);
-    const isLogout = urlParams.get('logout');
-    
-    if (isLogout === 'true') {
-        console.log('🚪 登出完成，清除快取並重新導向...');
-        sessionStorage.clear();
-        localStorage.clear();
-        document.cookie.split(";").forEach(function(c) { 
-            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-        });
-        const url = new URL(window.location.href);
-        url.searchParams.delete('logout');
-        window.location.href = url.toString();
-        return;
-    }
-    
+          
     currentFrom = urlParams.get('from') || 'omp';
     
     let rawReferrer = urlParams.get('referrer');
