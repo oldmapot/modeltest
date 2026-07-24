@@ -829,14 +829,12 @@ async function initLiff() {
     try {
         await liff.init({ liffId: LIFF_ID });
         
-        // ✅ 檢查是否在 LINE App 內
         if (!liff.isInClient()) {
             console.log('❌ 請在 LINE App 內開啟');
             showBlockPage('📱 僅支援手機 LINE App 開啟使用');
             return;
         }
         
-        // ✅ 檢查是否為手機（防止電腦版 LINE）
         const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
         if (!isMobile) {
             console.log('❌ 請使用手機 LINE App');
@@ -851,7 +849,12 @@ async function initLiff() {
         showBlockPage('初始化失敗，請在 LINE App 中開啟');
         return;
     }
-          
+    
+    // ============================================================
+    // ✅ 定義 urlParams（從這裡開始使用）
+    // ============================================================
+    const urlParams = new URLSearchParams(window.location.search);
+    
     currentFrom = urlParams.get('from') || 'omp';
     
     let rawReferrer = urlParams.get('referrer');
@@ -882,7 +885,6 @@ async function initLiff() {
     loadingText.innerText = texts[randomIndex];
     
     try {
-        // ✅ 已經在 liff.init 過了，直接使用
         if (!liff.isLoggedIn()) { 
             liff.login(); 
             return; 
@@ -930,7 +932,6 @@ async function initLiff() {
         }
         
         await fetchData();
-       
         
     } catch(e) { 
         console.error('LIFF init error:', e);
@@ -938,7 +939,6 @@ async function initLiff() {
         document.getElementById('loading').style.display = 'none';
     }
 }
-
 // ============================================================
 // ✅ 手機號碼格式化
 // ============================================================
