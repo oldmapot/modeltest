@@ -22,9 +22,7 @@
         .menu-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 28px; cursor: pointer; background: none; border: none; color: #fff; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .welcome-quote { font-size: 4.5vw; opacity: 0.95; margin-bottom: 8px; min-height: 24px; }
         .main-title { font-size: 8.5vw; font-weight: 900; }
-        .logout-btn { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 14px; cursor: pointer; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 6px 14px; border-radius: 20px; z-index: 10; transition: background 0.2s; font-weight: bold; letter-spacing: 0.5px; }
-        .logout-btn:hover { background: rgba(255,255,255,0.3); }
-
+        
         .side-menu { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg); box-shadow: 2px 0 12px rgba(0,0,0,0.15); z-index: 10000; transition: left 0.3s ease; overflow-y: auto; }
         .side-menu.open { left: 0; }
         .side-menu-header { background: var(--primary); color: #fff; padding: 30px 20px; text-align: center; }
@@ -94,7 +92,6 @@
         <button class="menu-icon" onclick="openSideMenu()">☰</button>
         <div class="welcome-quote" id="welcomeQuote"></div>
         <div class="main-title">老娘的一點心意</div>
-        <button class="logout-btn" onclick="logout()">🚪 登出</button>
     </div>
 
     <div id="sideMenuOverlay" class="side-menu-overlay" onclick="closeSideMenu()"></div>
@@ -167,8 +164,6 @@ const LIFF_ID = "2009761099-xXvMY51i";
 let userId = '', userData = null, currentFrom = 'omp', referrerParam = '', userToken = '', pendingCheckboxId = null;
 let countdownInterval = null;
 let currentCountdown = 60;
-let idleTimer = null;
-const IDLE_TIMEOUT = 5 * 60 * 1000;
 
 // ============================================================
 // ✅ Token 管理
@@ -207,82 +202,6 @@ function verifyToken(token) {
     } catch(e) {
         return null;
     }
-}
-
-// ============================================================
-// ✅ 登出函數
-// ============================================================
-function logout() {
-    if (confirm('⚠️ 確定要登出嗎？')) {
-        showToast('🔄 正在登出...');
-        performLogout();
-    }
-}
-
-function performLogout() {
-    clearToken();
-    sessionStorage.clear();
-    localStorage.clear();
-    document.cookie.split(";").forEach(function(c) { 
-        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-    });
-    try {
-        if (typeof liff !== 'undefined' && liff.isLoggedIn()) {
-            liff.logout();
-        }
-    } catch(e) { console.log('LIFF logout error:', e); }
-    
-    setTimeout(function() {
-        document.body.innerHTML = `
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px;background:#fdf5e6;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
-                <div style="font-size:64px;margin-bottom:20px;">👋</div>
-                <div style="font-size:24px;font-weight:bold;color:#8b0000;margin-bottom:10px;">已登出</div>
-                <div style="font-size:15px;color:#666;margin-bottom:30px;line-height:1.8;">感謝您的使用<br>點擊下方按鈕重新登入</div>
-                <button onclick="location.reload()" style="width:100%;max-width:300px;padding:16px;background:#8b0000;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;">🔄 重新登入</button>
-                <div style="margin-top:20px;font-size:12px;color:#ccc;">老娘的一點心意 v1.0</div>
-            </div>
-        `;
-    }, 500);
-}
-
-// ============================================================
-// ✅ 閒置自動登出
-// ============================================================
-function resetIdleTimer() {
-    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
-    idleTimer = setTimeout(function() {
-        console.log('⏰ 閒置 5 分鐘，自動登出');
-        showToast('⏰ 已閒置 5 分鐘，自動登出');
-        autoLogout();
-    }, IDLE_TIMEOUT);
-}
-
-function setupIdleDetection() {
-    var events = ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'];
-    events.forEach(function(event) {
-        document.addEventListener(event, function() { resetIdleTimer(); });
-    });
-    resetIdleTimer();
-}
-
-function autoLogout() {
-    clearToken();
-    sessionStorage.clear();
-    localStorage.clear();
-    document.cookie.split(";").forEach(function(c) { 
-        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-    });
-    try {
-        if (typeof liff !== 'undefined' && liff.isLoggedIn()) { liff.logout(); }
-    } catch(e) {}
-    document.body.innerHTML = `
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px;background:#fdf5e6;text-align:center;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
-            <div style="font-size:64px;margin-bottom:20px;">⏰</div>
-            <div style="font-size:24px;font-weight:bold;color:#8b0000;margin-bottom:10px;">已自動登出</div>
-            <div style="font-size:15px;color:#666;margin-bottom:30px;line-height:1.8;">為保護您的帳號安全<br>因閒置過久已自動登出<br><br>請重新登入繼續使用</div>
-            <button onclick="location.reload()" style="width:100%;max-width:300px;padding:16px;background:#8b0000;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:bold;cursor:pointer;">🔄 重新登入</button>
-        </div>
-    `;
 }
 
 // ============================================================
@@ -885,8 +804,7 @@ async function initLiff() {
         }
         
         await fetchData();
-        setupIdleDetection();
-        console.log('⏰ 閒置登出計時器已啟動（5 分鐘）');
+       
         
     } catch(e) { 
         console.error('LIFF init error:', e);
