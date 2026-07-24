@@ -104,9 +104,34 @@
             <button class="side-menu-item" onclick="openPointHistory(); closeSideMenu()">📜 點數明細</button>
             <button class="side-menu-item" onclick="openShopInfo(); closeSideMenu()">🏪 店面資訊</button>
             <button class="side-menu-item" onclick="openRightsDetail(); closeSideMenu()">📋 會員權益</button>
-            <button class="side-menu-item" onclick="openLegalDetail(); closeSideMenu()">⚖️ 法務免責及管控聲明</button>
+           
+    <!-- ✅ 底部固定區：法務免責及管控聲明 + 版本資訊 -->
+    <div style="
+        margin-top: auto;
+        width: 100%;
+        border-top: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    ">
+        <button class="side-menu-item" onclick="openLegalDetail(); closeSideMenu()" style="
+            border-bottom: none;
+            text-align: center;
+            width: 100%;
+        ">
+            ⚖️ 法務免責及管控聲明
+        </button>
+        <div style="
+            padding: 12px 0;
+            text-align: center;
+            font-size: 12px;
+            color: #ccc;
+            width: 100%;
+        ">
+            老娘的一點心意 v1.0
         </div>
     </div>
+</div>
     
     <div class="asset-card">
         <div style="display: flex; flex-direction: column; align-items: center; border-right: 1px solid #eee; padding-right: 5vw; flex: 1;">
