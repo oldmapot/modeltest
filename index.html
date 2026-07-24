@@ -612,22 +612,25 @@ function showBlockPage(message) {
             align-items: center;
             justify-content: flex-start;
             min-height: 100vh;
-            padding: 20px 24px 40px 24px;
+            padding: 40px 24px 30px 24px;
             background: #fdf5e6;
             text-align: center;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            box-sizing: border-box;
         ">
-            <!-- ✅ LOGO 區塊：上方 padding 減少，讓空間平均 -->
+            <!-- LOGO 區塊：上方保留較多空間，方框往下推 -->
             <div style="
-                margin-top: 8px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                width: 100%;
+                margin-top: 20px;
+                margin-bottom: 30px;
             ">
                 <div style="
                     width: 120px;
                     height: 120px;
-                    margin: 0 auto 14px auto;
+                    margin: 0 auto 16px auto;
                     border-radius: 50%;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
                     background: #fdf5e6;
@@ -637,7 +640,7 @@ function showBlockPage(message) {
                     padding: 20px;
                 ">
                     <img src="https://i.ibb.co/d0fcN62N/11-288x.png" 
-                         style="width: 70%; height: 70%; object-fit: contain; display: block;">
+                         style="width: 75%; height: 75%; object-fit: contain; display: block;">
                 </div>
                 
                 <div style="
@@ -651,20 +654,19 @@ function showBlockPage(message) {
                     老娘的一點心意<br>會員系統
                 </div>
                 
-                <!-- ✅ 說明文字與下方方框間距：margin-bottom: 6px -->
                 <div style="
                     font-size: 15px;
                     color: #666;
                     line-height: 1.8;
                     max-width: 380px;
                     margin-top: 4px;
-                    margin-bottom: 6px;
+                    margin-bottom: 0px;
                 ">
                     ${message || '📱 僅支援手機 LINE App 開啟使用'}
                 </div>
             </div>
             
-            <!-- ✅ 如何使用方框（完全保持不動） -->
+            <!-- ✅ 使用說明方框：往下推，與 LOGO 區塊拉開距離 -->
             <div style="
                 background: #fff5f5;
                 border-radius: 16px;
@@ -674,18 +676,19 @@ function showBlockPage(message) {
                 border: 1px solid #ffd0d0;
                 text-align: left;
                 margin-bottom: 20px;
+                margin-top: 10px;
             ">
                 <div style="font-weight: bold; color: #8b0000; margin-bottom: 10px;">
                     📌 如何使用：
                 </div>
                 <div style="font-size: 14px; color: #666; line-height: 1.8;">
                     <div>1️⃣ 在手機上開啟 LINE</div>
-                    <div>2️⃣ 搜尋 <b>老娘鍋</b> 官方帳號</div>
+                    <div>2️⃣ 搜尋 <b>老娘鍋</b> 官方帳號 [@oldmapot] </div>
                     <div>3️⃣ 點擊選單中的會員入口</div>
                 </div>
             </div>
             
-            <div style="font-size: 12px; color: #ccc; margin-top: 20px;">
+            <div style="font-size: 12px; color: #ccc; margin-top: 10px;">
                 老娘的一點心意 v1.0
             </div>
         </div>
@@ -693,7 +696,7 @@ function showBlockPage(message) {
         <style>
             @keyframes bounce {
                 0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-15px); }
+                50% { transform: translateY(-12px); }
             }
         </style>
     `;
