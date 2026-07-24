@@ -595,9 +595,16 @@ function autoCopyShare() {
 // ============================================================
 // ✅ 阻擋畫面（只能在 LINE App 內使用）
 // ============================================================
+/**
+ * 顯示「僅限手機 LINE App 開啟」的阻擋畫面
+ * 當用戶在電腦版 LINE 或一般瀏覽器開啟時顯示
+ * @param {string} message - 顯示的提示文字，可選
+ */
 function showBlockPage(message) {
+    // 隱藏 loading 動畫
     document.getElementById('loading').style.display = 'none';
     
+    // 隱藏所有主要畫面元件（會員主頁、歡迎頁、註冊頁）
     const memberUI = document.getElementById('memberUI');
     const welcomeUI = document.getElementById('welcomeUI');
     const regUI = document.getElementById('regUI');
@@ -605,92 +612,192 @@ function showBlockPage(message) {
     if (welcomeUI) welcomeUI.style.display = 'none';
     if (regUI) regUI.style.display = 'none';
     
+    // 重新繪製整個頁面內容
     document.body.innerHTML = `
+        <!-- ============================================================ -->
+        <!-- 最外層容器：控制整體版面配置                                    -->
+        <!-- ============================================================ -->
         <div style="
+            /* 啟用 Flexbox 排版 */
             display: flex;
+            /* 子項目垂直排列（由上到下） */
             flex-direction: column;
+            /* 子項目水平置中對齊 */
             align-items: center;
+            /* 子項目從頂部開始排列（不置中，避免下方空白被吃掉） */
             justify-content: flex-start;
+            /* 最小高度為整個視窗高度，確保填滿畫面 */
             min-height: 100vh;
+            /* 內邊距：上 28px / 左右 24px / 下 16px */
+            /* 調整這個可以控制整體上下位置 */
             padding: 28px 24px 16px 24px;
+            /* 背景色：米白 */
             background: #fdf5e6;
+            /* 文字置中對齊 */
             text-align: center;
+            /* 字體設定 */
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            /* 讓 padding 不影響元素總寬度 */
             box-sizing: border-box;
         ">
-            <!-- LOGO 區塊 -->
+            <!-- ============================================================ -->
+            <!-- LOGO 區塊：包含 LOGO 圖片、標題、提示文字                     -->
+            <!-- ============================================================ -->
             <div style="
+                /* 啟用 Flexbox 排版 */
                 display: flex;
+                /* 子項目垂直排列 */
                 flex-direction: column;
+                /* 子項目水平置中 */
                 align-items: center;
+                /* 佔滿父容器寬度 */
                 width: 100%;
             ">
+                <!-- ========================================================== -->
+                <!-- LOGO 圓形外框                                            -->
+                <!-- ========================================================== -->
                 <div style="
+                    /* 外框寬度：調整這個可以放大縮小 LOGO 外框 */
                     width: 120px;
+                    /* 外框高度：與寬度相同保持正圓 */
                     height: 120px;
+                    /* 外框下方間距：調整 LOGO 與標題的距離 */
                     margin: 0 auto 14px auto;
+                    /* 圓形邊框（50% 為正圓） */
                     border-radius: 50%;
+                    /* 外陰影：讓 LOGO 有立體感 */
                     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                    /* 背景色：與頁面底色相同（讓外框隱形） */
                     background: #fdf5e6;
+                    /* 啟用 Flexbox 讓圖片置中 */
                     display: flex;
+                    /* 子項目垂直置中 */
                     align-items: center;
+                    /* 子項目水平置中 */
                     justify-content: center;
+                    /* 內邊距：讓 LOGO 圖片與外框有呼吸空間 */
                     padding: 20px;
                 ">
+                    <!-- LOGO 圖片 -->
                     <img src="https://i.ibb.co/d0fcN62N/11-288x.png" 
-                         style="width: 75%; height: 75%; object-fit: contain; display: block;">
+                         style="
+                            /* 圖片寬度為外框的 75%（調整這個可改變 LOGO 大小） */
+                            width: 75%;
+                            /* 圖片高度為外框的 75% */
+                            height: 75%;
+                            /* 保持圖片比例，完整顯示不裁切 */
+                            object-fit: contain;
+                            /* 圖片為區塊元素 */
+                            display: block;
+                         ">
                 </div>
                 
+                <!-- ========================================================== -->
+                <!-- 主標題：老娘的一點心意／會員系統                          -->
+                <!-- ========================================================== -->
                 <div style="
+                    /* 字體大小：調整標題大小 */
                     font-size: 22px;
+                    /* 粗體 */
                     font-weight: bold;
+                    /* 文字顏色：品牌紅 */
                     color: #8b0000;
-                    margin-top: 0px;
-                    margin-bottom: 2px;
+                    /* 上方間距：調整標題與 LOGO 的距離 */
+                    margin-top: 4px;
+                    /* 下方間距：調整標題與提示文字的距離 */
+                    margin-bottom: 8px;
+                    /* 行高：2 倍（保持舒適閱讀） */
                     line-height: 1.3;
                 ">
                     老娘的一點心意<br>會員系統
                 </div>
                 
+                <!-- ========================================================== -->
+                <!-- 提示文字：僅支援手機 LINE App 開啟使用                   -->
+                <!-- ========================================================== -->
                 <div style="
+                    /* 字體大小 */
                     font-size: 14px;
+                    /* 文字顏色：灰色 */
                     color: #888;
+                    /* 行高：1.6 倍 */
                     line-height: 1.6;
+                    /* 最大寬度：避免文字過長 */
                     max-width: 380px;
+                    /* 上方間距：調整提示文字與標題的距離 */
                     margin-top: 4px;
-                    margin-bottom: 28px;
+                    /* 下方間距：調整提示文字與「使用說明方框」的距離 */
+                    /* 這個值越大，方框越往下移 */ 
+                    margin-bottom: 60px;
                 ">
                     ${message || '📱 僅支援手機 LINE App 開啟使用'}
                 </div>
             </div>
             
-            <!-- 使用說明方框 -->
+            <!-- ============================================================ -->
+            <!-- 使用說明方框                                               -->
+            <!-- ============================================================ -->
             <div style="
+                /* 背景色：淡粉紅 */
                 background: #fff5f5;
+                /* 圓角 */
                 border-radius: 16px;
-                padding: 20px;
-                max-width: 380px;
+                /* 內邊距：控制方框內部空間 */
+                padding: 12px;
+                /* 最大寬度 */
+                max-width: 200px;
+                /* 佔滿父容器寬度 */
                 width: 100%;
+                /* 邊框：淡紅色 */
                 border: 1px solid #ffd0d0;
+                /* 文字靠左對齊 */
                 text-align: left;
+                /* 下方間距：調整方框與版權資訊的距離 */
                 margin-bottom: 12px;
             ">
-                <div style="font-weight: bold; color: #8b0000; margin-bottom: 10px; font-size: 15px;">
+                <div style="
+                    /* 粗體 */
+                    font-weight: bold;
+                    /* 文字顏色：品牌紅 */
+                    color: #8b0000;
+                    /* 下方間距：調整標題與內容的距離 */
+                    margin-bottom: 10px;
+                    /* 字體大小 */
+                    font-size: 15px;
+                ">
                     📌 如何使用：
                 </div>
-                <div style="font-size: 14px; color: #666; line-height: 1.8;">
+                <div style="
+                    /* 字體大小 */
+                    font-size: 14px;
+                    /* 文字顏色 */
+                    color: #666;
+                    /* 行高：1.8 倍 */
+                    line-height: 1.8;
+                ">
                     <div>1️⃣ 在手機上開啟 LINE</div>
-                    <div>2️⃣ 搜尋 <b>老娘鍋</b> 官方帳號</div>
+                    <div>2️⃣ 搜尋 <b>老娘鍋</b> 官方帳號 [@oldmapot] </div>
                     <div>3️⃣ 點擊選單中的會員入口</div>
                 </div>
             </div>
             
-            <div style="font-size: 12px; color: #ccc; margin-top: 4px;">
+            <!-- ============================================================ -->
+            <!-- 版權資訊                                                 -->
+            <!-- ============================================================ -->
+            <div style="
+                /* 字體大小 */
+                font-size: 12px;
+                /* 文字顏色：淺灰 */
+                color: #ccc;
+                /* 上方間距：調整版權與方框的距離 */
+                margin-top: 18px;
+            ">
                 老娘的一點心意 v1.0
             </div>
         </div>
         
         <style>
+            /* LOGO 輕微彈跳動畫 */
             @keyframes bounce {
                 0%, 100% { transform: translateY(0); }
                 50% { transform: translateY(-12px); }
