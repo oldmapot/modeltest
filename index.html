@@ -673,90 +673,221 @@ function autoCopyShare() {
             document.body.removeChild(textArea);
         }); 
 }
+// ============================================================
+// ✅ 阻擋畫面（只能在 LINE App 內使用）
+// ============================================================
+function showBlockPage(message) {
+    document.getElementById('loading').style.display = 'none';
+    
+    // 隱藏所有畫面
+    const memberUI = document.getElementById('memberUI');
+    const welcomeUI = document.getElementById('welcomeUI');
+    const regUI = document.getElementById('regUI');
+    if (memberUI) memberUI.style.display = 'none';
+    if (welcomeUI) welcomeUI.style.display = 'none';
+    if (regUI) regUI.style.display = 'none';
+    
+    document.body.innerHTML = `
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px 24px;
+            background: #fdf5e6;
+            text-align: center;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        ">
+            <div style="
+                font-size: 72px;
+                margin-bottom: 20px;
+                animation: bounce 1.5s ease infinite;
+            ">📱</div>
+            
+            <div style="
+                font-size: 24px;
+                font-weight: bold;
+                color: #8b0000;
+                margin-bottom: 12px;
+            ">
+                請使用手機操作
+            </div>
+            
+            <div style="
+                font-size: 15px;
+                color: #666;
+                line-height: 1.8;
+                max-width: 380px;
+                margin-bottom: 30px;
+            ">
+                ${message || '老娘的一點心意 僅支援手機 LINE App 開啟使用'}
+            </div>
+            
+            <div style="
+                background: #fff5f5;
+                border-radius: 16px;
+                padding: 20px;
+                max-width: 380px;
+                width: 100%;
+                border: 1px solid #ffd0d0;
+                text-align: left;
+                margin-bottom: 20px;
+            ">
+                <div style="font-weight: bold; color: #8b0000; margin-bottom: 10px;">
+                    📌 如何使用：
+                </div>
+                <div style="font-size: 14px; color: #666; line-height: 1.8;">
+                    <div>1️⃣ 在手機上開啟 LINE</div>
+                    <div>2️⃣ 搜尋 <b>老娘的一點心意</b> 官方帳號</div>
+                    <div>3️⃣ 點擊選單中的會員入口</div>
+                </div>
+            </div>
+            
+            <div style="font-size: 12px; color: #ccc; margin-top: 20px;">
+                老娘的一點心意 v1.0
+            </div>
+        </div>
+        
+        <style>
+            @keyframes bounce {
+                0%, 100% { transform: translateY(0); }
+                50% { transform: translateY(-15px); }
+            }
+        </style>
+    `;
+}
 
-// ============================================================
-// ✅ initLiff（加入 Token 驗證）
-// ============================================================
 async function initLiff() {
-    var urlParams = new URLSearchParams(window.location.search);
-    var isLogout = urlParams.get('logout');
+    // ============================================================
+    // ✅ 第一道防線：只能在 LINE App 內使用
+    // ============================================================
+    try {
+        await liff.init({ liffId: LIFF_ID });
+        
+        // ✅ 檢查是否在 LINE App 內
+        if (!liff.isInClient()) {
+            console.log('❌ 請在 LINE App 內開啟');
+            showBlockPage('📱 請在 LINE App 內開啟');
+            return;
+        }
+        
+        // ✅ 檢查是否為手機（防止電腦版 LINE）
+        const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+        if (!isMobile) {
+            console.log('❌ 請使用手機 LINE App');
+            showBlockPage('📱 請使用手機 LINE App 開啟');
+            return;
+        }
+        
+        console.log('✅ 通過檢測：手機 LINE App');
+        
+    } catch(e) {
+        console.error('LIFF init error:', e);
+        showBlockPage('初始化失敗，請在 LINE App 中開啟');
+        return;
+    }
+    
+    // ============================================================
+    // ✅ 檢查是否為「登出後重新載入」
+    // ============================================================
+    const urlParams = new URLSearchParams(window.location.search);
+    const isLogout = urlParams.get('logout');
+    
     if (isLogout === 'true') {
         console.log('🚪 登出完成，清除快取並重新導向...');
-        clearToken();
         sessionStorage.clear();
         localStorage.clear();
         document.cookie.split(";").forEach(function(c) { 
             document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
         });
-        var url = new URL(window.location.href);
+        const url = new URL(window.location.href);
         url.searchParams.delete('logout');
         window.location.href = url.toString();
         return;
     }
+    
     currentFrom = urlParams.get('from') || 'omp';
-    var rawReferrer = urlParams.get('referrer');
+    
+    let rawReferrer = urlParams.get('referrer');
     if (rawReferrer) {
         try { referrerParam = decodeURIComponent(rawReferrer); } catch(e) { referrerParam = rawReferrer; }
     } else { referrerParam = ''; }
     referrerParam = referrerParam.trim();
-    var loadingText = document.getElementById('loading-text');
-    var loadingTexts = {
-        omp: ["老娘正在翻帳本，幫你算驚喜...", "老娘正在火速趕來...", "別催，老娘正在幫你算點數...", "正在幫您端上熱騰騰的驚喜...", "火鍋滾了，心意也快好了..."],
-        swo: ["正在為你的生活，加入一點甜...", "攪拌心意中，請稍候片刻...", "正準備為您送上今日份的療癒...", "心意準備中，等等來點甜的吧！", "STAY SWEET！"]
+    
+    const loadingText = document.getElementById('loading-text');
+    const loadingTexts = {
+        omp: [
+            "老娘正在翻帳本，幫你算驚喜...",
+            "老娘正在火速趕來...",
+            "別催，老娘正在幫你算點數...",
+            "正在幫您端上熱騰騰的驚喜...",
+            "火鍋滾了，心意也快好了..."
+        ],
+        swo: [
+            "正在為你的生活，加入一點甜...",
+            "攪拌心意中，請稍候片刻...",
+            "正準備為您送上今日份的療癒...",
+            "心意準備中，等等來點甜的吧！",
+            "STAY SWEET！"
+        ]
     };
-    var texts = currentFrom === 'so' ? loadingTexts.swo : loadingTexts.omp;
-    var randomIndex = Math.floor(Math.random() * texts.length);
+    const texts = currentFrom === 'so' ? loadingTexts.swo : loadingTexts.omp;
+    const randomIndex = Math.floor(Math.random() * texts.length);
     loadingText.innerText = texts[randomIndex];
+    
     try {
-        await liff.init({ liffId: LIFF_ID });
-        if (!liff.isLoggedIn()) { liff.login(); return; }
-        var currentUserId = (await liff.getProfile()).userId;
-        var storedUserId = sessionStorage.getItem('liff_user_id');
-        var token = getToken();
+        // ✅ 已經在 liff.init 過了，直接使用
+        if (!liff.isLoggedIn()) { 
+            liff.login(); 
+            return; 
+        }
+        
+        const currentUserId = (await liff.getProfile()).userId;
+        const storedUserId = sessionStorage.getItem('liff_user_id');
+        const storedFrom = sessionStorage.getItem('liff_from');
         
         console.log('🔍 帳號檢測：');
         console.log('   └─ 當前 LINE userId:', currentUserId);
         console.log('   └─ 快取中的 userId:', storedUserId || '(無)');
-        console.log('   └─ Token 存在:', token ? '✅ 是' : '❌ 否');
         
-        // ✅ 如果有 Token，驗證是否有效
-        if (token) {
-            var verifiedUserId = verifyToken(token);
-            if (verifiedUserId === currentUserId) {
-                console.log('✅ Token 驗證通過，直接載入資料');
-                userId = currentUserId;
-                await fetchData();
-                setupIdleDetection();
-                console.log('⏰ 閒置登出計時器已啟動（5 分鐘）');
-                return;
-            } else {
-                console.log('⚠️ Token 驗證失敗，重新登入');
-                clearToken();
-                var url = new URL(window.location.href);
-                url.searchParams.set('t', Date.now());
-                window.location.href = url.toString();
-                return;
-            }
-        }
-        
-        // ✅ 沒有 Token，檢查是否換帳號
         if (storedUserId && storedUserId !== currentUserId) {
-            console.log('🔄 偵測到帳號切換！');
-            clearToken();
-            sessionStorage.setItem('liff_user_id', currentUserId);
-            generateToken(currentUserId);
+            console.log('🔄 偵測到帳號切換！強制清除所有快取');
+            sessionStorage.clear();
+            localStorage.clear();
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            showToast('🔄 偵測到帳號變更，重新整理中...');
+            await new Promise(function(resolve) { setTimeout(resolve, 1000); });
+            const url = new URL(window.location.href);
+            url.searchParams.set('t', Date.now());
+            window.location.href = url.toString();
+            return;
         }
         
         if (!storedUserId) {
-            console.log('✅ 首次登入，建立 Token');
+            console.log('✅ 首次登入，儲存 userId:', currentUserId);
             sessionStorage.setItem('liff_user_id', currentUserId);
-            generateToken(currentUserId);
         }
         
-        userId = currentUserId;
+        if (storedFrom && storedFrom !== currentFrom) {
+            console.log('🔄 偵測到品牌切換！');
+            sessionStorage.setItem('liff_from', currentFrom);
+        }
+        
+        sessionStorage.setItem('liff_user_id', currentUserId);
+        sessionStorage.setItem('liff_from', currentFrom);
+        
+        if (!userId || userId !== currentUserId) {
+            userId = currentUserId;
+            console.log('✅ 設定 userId:', userId);
+        }
+        
         await fetchData();
         setupIdleDetection();
         console.log('⏰ 閒置登出計時器已啟動（5 分鐘）');
+        
     } catch(e) { 
         console.error('LIFF init error:', e);
         showToast('初始化失敗，請重新開啟頁面'); 
