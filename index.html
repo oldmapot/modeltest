@@ -190,44 +190,6 @@ let userId = '', userData = null, currentFrom = 'omp', referrerParam = '', userT
 let countdownInterval = null;
 let currentCountdown = 60;
 
-// ============================================================
-// ✅ Token 管理
-// ============================================================
-const TOKEN_KEY = 'liff_auth_token';
-
-function generateToken(userId) {
-    var timestamp = Date.now();
-    var random = Math.random().toString(36).substring(2, 10);
-    var token = btoa(userId + '|' + timestamp + '|' + random);
-    localStorage.setItem(TOKEN_KEY, token);
-    sessionStorage.setItem('liff_user_id', userId);
-    return token;
-}
-
-function getToken() {
-    return localStorage.getItem(TOKEN_KEY);
-}
-
-function clearToken() {
-    localStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem('liff_user_id');
-}
-
-function verifyToken(token) {
-    if (!token) return null;
-    try {
-        var decoded = atob(token);
-        var parts = decoded.split('|');
-        if (parts.length !== 3) return null;
-        var userId = parts[0];
-        var timestamp = parseInt(parts[1]);
-        var expiresIn = 24 * 60 * 60 * 1000;
-        if (Date.now() - timestamp > expiresIn) return null;
-        return userId;
-    } catch(e) {
-        return null;
-    }
-}
 
 // ============================================================
 // ✅ 工具函數
@@ -421,8 +383,6 @@ async function refreshAll() {
     if (!userId) return;
     try {
         var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        var token = getToken();
-        var url = GAS_URL + '?action=checkID&userId=' + userId + '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + '&referrerId=' + encodeURIComponent(referrerParam) + '&token=' + encodeURIComponent(token || '') + '&t=' + Date.now();
         var refreshBtn = document.querySelector('.asset-card button');
         if (refreshBtn) refreshBtn.disabled = true;
         var res = await fetch(url);
@@ -449,14 +409,12 @@ async function refreshAll() {
 }
 
 // ============================================================
-// ✅ fetchData（帶 Token）
+// ✅ fetchData
 // ============================================================
 async function fetchData(isReload) {
     if (isReload === undefined) isReload = false;
     try {
         var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        var token = getToken();
-        var url = GAS_URL + '?action=checkID&userId=' + userId + '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + '&referrerId=' + encodeURIComponent(referrerParam) + '&token=' + encodeURIComponent(token || '') + '&t=' + Date.now();
         var res = await fetch(url);
         if (!res.ok) { throw new Error('HTTP ' + res.status); }
         var responseText = await res.text();
