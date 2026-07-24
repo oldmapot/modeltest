@@ -610,9 +610,9 @@ function showBlockPage(message) {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             min-height: 100vh;
-            padding: 24px 24px 40px 24px;
+            padding: 28px 24px 16px 24px;
             background: #fdf5e6;
             text-align: center;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -624,12 +624,11 @@ function showBlockPage(message) {
                 flex-direction: column;
                 align-items: center;
                 width: 100%;
-                margin-bottom: 32px;
             ">
                 <div style="
                     width: 120px;
                     height: 120px;
-                    margin: 0 auto 16px auto;
+                    margin: 0 auto 14px auto;
                     border-radius: 50%;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
                     background: #fdf5e6;
@@ -646,7 +645,7 @@ function showBlockPage(message) {
                     font-size: 22px;
                     font-weight: bold;
                     color: #8b0000;
-                    margin-top: 4px;
+                    margin-top: 0px;
                     margin-bottom: 2px;
                     line-height: 1.3;
                 ">
@@ -659,12 +658,13 @@ function showBlockPage(message) {
                     line-height: 1.6;
                     max-width: 380px;
                     margin-top: 4px;
+                    margin-bottom: 28px;
                 ">
                     ${message || '📱 僅支援手機 LINE App 開啟使用'}
                 </div>
             </div>
             
-            <!-- ✅ 使用說明方框：在畫面中央偏下，不貼底 -->
+            <!-- 使用說明方框 -->
             <div style="
                 background: #fff5f5;
                 border-radius: 16px;
@@ -673,7 +673,7 @@ function showBlockPage(message) {
                 width: 100%;
                 border: 1px solid #ffd0d0;
                 text-align: left;
-                margin-bottom: 24px;
+                margin-bottom: 12px;
             ">
                 <div style="font-weight: bold; color: #8b0000; margin-bottom: 10px; font-size: 15px;">
                     📌 如何使用：
@@ -685,7 +685,7 @@ function showBlockPage(message) {
                 </div>
             </div>
             
-            <div style="font-size: 12px; color: #ccc;">
+            <div style="font-size: 12px; color: #ccc; margin-top: 4px;">
                 老娘的一點心意 v1.0
             </div>
         </div>
