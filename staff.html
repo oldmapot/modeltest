@@ -147,8 +147,10 @@ let config = { minSpend: 0, maxRate: 0, earnRate: 0, ticketRate: 0, shopCode: ""
 let customerId = "", currentPoints = 0, memberLevel = "", levelRate = 1;
 let cameraStream = null;
 let scanInterval = null;
-let isLoggedIn = false;  // ✅ 預設為 false
+let isLoggedIn = false;
 let cachedPrefixes = null;
+let idleTimer = null;
+const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 分鐘
 
 function getUrlParam(name) {
     const url = new URLSearchParams(window.location.search);
@@ -179,13 +181,31 @@ async function getCouponPrefixes() {
     }
 }
 
+function resetIdleTimer() {
+    if (!isLoggedIn) return;
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function() {
+        alert("⚠️ 您已閒置 5 分鐘，將自動登出");
+        logout();
+    }, IDLE_TIMEOUT);
+}
+
+function setupIdleDetection() {
+    var events = ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'];
+    events.forEach(function(event) {
+        document.addEventListener(event, function() {
+            resetIdleTimer();
+        });
+    });
+    resetIdleTimer();
+}
+
 function init() {
     const staffName = getUrlParam('name') || '';
     const branchName = getUrlParam('branch') || '';
     const loginId = getUrlParam('loginId') || '';
     const deviceId = getDeviceId();
     
-    // ✅ 檢查是否有登入資訊
     if (!loginId || !staffName || !branchName) {
         showToast("⚠️ 請先登入");
         setTimeout(() => {
@@ -206,6 +226,7 @@ function init() {
     getCouponPrefixes();
     hideLoading();
     setupScannerListener();
+    setupIdleDetection();
 }
 
 function getDeviceId() {
@@ -220,19 +241,13 @@ function getDeviceId() {
     return deviceId;
 }
 
-function resetIdleTimer() {
-    if (!isLoggedIn) return;
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(()=>{ alert("閒置5分鐘，自動登出"); logout(); }, 300000);
-}
-document.addEventListener("mousemove", resetIdleTimer);
-document.addEventListener("keydown", resetIdleTimer);
-document.addEventListener("click", resetIdleTimer);
-
 async function logout() {
     showToast("正在登出...");
-    const loginId = getUrlParam('loginId');
-    const deviceId = getDeviceId();
+    const loginId = staff.loginId;
+    const deviceId = staff.deviceId;
+    
+    isLoggedIn = false;
+    clearTimeout(idleTimer);
     
     if (loginId) {
         try {
@@ -243,7 +258,6 @@ async function logout() {
         }
     }
     
-    isLoggedIn = false;
     window.location.href = 'staff_login.html';
 }
 
@@ -332,7 +346,6 @@ function parseScannedCode(scannedText) {
 }
     
 async function onScanSuccess(scannedText) {
-    // ✅ 檢查登入狀態
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
         setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
@@ -342,17 +355,13 @@ async function onScanSuccess(scannedText) {
     await closeCamera();
     if (navigator.vibrate) navigator.vibrate(200);
     
+    resetIdleTimer();
     await getCouponPrefixes();
     const parsed = parseScannedCode(scannedText);
     
     try {
         showLoading("連線中...");
         
-       // ==================== 修改 onScanSuccess 中的優惠券處理部分 ====================
-// 找到 onScanSuccess 函數中處理優惠券的區塊（約第 180-220 行）
-// 將原本的優惠券處理程式碼替換為以下增強版：
-
-        // ========== 優惠券兌換（增強版） ==========
         if (parsed.type === "coupon") {
             const realStaffName = staff.name;
             const realStaffBranch = staff.branch;
@@ -360,10 +369,8 @@ async function onScanSuccess(scannedText) {
             const loginId = staff.loginId || "";
             const deviceId = staff.deviceId || "";
             
-            // 顯示處理中
             showLoading("🔄 處理優惠券兌換中...");
             
-            // 嘗試兌換，最多重試 3 次
             let maxRetries = 3;
             let attempt = 0;
             let success = false;
@@ -396,14 +403,12 @@ async function onScanSuccess(scannedText) {
                         lastError = result.error || result.message || "兌換失敗";
                         console.warn(`⚠️ 嘗試 ${attempt} 失敗:`, lastError);
                         
-                        // 如果是最後一次嘗試，顯示錯誤
                         if (attempt >= maxRetries) {
                             hideLoading();
                             showModal(`❌ 優惠券兌換失敗（已重試 ${maxRetries} 次）<br><br>錯誤訊息：${lastError}<br><br>💡 請確認優惠券是否已被使用或已過期`);
                             return;
                         }
                         
-                        // 等待 1 秒後重試
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         showLoading(`🔄 重試中 (${attempt}/${maxRetries})...`);
                     }
@@ -424,7 +429,6 @@ async function onScanSuccess(scannedText) {
             return;
         }
         
-        // ========== 會員 QR ==========
         if (parsed.type === "member") {
             if (!parsed.userId) {
                 hideLoading();
@@ -497,7 +501,6 @@ async function onScanSuccess(scannedText) {
 }
 
 async function openCamera() {
-    // ✅ 檢查登入狀態
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
         setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
@@ -552,7 +555,6 @@ function toggleMode() {
     doCalc();
 }
 
-// 🔥 doCalc()（含活動倍率、低消、折抵）
 function doCalc() {
     if (!config.earnRate) return;
     
@@ -572,22 +574,18 @@ function doCalc() {
         const ticket = Number(document.getElementById('ticketSpend').value) || 0;
         const base = total - ticket;
 
-        // 1. 自動抓品牌低消
         let minSpend = config.shopCode === "swo" ? 500 : 1500;
         
-        // 2. 禁止折抵判斷 (maxRate=0)
         if (config.maxRate <= 0) {
             maxRedeem = 0;
             tipEl.innerText = "🚫 今日活動暫停折抵";
             tipEl.className = "redeem-tip tip-no-redeem";
         }
-        // 3. 未達低消
         else if (base < minSpend) {
             maxRedeem = 0;
             tipEl.innerText = `⚠️ 未達低消門檻 ${minSpend} 元，無法折抵`;
             tipEl.className = "redeem-tip tip-no-redeem";
         }
-        // 4. 正常可折抵
         else {
             maxRedeem = Math.min(currentPoints, Math.floor(base * config.maxRate));
             tipEl.innerText = `✅ 已達低消 ${minSpend} 元，可正常折抵`;
@@ -598,16 +596,14 @@ function doCalc() {
         document.getElementById('redeemAmount').value = redeem;
         document.getElementById('max-hint').innerText = maxRedeem;
 
-        // 🔥 正確集點公式：(消費-餐券-折抵) × 基礎3% × 會員倍率 × 活動倍率 → 無條件捨去
         newPts = Math.floor((base - redeem) * config.earnRate * currentLevelRate * eventMultiplier);
     }
 
     document.getElementById('new-pts').innerText = newPts;
     document.getElementById('after-pts').innerText = currentPoints - redeem + newPts;
 }
-// ==================== 修改 submitData 函數 ====================
+
 async function submitData() {
-    // ✅ 檢查登入狀態
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
         setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
@@ -618,7 +614,8 @@ async function submitData() {
     btn.disabled = true;
     showLoading("處理中...保持微笑");
 
-    // ✅ 加入 loginId 和 deviceId
+    resetIdleTimer();
+
     const params = new URLSearchParams({
         action: "addPoints",
         customerId: customerId,
@@ -634,7 +631,6 @@ async function submitData() {
         deviceId: staff.deviceId || ""
     });
 
-    // 重試機制
     let maxRetries = 3;
     let attempt = 0;
     let success = false;
