@@ -385,6 +385,7 @@ async function refreshAll() {
         var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
         var refreshBtn = document.querySelector('.asset-card button');
         if (refreshBtn) refreshBtn.disabled = true;
+        var url = GAS_URL + '?action=checkID&userId=' + userId + '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + '&referrerId=' + encodeURIComponent(referrerParam) + '&t=' + Date.now();
         var res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var responseText = await res.text();
@@ -415,6 +416,7 @@ async function fetchData(isReload) {
     if (isReload === undefined) isReload = false;
     try {
         var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
+        var url = GAS_URL + '?action=checkID&userId=' + userId + '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + '&referrerId=' + encodeURIComponent(referrerParam) + '&t=' + Date.now();
         var res = await fetch(url);
         if (!res.ok) { throw new Error('HTTP ' + res.status); }
         var responseText = await res.text();
