@@ -617,22 +617,24 @@ function showBlockPage(message) {
             text-align: center;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         ">
-            <!-- ✅ LOGO 圓框：從 120px 放大到 160px -->
+            <!-- ✅ LOGO 圓框：圖片不填滿，保留留白 -->
             <div style="
                 width: 160px;
                 height: 160px;
                 margin: 0 auto 16px auto;
                 border-radius: 50%;
-                overflow: hidden;
                 border: 4px solid #8b0000;
                 box-shadow: 0 4px 20px rgba(139,0,0,0.15);
                 background: #fff;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
             ">
                 <img src="https://i.ibb.co/d0fcN62N/11-288x.png" 
-                     style="width:100%; height:100%; object-fit:cover; display:block;">
+                     style="width: 70%; height: 70%; object-fit: contain; display: block;">
             </div>
             
-            <!-- ✅ 標題：margin-top 從 4px 改為 16px（拉開間距） -->
             <div style="
                 font-size: 24px;
                 font-weight: bold;
@@ -669,7 +671,7 @@ function showBlockPage(message) {
                 </div>
                 <div style="font-size: 14px; color: #666; line-height: 1.8;">
                     <div>1️⃣ 在手機上開啟 LINE</div>
-                    <div>2️⃣ 搜尋 <b>老娘鍋</b> 官方帳號</div>
+                    <div>2️⃣ 搜尋 <b>老娘鍋</b> 官方帳號 [@[oldmapot] </div>
                     <div>3️⃣ 點擊選單中的會員入口</div>
                 </div>
             </div>
