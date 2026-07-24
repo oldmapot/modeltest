@@ -597,14 +597,13 @@ function autoCopyShare() {
 // ============================================================
 function showBlockPage(message) {
     document.getElementById('loading').style.display = 'none';
-    
     const memberUI = document.getElementById('memberUI');
     const welcomeUI = document.getElementById('welcomeUI');
     const regUI = document.getElementById('regUI');
     if (memberUI) memberUI.style.display = 'none';
     if (welcomeUI) welcomeUI.style.display = 'none';
     if (regUI) regUI.style.display = 'none';
-    
+
     document.body.innerHTML = `
         <div style="
             display: flex;
@@ -612,22 +611,24 @@ function showBlockPage(message) {
             align-items: center;
             justify-content: flex-start;
             min-height: 100vh;
-            padding: 30px 24px 40px 24px;
+            padding: 24px 24px 30px 24px;
             background: #fdf5e6;
             text-align: center;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            box-sizing: border-box;
         ">
-            <!-- ✅ LOGO 圓框：padding-top 從 40px 減少到 20px，整體往上移 -->
+            <!-- Logo 區塊：間距全面縮小 -->
             <div style="
-                margin-top: 20px;
+                margin-top: 12px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
+                width: 100%;
             ">
                 <div style="
                     width: 120px;
                     height: 120px;
-                    margin: 0 auto 16px auto;
+                    margin: 0 auto 12px auto;
                     border-radius: 50%;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.08);
                     background: #fdf5e6;
@@ -637,54 +638,70 @@ function showBlockPage(message) {
                     padding: 20px;
                 ">
                     <img src="https://i.ibb.co/d0fcN62N/11-288x.png" 
-                         style="width: 80%; height: 80%; object-fit: contain; display: block;">
+                         style="width: 75%; height: 75%; object-fit: contain; display: block;">
                 </div>
                 
                 <div style="
-                    font-size: 24px;
+                    font-size: 22px;
                     font-weight: bold;
                     color: #8b0000;
-                    margin-top: 12px;
-                    margin-bottom: 4px;
-                    line-height: 1.4;
+                    margin-top: 4px;
+                    margin-bottom: 2px;
+                    line-height: 1.3;
                 ">
                     老娘的一點心意<br>會員系統
                 </div>
                 
                 <div style="
-                    font-size: 15px;
-                    color: #666;
-                    line-height: 1.8;
+                    font-size: 14px;
+                    color: #888;
+                    line-height: 1.6;
                     max-width: 380px;
-                    margin-top: 6px;
-                    margin-bottom: 30px;
+                    margin-top: 4px;
+                    margin-bottom: 16px;
                 ">
                     ${message || '僅支援手機 LINE App 開啟使用'}
                 </div>
             </div>
             
-            <!-- ✅ 如何使用方框（保持不動） -->
+            <!-- 使用說明方塊：保持清晰，下方留白增加 -->
             <div style="
                 background: #fff5f5;
                 border-radius: 16px;
-                padding: 20px;
+                padding: 18px 20px;
                 max-width: 380px;
                 width: 100%;
                 border: 1px solid #ffd0d0;
                 text-align: left;
-                margin-bottom: 20px;
+                margin-bottom: 24px;
+                box-sizing: border-box;
             ">
-                <div style="font-weight: bold; color: #8b0000; margin-bottom: 10px;">
+                <div style="
+                    font-weight: bold;
+                    color: #8b0000;
+                    margin-bottom: 8px;
+                    font-size: 15px;
+                ">
                     📌 如何使用：
                 </div>
-                <div style="font-size: 14px; color: #666; line-height: 1.8;">
+                <div style="
+                    font-size: 14px;
+                    color: #555;
+                    line-height: 1.8;
+                ">
                     <div>1️⃣ 在手機上開啟 LINE</div>
-                    <div>2️⃣ 搜尋 <b>老娘鍋</b> 官方帳號</div>
+                    <div>2️⃣ 搜尋 <b>老娘鍋</b> 官方帳號 <span style="color:#999;font-size:13px;">[@oldmapot]</span></div>
                     <div>3️⃣ 點擊選單中的會員入口</div>
                 </div>
             </div>
             
-            <div style="font-size: 12px; color: #ccc; margin-top: 20px;">
+            <!-- 版權訊息：與下方拉開距離 -->
+            <div style="
+                font-size: 12px;
+                color: #ccc;
+                margin-top: 8px;
+                padding-bottom: 4px;
+            ">
                 老娘的一點心意 v1.0
             </div>
         </div>
@@ -692,7 +709,7 @@ function showBlockPage(message) {
         <style>
             @keyframes bounce {
                 0%, 100% { transform: translateY(0); }
-                50% { transform: translateY(-15px); }
+                50% { transform: translateY(-12px); }
             }
         </style>
     `;
