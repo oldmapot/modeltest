@@ -435,7 +435,7 @@ function getDeviceName() {
             
         } catch (error) {
             console.error('登入失敗:', error);
-            showError('網路連線失敗，請檢查 WIFI 是否連上');
+            showError('⚠️ IP位址錯誤，無法登入！');
             loginBtn.disabled = false;
             loginBtn.innerHTML = '登入系統';
         }
