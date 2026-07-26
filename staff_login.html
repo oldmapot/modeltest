@@ -366,18 +366,54 @@ function getDeviceName() {
             document.getElementById('branchModal').style.display = 'flex';
         }
 
-       // ✅ 確認分店（這裡幫妳把抓到的 IP 傳到下一頁 URL）
-    function confirmBranch() {
-        const branch = document.getElementById('branchSelect').value;
-        if (!branch) {
-            showError('⚠️ 請一定要選擇分店才能進入系統！');
-            return;
-        }
-
-        // 保持妳原本的跳轉邏輯，補上 clientIp
-        const url = `staff.html?name=${encodeURIComponent(currentStaff.name)}&branch=${encodeURIComponent(branch)}&loginId=${encodeURIComponent(currentStaff.loginId)}&role=${encodeURIComponent(currentStaff.role || '')}&clientIp=${encodeURIComponent(currentStaff.clientIp || '')}`;
-        window.location.href = url;
+       // ✅ 確認分店：將夥伴實際選擇的分店傳給後端寫入紀錄，並跳轉頁面
+async function confirmBranch() {
+    const branch = document.getElementById('branchSelect').value;
+    if (!branch) {
+        showError('⚠️ 請一定要選擇分店才能進入系統！');
+        return;
     }
+
+    const confirmBtn = document.querySelector('.confirm-btn');
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = '進入系統中...';
+    }
+
+    // 抓取原本輸入的帳密與設備資訊
+    const userId = document.getElementById('userId').value.trim();
+    const keyword = document.getElementById('keyword').value.trim();
+    const deviceId = getDeviceId();
+    const deviceName = getDeviceName();
+    const clientIp = currentStaff.clientIp || '';
+
+    // 🔥 關鍵修正：將選好的 branch 一併帶給後端 GAS！
+    const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
+
+    try {
+        const response = await fetch(finalUrl);
+        const result = await response.json();
+
+        if (result.success) {
+            // 後端更新/寫入成功後，帶著完整資訊跳轉頁面
+            const targetUrl = `staff.html?name=${encodeURIComponent(currentStaff.name)}&branch=${encodeURIComponent(branch)}&loginId=${encodeURIComponent(currentStaff.loginId)}&role=${encodeURIComponent(currentStaff.role || '')}&clientIp=${encodeURIComponent(clientIp)}`;
+            window.location.href = targetUrl;
+        } else {
+            showError(result.message || '登入失敗，請重新嘗試');
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = '確認進入系統';
+            }
+        }
+    } catch (e) {
+        console.error("更新登入分店失敗:", e);
+        showError('⚠️ 系統連線異常，請稍後再試');
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = '確認進入系統';
+        }
+    }
+}
 
     // 🚀 核心登入函數（補上 IP 抓取，其餘不動）
     async function handleLogin(event) {
