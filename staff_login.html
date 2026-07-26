@@ -388,8 +388,8 @@ async function confirmBranch() {
     const clientIp = currentStaff.clientIp || '';
 
     // 🔥 關鍵修正：將選好的 branch 一併帶給後端 GAS！
-    const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
-
+   const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
+// 沒有 skipLog，預設 false，會寫入紀錄
     try {
         const response = await fetch(finalUrl);
         const result = await response.json();
@@ -443,7 +443,7 @@ async function confirmBranch() {
             const deviceName = getDeviceName();
 
             // ✅ 拼接妳原本的 verifyUrl，並帶入 clientIp
-            const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}`;
+           const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true`;
             
             const response = await fetch(verifyUrl);
             const result = await response.json();
