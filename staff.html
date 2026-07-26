@@ -243,21 +243,35 @@ function getDeviceId() {
 
 async function logout() {
     showToast("正在登出...");
-    const loginId = staff.loginId;
-    const deviceId = staff.deviceId;
+    
+    // 1. 抓取 loginId 與 deviceId (如果全域 staff 物件還在就用 staff，否則嘗試從 localStorage 或 sessionStorage 拿)
+    var loginId = (typeof staff !== 'undefined' && staff && staff.loginId) 
+                  ? staff.loginId 
+                  : (localStorage.getItem('staffLoginId') || '');
+                  
+    var deviceId = (typeof staff !== 'undefined' && staff && staff.deviceId) 
+                   ? staff.deviceId 
+                   : (localStorage.getItem('staffDeviceId') || '');
     
     isLoggedIn = false;
-    clearTimeout(idleTimer);
+    if (typeof idleTimer !== 'undefined') clearTimeout(idleTimer);
     
+    // 2. 如果有 loginId，發送登出請求給 GAS
     if (loginId) {
         try {
-            const url = `${GAS_URL}?action=staffLogout&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
-            fetch(url, { mode: 'no-cors' }).catch(e => console.log("登出記錄已發送"));
+            var url = `${GAS_URL}?action=staffLogout&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
+            
+            // 💡 關鍵修正：加上 await，讓瀏覽器「確實把請求送出並收到回應」後，才執行後續程式
+            await fetch(url);
+            console.log("登出記錄已成功發送並寫入表格");
         } catch (e) { 
             console.log("登出記錄發送失敗:", e); 
         }
+    } else {
+        console.log("未找到 loginId，無法寫入登出紀錄");
     }
     
+    // 3. 紀錄發送完畢後，才執行頁面跳轉
     window.location.href = 'staff_login.html';
 }
 
