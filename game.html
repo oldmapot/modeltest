@@ -457,11 +457,11 @@ const IMAGES = {
 
 // ==================== 食材定義 ====================
 const FOOD_TYPES = [
-    { id: 'vegetable', name: '蔬菜', score: 1, emoji: '🥬', weight: 28 },
-    { id: 'seafood', name: '海鮮', score: 2, emoji: '🦐', weight: 22 },
+    { id: 'vegetable', name: '蔬菜', score: 1, emoji: '🥬', weight: 35 },
+    { id: 'seafood', name: '海鮮', score: 2, emoji: '🦐', weight: 25 },
     { id: 'meat', name: '肉片', score: 2, emoji: '🥩', weight: 20 },
-    { id: 'lobster', name: '龍蝦', score: 10, emoji: '🦞', weight: 2, rare: true },
-    { id: 'trap', name: '陷阱', score: -1, emoji: '💀', weight: 28 },
+    { id: 'lobster', name: '龍蝦', score: 10, emoji: '🦞', weight: 5, rare: true },
+    { id: 'trap', name: '陷阱', score: -1, emoji: '💀', weight: 15 },
 ];
 
 // ==================== 遊戲狀態 ====================
@@ -550,10 +550,13 @@ function resizeCanvas() {
     const screenWidth = canvas.width;
     const screenHeight = canvas.height;
 
-    CONFIG.potWidth = Math.max(70, screenWidth * 0.22);
+    // 🔥 鍋子放大（螢幕寬度 28%）
+    CONFIG.potWidth = Math.max(80, screenWidth * 0.28);
     CONFIG.potHeight = CONFIG.potWidth * 0.7;
-    CONFIG.potY = screenHeight - CONFIG.potHeight - (screenHeight * 0.10);
-    CONFIG.foodSize = Math.max(40, screenWidth * 0.13);
+    CONFIG.potY = screenHeight - CONFIG.potHeight - (screenHeight * 0.08);
+    
+    // 🔥 食材放大（螢幕寬度 16%）
+    CONFIG.foodSize = Math.max(50, screenWidth * 0.16);
 
     if (potX === 0) {
         potX = (screenWidth - CONFIG.potWidth) / 2;
@@ -1028,7 +1031,12 @@ function showStatus(msg) {
 }
 
 function goBack() {
-    window.history.back();
+    // 如果是在 LIFF 中，關閉 LIFF 視窗
+    if (typeof liff !== 'undefined' && liff.closeWindow) {
+        liff.closeWindow();
+    } else {
+        window.history.back();
+    }
 }
 
 // ==================== 啟動 ====================
