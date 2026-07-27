@@ -72,7 +72,7 @@
             to { transform: rotate(360deg); }
         }
         #loadingScreen p {
-            font-size: 14px;
+            font-size: 16px;
             color: #ffaa88;
             letter-spacing: 2px;
         }
@@ -93,10 +93,7 @@
             padding: 24px 20px;
         }
 
-        #startScreen .logo {
-            font-size: 56px;
-            margin-bottom: 4px;
-        }
+        #startScreen .logo { font-size: 56px; margin-bottom: 4px; }
         #startScreen h1 {
             color: #ffd700;
             font-size: 28px;
@@ -110,32 +107,28 @@
         }
 
         #startScreen .rules {
-    color: #ddd;
-    font-size: 18px;          /* 🔥 13px → 18px */
-    text-align: center;
-    line-height: 2.2;         /* 🔥 1.9 → 2.2（行距也調大） */
-    background: rgba(255,255,255,0.06);
-    padding: 20px 24px;       /* 🔥 內邊距也調大 */
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.08);
-    margin-bottom: 16px;
-    width: 100%;
-    max-width: 340px;
-}
-#startScreen .rules .highlight {
-    color: #ffd700;
-    font-weight: 700;
-    font-size: 20px;          /* 🔥 突出顯示的數字再大一點 */
-}
-#startScreen .rules .danger {
-    color: #ff6b6b;
-    font-weight: 700;
-}
-#startScreen .rules .info {
-    color: #4fc3f7;
-    font-weight: 700;
-    font-size: 16px;          /* 🔥 訊息文字稍微放大 */
-}
+            color: #ddd;
+            font-size: 18px;
+            text-align: center;
+            line-height: 2.2;
+            background: rgba(255,255,255,0.06);
+            padding: 20px 24px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 16px;
+            width: 100%;
+            max-width: 340px;
+        }
+        #startScreen .rules .highlight {
+            color: #ffd700;
+            font-weight: 700;
+            font-size: 20px;
+        }
+        #startScreen .rules .info {
+            color: #4fc3f7;
+            font-weight: 700;
+            font-size: 16px;
+        }
 
         .btn-start {
             padding: 16px 56px;
@@ -180,16 +173,6 @@
             z-index: 20;
             padding: 24px;
         }
-        #resultScreen .result-bg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            opacity: 0.2;
-        }
         #resultScreen .result-content {
             position: relative;
             z-index: 1;
@@ -221,6 +204,7 @@
             font-weight: 700;
             margin-bottom: 12px;
         }
+
         .stars-container {
             display: flex;
             justify-content: center;
@@ -257,12 +241,7 @@
             transition: all 0.2s ease;
         }
         .btn-retry:active { transform: scale(0.95); }
-        .btn-retry:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
 
-        /* 再玩一次按鈕（扣點） */
         .btn-replay {
             padding: 12px 36px;
             font-size: 15px;
@@ -274,6 +253,7 @@
             cursor: pointer;
             margin-top: 6px;
             transition: all 0.2s ease;
+            display: none;
         }
         .btn-replay:active { transform: scale(0.95); }
         .btn-replay:disabled {
@@ -328,19 +308,13 @@
             font-weight: 700;
             cursor: pointer;
         }
-        #confirmBox .btn-yes {
-            background: #ffd700;
-            color: #1a0a0a;
-        }
-        #confirmBox .btn-no {
-            background: #666;
-            color: #fff;
-        }
+        #confirmBox .btn-yes { background: #ffd700; color: #1a0a0a; }
+        #confirmBox .btn-no { background: #666; color: #fff; }
 
         /* ===== 浮動文字 ===== */
         .float-text {
             position: fixed;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
             pointer-events: none;
             animation: floatUp 0.8s ease forwards;
@@ -349,7 +323,7 @@
         }
         .float-text.positive { color: #4caf50; }
         .float-text.negative { color: #ff4444; }
-        .float-text.special { color: #ffd700; font-size: 36px; }
+        .float-text.special { color: #ffd700; font-size: 40px; }
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0) scale(1); }
             100% { opacity: 0; transform: translateY(-100px) scale(1.2); }
@@ -357,7 +331,7 @@
 
         @media (max-width: 480px) {
             #startScreen h1 { font-size: 24px; }
-            #startScreen .rules { font-size: 12px; padding: 12px 14px; }
+            #startScreen .rules { font-size: 16px; padding: 14px 16px; }
             .btn-start { padding: 14px 40px; font-size: 18px; }
             #resultScreen .result-title { font-size: 24px; }
             .star-icon { font-size: 30px; }
@@ -392,7 +366,6 @@
 
     <!-- 結果畫面 -->
     <div id="resultScreen">
-        <div class="result-bg" id="resultBg"></div>
         <div class="result-content">
             <div class="result-emoji" id="resultEmoji">🎉</div>
             <div class="result-title" id="resultTitle">太棒了！</div>
@@ -400,8 +373,8 @@
             <div class="result-info" id="resultInfo"></div>
             <div id="resultStars" class="stars-container"></div>
             <div class="result-bonus" id="resultBonus"></div>
-           <button class="btn-retry" id="retryBtn">🏠 返回</button>
-            <button class="btn-replay" id="replayBtn" style="display:none;">🔄 再玩一次（扣 5 點）</button>
+            <button class="btn-retry" id="retryBtn">🏠 返回</button>
+            <button class="btn-replay" id="replayBtn">🔄 再玩一次（扣 5 點）</button>
         </div>
     </div>
 
@@ -420,7 +393,7 @@
 
 <script>
 // ============================================================
-//  火鍋達人 - 完整遊戲邏輯
+//  火鍋達人 - Emoji 完整版
 // ============================================================
 
 // ==================== 設定 ====================
@@ -428,70 +401,58 @@ const CONFIG = {
     gameTime: 30,
     threshold: 50,
     bonusPoints: 30,
-    maxPlays: 3,
+    maxPlays: 4,              // 🔥 免費 1 次 + 付費 3 次 = 共 4 次
     costPerPlay: 5,
     trapMinCount: 10,
     trapMaxCount: 15,
-    spawnInterval: 400,           // 🔥 生成間隔縮短（550→400），食材更多
+    spawnInterval: 400,
     potWidth: 80,
     potHeight: 60,
     potY: 0,
-    foodSize: 50,
-    fallSpeedMin: 2.8,            // 🔥 最低速度提高（1.8→2.8）
-    fallSpeedMax: 4.8,            // 🔥 最高速度提高（3.8→4.8）
+    foodSize: 55,             // 🔥 Emoji 大小
+    fallSpeedMin: 2.8,
+    fallSpeedMax: 4.8,
 };
 
-// ==================== 圖片素材 ====================
-const IMAGES = {
-  pot: 'https://i.ibb.co/sk9n2KH/26.png',         //火鍋鍋子
-  successBg: 'https://i.ibb.co/03dfdsN/30.png',   //成功畫面
-  failBg: 'https://i.ibb.co/Lz7gFY0M/29.png',     //失敗畫面
-  star: 'https://i.ibb.co/rR5PF3kZ/31.png',      //達標 winner字樣
-  bg: "https://i.ibb.co/sdcqjnV6/28.png",        //遊戲底圖
-  // 🥦 蔬菜 +1 分
-  cabbage: "https://i.ibb.co/MH2cTLP/1.png",      // 高麗菜
-  mushroom: "https://i.ibb.co/Nnsm5ZzR/10.png",    // 香菇
-  green_veg: "https://i.ibb.co/tMnnN12F/9.png",   // 青菜
-  corn: "https://i.ibb.co/gbKF4gvH/8.png",        // 玉米
-  carrot: "https://i.ibb.co/C5Hdjw02/7.png",      // 蘿蔔
-
-  // 🦐 海鮮 +2 分
-  shrimp: "https://i.ibb.co/vCXrXYSj/2.png",      // 蝦子
-  clam: "https://i.ibb.co/pBfpgF5K/6.png",        // 蛤蜊
-
-  // 🥩 肉片 +2 分
-  meat_1: "https://i.ibb.co/20gx6QW8/14.png",     // 肉片 A
-  meat_2: "https://i.ibb.co/Fbysf7px/12.png",     // 肉片 B
-
-  // 🦞 稀有龍蝦 +10 分
-  lobster: "https://i.ibb.co/gF6RBgVD/11.png",    // 龍蝦 (專屬圖片)
-
-  // 🦴 陷阱 -1 分
-  trap_fish: "https://i.ibb.co/htjq96p/5.png",    // 魚骨
-  trap_chicken: "https://i.ibb.co/pjTCDG2q/4.png", // 雞骨
-  trap_egg: "https://i.ibb.co/DDhXytbf/3.png"     // 破蛋殼
+// ==================== Emoji 對照表 ====================
+const FOOD_EMOJIS = {
+    cabbage: '🥬',
+    mushroom: '🍄',
+    green_veg: '🥗',
+    corn: '🌽',
+    carrot: '🥕',
+    shrimp: '🦐',
+    clam: '🦪',
+    meat_1: '🥩',
+    meat_2: '🥩',
+    lobster: '🦞',
+    trap_fish: '🐟',
+    trap_chicken: '🦴',
+    trap_egg: '🥚❌',
+    pot: '🍲'
 };
 
 // ==================== 食材定義 ====================
 const FOOD_TYPES = [
-  // 蔬菜類 (+1分)
-  { id: 'cabbage', score: 1, weight: 15 },
-  { id: 'mushroom', score: 1, weight: 15 },
-  { id: 'green_veg', score: 1, weight: 15 },
-  { id: 'corn', score: 1, weight: 15 },
-  { id: 'carrot', score: 1, weight: 15 },
-  // 海鮮與肉片 (+2分)
-  { id: 'shrimp', score: 2, weight: 10 },
-  { id: 'clam', score: 2, weight: 10 },
-  { id: 'meat_1', score: 2, weight: 10 },
-  { id: 'meat_2', score: 2, weight: 10 },
-  // 陷阱類 (-1分)
-  { id: 'trap_fish', score: -1, weight: 5 },
-  { id: 'trap_chicken', score: -1, weight: 5 },
-  { id: 'trap_egg', score: -1, weight: 5 },
-  // 龍蝦 (+10分)
-  { id: 'lobster', score: 5, weight: 1 }
+    // 蔬菜類 (+1分)
+    { id: 'cabbage', score: 1, weight: 15 },
+    { id: 'mushroom', score: 1, weight: 15 },
+    { id: 'green_veg', score: 1, weight: 15 },
+    { id: 'corn', score: 1, weight: 15 },
+    { id: 'carrot', score: 1, weight: 15 },
+    // 海鮮與肉片 (+2分)
+    { id: 'shrimp', score: 2, weight: 10 },
+    { id: 'clam', score: 2, weight: 10 },
+    { id: 'meat_1', score: 2, weight: 10 },
+    { id: 'meat_2', score: 2, weight: 10 },
+    // 龍蝦 (+5分)
+    { id: 'lobster', score: 5, weight: 2 },
+    // 陷阱類 (-1分)
+    { id: 'trap_fish', score: -1, weight: 5 },
+    { id: 'trap_chicken', score: -1, weight: 5 },
+    { id: 'trap_egg', score: -1, weight: 5 }
 ];
+
 // ==================== 遊戲狀態 ====================
 let canvas, ctx;
 let gameRunning = false;
@@ -506,14 +467,14 @@ let spawnInterval = null;
 let animationId = null;
 let trapCount = 0;
 let targetTrapCount = 0;
-let imagesLoaded = false;
 let userId = '';
 let GAS_BASE_URL = 'https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec';
 let isWin = false;
 let gameResultData = null;
-let gameStatus = null; // 儲存遊戲狀態（免費/付費）
-let trapCooldownTimer = 0;  // 陷阱冷卻計時器
-let foodPool = [];          // 洗牌食材池
+let gameStatus = null;
+let trapCooldownTimer = 0;
+let foodPool = [];
+let imagesLoaded = true;  // 🔥 Emoji 不需要載入圖片
 
 // ==================== DOM 元素 ====================
 const canvasEl = document.getElementById('gameCanvas');
@@ -554,11 +515,14 @@ function init() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-   loadAllImages(async () => {
+    // 🔥 直接顯示開始畫面，背景載入資料
     loadingScreen.style.display = 'none';
-    // 🔥 改為同步並行請求，省去一半 API 等待時間
-    await loadInitialData();
-});
+    startScreen.style.display = 'flex';
+    showStatus('⏳ 載入遊戲設定...');
+    
+    initFoodPool();
+    loadInitialData();
+
     startBtn.addEventListener('click', startGame);
     retryBtn.addEventListener('click', goBack);
     replayBtn.addEventListener('click', showConfirmReplay);
@@ -578,12 +542,9 @@ function resizeCanvas() {
     const screenWidth = canvas.width;
     const screenHeight = canvas.height;
 
-    // 🔥 鍋子放大（螢幕寬度 28%）
     CONFIG.potWidth = Math.max(80, screenWidth * 0.28);
     CONFIG.potHeight = CONFIG.potWidth * 0.7;
     CONFIG.potY = screenHeight - CONFIG.potHeight - (screenHeight * 0.08);
-    
-    // 🔥 食材放大（螢幕寬度 16%）
     CONFIG.foodSize = Math.max(50, screenWidth * 0.16);
 
     if (potX === 0) {
@@ -591,83 +552,7 @@ function resizeCanvas() {
     }
 }
 
-// ==================== 圖片載入 ====================
-function loadAllImages(callback) {
-    const keys = Object.keys(IMAGES);
-    let loaded = 0;
-    const total = keys.length;
-
-    for (let key of keys) {
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = IMAGES[key];
-        img.onload = () => {
-            IMAGES[key + '_img'] = img;
-            loaded++;
-            if (loaded === total) { imagesLoaded = true; if (callback) callback(); }
-        };
-        img.onerror = () => {
-            console.warn('⚠️ 圖片載入失敗:', key);
-            IMAGES[key + '_img'] = null;
-            loaded++;
-            if (loaded === total) { imagesLoaded = true; if (callback) callback(); }
-        };
-    }
-}
-
 // ==================== API 呼叫 ====================
-async function loadInitialData() {
-    showStatus('⏳ 載入遊戲資料與狀態...');
-    startBtn.disabled = true;
-
-    try {
-        const [configData, statusData] = await Promise.all([
-            callApi('getGameConfig'),
-            callApi('checkGameStatus', { userId: userId })
-        ]);
-
-        // 1. 寫回 CONFIG 並更新畫面文字
-        if (configData && configData.success) {
-            CONFIG.threshold = configData.threshold || CONFIG.threshold;
-            CONFIG.bonusPoints = configData.bonusPoints || CONFIG.bonusPoints;
-            CONFIG.gameTime = configData.gameTime || CONFIG.gameTime;
-            CONFIG.maxPlays = configData.maxPlays || CONFIG.maxPlays;
-            CONFIG.costPerPlay = configData.costPerPlay || CONFIG.costPerPlay;
-
-            document.getElementById('thresholdDisplay').textContent = CONFIG.threshold;
-            document.getElementById('bonusDisplay').textContent = CONFIG.bonusPoints;
-            document.getElementById('gameTimeDisplay').textContent = CONFIG.gameTime;
-            document.getElementById('costDisplay').textContent = CONFIG.costPerPlay;
-        }
-
-        // 2. 更新遊戲狀態
-        if (statusData) {
-            gameStatus = statusData;
-            if (statusData.available) {
-                startBtn.disabled = false;
-                let msg = statusData.freePlay ? '🎮 免費遊玩一次！' : '💎 花費 ' + statusData.cost + ' 點再玩一次！';
-                showStatus('✅ ' + msg);
-            } else {
-                startBtn.disabled = true;
-                showStatus('⏳ ' + statusData.message);
-            }
-        }
-
-        // 🔥 補上這行！資料載入完後，重新繪製/初始化遊戲畫面上的食材
-        if (typeof initGameScene === 'function') {
-            initGameScene();
-        } else if (typeof resetGame === 'function') {
-            resetGame();
-        } else if (typeof draw === 'function') {
-            draw();
-        }
-
-    } catch (err) {
-        console.error('載入失敗:', err);
-        showStatus('⚠️ 網路連線失敗，請重新整理');
-        startBtn.disabled = true;
-    }
-}
 function callApi(action, params = {}) {
     const url = new URL(GAS_BASE_URL);
     url.searchParams.set('action', action);
@@ -682,74 +567,90 @@ function callApi(action, params = {}) {
         });
 }
 
-function fetchGameConfig() {
-    callApi('getGameConfig').then(data => {
-        if (data.success) {
-            CONFIG.threshold = data.threshold || 50;
-            CONFIG.bonusPoints = data.bonusPoints || 30;
-            CONFIG.gameTime = data.gameTime || 20;
-            CONFIG.maxPlays = data.maxPlays || 3;
-            CONFIG.costPerPlay = data.costPerPlay || 5;
+async function loadInitialData() {
+    startBtn.disabled = true;
+
+    try {
+        const [configData, statusData] = await Promise.all([
+            callApi('getGameConfig'),
+            callApi('checkGameStatus', { userId: userId })
+        ]);
+
+        if (configData && configData.success) {
+            CONFIG.threshold = configData.threshold || CONFIG.threshold;
+            CONFIG.bonusPoints = configData.bonusPoints || CONFIG.bonusPoints;
+            CONFIG.gameTime = configData.gameTime || CONFIG.gameTime;
+            CONFIG.maxPlays = configData.maxPlays || CONFIG.maxPlays;
+            CONFIG.costPerPlay = configData.costPerPlay || CONFIG.costPerPlay;
+
             document.getElementById('thresholdDisplay').textContent = CONFIG.threshold;
             document.getElementById('bonusDisplay').textContent = CONFIG.bonusPoints;
             document.getElementById('gameTimeDisplay').textContent = CONFIG.gameTime;
             document.getElementById('costDisplay').textContent = CONFIG.costPerPlay;
         }
-    }).catch(() => {});
-}
 
-function checkGameStatus() {
-    // 🔥 1. 先顯示「載入中」，並禁用按鈕
-    showStatus('⏳ 檢查遊戲狀態...');
-    startBtn.disabled = true;
-    
-    // 🔥 2. 呼叫 API
-    callApi('checkGameStatus', { userId: userId })
-        .then(data => {
-            gameStatus = data;
-            console.log('📊 遊戲狀態:', data); // 方便除錯
-            
-            if (data.available) {
+        if (statusData) {
+            gameStatus = statusData;
+            if (statusData.available) {
                 startBtn.disabled = false;
-                let msg = data.freePlay ? '🎮 免費遊玩一次！' : '💎 花費 ' + data.cost + ' 點再玩一次！';
+                let msg = statusData.freePlay ? '🎮 免費遊玩一次！' : '💎 花費 ' + statusData.cost + ' 點再玩一次！';
                 showStatus('✅ ' + msg);
             } else {
                 startBtn.disabled = true;
-                showStatus('⏳ ' + data.message);
+                showStatus('⏳ ' + statusData.message);
             }
-        })
-        .catch(err => {
-            console.error('檢查遊戲狀態失敗:', err);
-            showStatus('⚠️ 無法連線到伺服器');
-            startBtn.disabled = true;
-        });
+        }
+
+        initFoodPool();
+
+    } catch (err) {
+        console.error('載入失敗:', err);
+        showStatus('⚠️ 網路連線失敗，請重新整理');
+        startBtn.disabled = true;
+    }
 }
 
 function submitResult(score, cost) {
     return callApi('recordGameResult', { userId: userId, score: score, cost: cost });
 }
 
+// ==================== 食材池 ====================
+function initFoodPool() {
+    foodPool = [];
+    for (let i = 0; i < 3; i++) {
+        foodPool.push(...FOOD_TYPES);
+    }
+    for (let i = foodPool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [foodPool[i], foodPool[j]] = [foodPool[j], foodPool[i]];
+    }
+}
+
+function selectFoodType() {
+    if (foodPool.length === 0) {
+        initFoodPool();
+    }
+    return foodPool.pop();
+}
+
 // ==================== 遊戲主邏輯 ====================
 function startGame() {
-    if (gameRunning || !imagesLoaded) return;
+    if (gameRunning) return;
 
     if (!gameStatus || !gameStatus.available) {
         showStatus('⚠️ ' + (gameStatus ? gameStatus.message : '今日無法遊玩'));
         return;
     }
 
-    // 重置遊戲變數
     score = 0;
     timeLeft = CONFIG.gameTime;
     foods = [];
     floatTexts = [];
-    
-    // 🔥 刪除 lobsterSpawned
     trapCount = 0;
     targetTrapCount = Math.floor(Math.random() * (CONFIG.trapMaxCount - CONFIG.trapMinCount + 1)) + CONFIG.trapMinCount;
+    trapCooldownTimer = 0;
     
-    initFoodPool();  // 🔥 直接呼叫，不需要 typeof 檢查
-
+    initFoodPool();
     isWin = false;
     gameEnded = false;
     gameRunning = true;
@@ -766,28 +667,7 @@ function startGame() {
     if (animationId) cancelAnimationFrame(animationId);
     gameLoop();
 }
-// 初始化並打散食材池 (確保種類交錯不連刷)
-function initFoodPool() {
-  // 🔥 不再排除龍蝦，所有食材都進池
-  foodPool = [];
-  for (let i = 0; i < 3; i++) {
-    foodPool.push(...FOOD_TYPES);
-  }
-  // 洗牌 (Fisher-Yates Shuffle)
-  for (let i = foodPool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [foodPool[i], foodPool[j]] = [foodPool[j], foodPool[i]];
-  }
-}
 
-// 取得下一個出現的食材
-function selectFoodType() {
-  // 🔥 直接從食材池取，不再有龍蝦特殊判斷
-  if (foodPool.length === 0) {
-    initFoodPool();
-  }
-  return foodPool.pop();
-}
 function updateTimer() {
     timeLeft--;
     if (timeLeft <= 0) {
@@ -797,42 +677,40 @@ function updateTimer() {
 }
 
 function spawnFood() {
-  if (!gameRunning || gameEnded) return;
+    if (!gameRunning || gameEnded) return;
 
-  let foodType = selectFoodType();
-  if (!foodType) return;
+    let foodType = selectFoodType();
+    if (!foodType) return;
 
-  // 🔥 不再有龍蝦特殊判斷，只有陷阱控制
-  if (foodType.id === 'trap_fish' || foodType.id === 'trap_chicken' || foodType.id === 'trap_egg') {
-    if (trapCount >= targetTrapCount) return;
-    if (trapCooldownTimer > 0) return;
-    trapCount++;
-    trapCooldownTimer = 3;
-  }
+    // 陷阱控制
+    if (foodType.id === 'trap_fish' || foodType.id === 'trap_chicken' || foodType.id === 'trap_egg') {
+        if (trapCount >= targetTrapCount) return;
+        if (trapCooldownTimer > 0) return;
+        trapCount++;
+        trapCooldownTimer = 3;
+    }
 
-  const x = Math.random() * (canvas.width - CONFIG.foodSize);
-  const speed = CONFIG.fallSpeedMin + Math.random() * (CONFIG.fallSpeedMax - CONFIG.fallSpeedMin);
+    const x = Math.random() * (canvas.width - CONFIG.foodSize);
+    const speed = CONFIG.fallSpeedMin + Math.random() * (CONFIG.fallSpeedMax - CONFIG.fallSpeedMin);
 
-  foods.push({
-    type: foodType,
-    x: x,
-    y: -CONFIG.foodSize,
-    size: CONFIG.foodSize,
-    speed: speed,
-  });
+    foods.push({
+        type: foodType,
+        x: x,
+        y: -CONFIG.foodSize,
+        size: CONFIG.foodSize,
+        speed: speed,
+    });
 }
 
 function gameLoop() {
     if (!gameRunning) return;
     if (gameEnded) { draw(); return; }
-
     update();
     draw();
     animationId = requestAnimationFrame(gameLoop);
 }
 
 function update() {
-    // 🔥 更新陷阱冷卻（放在 for 迴圈外面）
     if (trapCooldownTimer > 0) {
         trapCooldownTimer -= 1/60;
         if (trapCooldownTimer < 0) trapCooldownTimer = 0;
@@ -864,50 +742,54 @@ function update() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const bgImg = IMAGES['bg_img'];
-    if (bgImg && bgImg.complete) {
-        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
-    } else {
-        ctx.fillStyle = '#2d1a1a';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
+    // 🔥 簡潔背景
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#1a0a0a');
+    gradient.addColorStop(0.5, '#2d1a1a');
+    gradient.addColorStop(1, '#1a0a0a');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // 繪製裝飾線
+    ctx.strokeStyle = 'rgba(255,215,0,0.08)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([10, 20]);
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height * 0.15);
+    ctx.lineTo(canvas.width, canvas.height * 0.15);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 🔥 繪製食材 (Emoji)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     for (let food of foods) {
-    const imgKey = food.type.id + '_img';  // 🔥 用 food.type.id 對應圖片
-    const img = IMAGES[imgKey];
-    if (img && img.complete) {
-        ctx.drawImage(img, food.x, food.y, food.size, food.size);
-    } else {
-        // fallback 用 Emoji
-        ctx.fillStyle = food.type.score > 0 ? '#4caf50' : '#ff4444';
-        ctx.fillRect(food.x, food.y, food.size, food.size);
-        ctx.fillStyle = '#fff';
-        ctx.font = '22px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(food.type.emoji || '?', food.x + food.size/2, food.y + food.size/2 + 8);
-    }
-}
-
-    const potImg = IMAGES['pot_img'];
-    if (potImg && potImg.complete) {
-        ctx.drawImage(potImg, potX, CONFIG.potY, CONFIG.potWidth, CONFIG.potHeight);
-    } else {
-        ctx.fillStyle = '#8B0000';
-        ctx.fillRect(potX, CONFIG.potY, CONFIG.potWidth, CONFIG.potHeight);
-        ctx.fillStyle = '#ffd700';
-        ctx.fillRect(potX + 4, CONFIG.potY - 4, CONFIG.potWidth - 8, 6);
+        const emoji = FOOD_EMOJIS[food.type.id] || '❓';
+        const fontSize = food.size * 1.0;
+        ctx.font = fontSize + 'px serif';
+        ctx.fillText(emoji, food.x + food.size/2, food.y + food.size/2);
     }
 
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    // 🔥 繪製鍋子 (Emoji)
+    const potSize = CONFIG.potWidth * 0.9;
+    ctx.font = potSize + 'px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(FOOD_EMOJIS.pot, potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight/2 + 4);
+
+    // 計分板
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
     roundRect(ctx, 10, 10, 150, 58, 12, true, false);
 
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 17px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`🏆 ${score} 分`, 22, 37);
+    ctx.textBaseline = 'top';
+    ctx.fillText(`🏆 ${score} 分`, 22, 18);
     ctx.fillStyle = '#ffd700';
-    ctx.fillText(`⏱️ ${timeLeft}s`, 22, 60);
+    ctx.fillText(`⏱️ ${timeLeft}s`, 22, 42);
 
+    // 浮動文字
     for (let i = floatTexts.length - 1; i >= 0; i--) {
         const ft = floatTexts[i];
         ft.y -= 1.8;
@@ -979,10 +861,8 @@ function endGame() {
     if (spawnInterval) clearInterval(spawnInterval);
     if (animationId) cancelAnimationFrame(animationId);
 
-    // 🔥 立即顯示結果畫面（避免空白等待）
     resultScreen.style.display = 'flex';
     
-    // 🔥 顯示載入狀態
     document.getElementById('resultEmoji').textContent = '⏳';
     document.getElementById('resultTitle').textContent = '結算中...';
     document.getElementById('resultTitle').className = 'result-title';
@@ -990,12 +870,11 @@ function endGame() {
     document.getElementById('resultInfo').textContent = '請稍候...';
     document.getElementById('resultBonus').textContent = '';
     document.getElementById('resultStars').innerHTML = '';
-    document.getElementById('replayBtn').style.display = 'none';
+    replayBtn.style.display = 'none';
 
     isWin = score >= CONFIG.threshold;
     const cost = gameStatus && !gameStatus.freePlay ? CONFIG.costPerPlay : 0;
 
-    // 🔥 呼叫 API 並更新結果
     submitResult(score, cost).then(data => {
         gameResultData = data;
         showResult(data);
@@ -1011,12 +890,10 @@ function showResult(data) {
     const infoEl = document.getElementById('resultInfo');
     const bonusEl = document.getElementById('resultBonus');
     const stars = document.getElementById('resultStars');
-    const bg = document.getElementById('resultBg');
 
     const isWinLocal = isWin && data.success;
     const remaining = data.remaining || 0;
 
-    // 清除舊的星星
     stars.innerHTML = '';
 
     if (isWinLocal) {
@@ -1027,17 +904,11 @@ function showResult(data) {
         infoEl.textContent = '';
         bonusEl.textContent = `🎁 獲得 ${CONFIG.bonusPoints} 點！`;
         
-        // 五星動畫
         for (let i = 0; i < 5; i++) {
             const span = document.createElement('span');
             span.className = 'star-icon';
             span.textContent = '⭐';
             stars.appendChild(span);
-        }
-        
-        const bgImg = IMAGES['successBg_img'];
-        if (bgImg && bgImg.complete) {
-            bg.style.backgroundImage = `url(${IMAGES.successBg})`;
         }
         replayBtn.style.display = 'none';
         
@@ -1046,7 +917,7 @@ function showResult(data) {
         title.textContent = '達標但儲存失敗';
         title.className = 'result-title lose';
         scoreEl.textContent = `得分：${score} 分`;
-        infoEl.textContent = data.message || '請聯絡客服';
+        infoEl.textContent = data.message || '請先截圖後聯絡客服';
         bonusEl.textContent = '';
         replayBtn.style.display = 'none';
         
@@ -1058,11 +929,7 @@ function showResult(data) {
         infoEl.textContent = data.success ? `剩餘可用次數：${remaining}` : data.message || '';
         bonusEl.textContent = '💪 差一點就達標了！';
 
-        const bgImg = IMAGES['failBg_img'];
-        if (bgImg && bgImg.complete) {
-            bg.style.backgroundImage = `url(${IMAGES.failBg})`;
-        }
-
+        // 🔥 顯示「再玩一次」按鈕
         if (data.success && remaining > 0 && CONFIG.costPerPlay > 0) {
             replayBtn.style.display = 'inline-block';
             replayBtn.textContent = `🔄 再玩一次（扣 ${CONFIG.costPerPlay} 點）`;
@@ -1074,8 +941,6 @@ function showResult(data) {
 }
 
 // ==================== 再玩一次 ====================
-let replayCallback = null;
-
 function showConfirmReplay() {
     const cost = CONFIG.costPerPlay;
     confirmMessage.textContent = `是否花費 ${cost} 點再玩一次？\n（今日剩餘可用次數：${gameResultData?.remaining || 0}）`;
@@ -1084,20 +949,14 @@ function showConfirmReplay() {
 
 function confirmReplay() {
     confirmOverlay.style.display = 'none';
-    // 重新檢查遊戲狀態
     callApi('checkGameStatus', { userId: userId }).then(data => {
         gameStatus = data;
         if (data.available) {
-            // 關閉結果畫面，回到開始畫面
             resultScreen.style.display = 'none';
             startScreen.style.display = 'flex';
             startBtn.disabled = false;
             let msg = data.freePlay ? '🎮 免費遊玩一次！' : '💎 花費 ' + data.cost + ' 點再玩一次！';
             showStatus('✅ ' + msg);
-            // 🔥 重新讀取最新會員資料，更新點數顯示
-            if (window.parent && window.parent.refreshMemberData) {
-                window.parent.refreshMemberData();
-            }
         } else {
             showStatus('⏳ ' + data.message);
             replayBtn.style.display = 'none';
@@ -1143,17 +1002,18 @@ function showStatus(msg) {
 }
 
 function goBack() {
-    // 🔥 直接跳回會員頁面（使用 location.href）
-    // 請把網址換成你的會員頁面實際網址
     var memberPageUrl = 'https://oldmapot.github.io/modeltest/index.html';
-    
-    // 帶上 userId，讓會員頁面自動登入
     if (userId) {
         memberPageUrl += '?userId=' + encodeURIComponent(userId);
     }
-    
     window.location.href = memberPageUrl;
 }
+
+// ==================== GAS 端的 recordGameResult 需要同步更新 ====================
+/* 
+ * 請在 GAS 中將 recordGameResult 的 MAX_PLAYS 改為 4
+ * 並確保扣點流水帳有寫入「遊戲扣抵」
+ */
 
 // ==================== 啟動 ====================
 document.addEventListener('DOMContentLoaded', init);
