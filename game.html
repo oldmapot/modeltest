@@ -709,7 +709,40 @@ function resizeCanvas() {
         potX = (screenWidth - CONFIG.potWidth) / 2;
     }
 }
+// 🔥 播放背景音樂（在 fastEnterGame 中呼叫）
+function startBGM() {
+    if (!bgmReady) {
+        initBGM();
+    }
+    
+    if (!bgmAudio || bgmPlaying) return;
+    
+    try {
+        bgmAudio.play();
+        bgmPlaying = true;
+        console.log('🎵 背景音樂播放中');
+    } catch(e) {
+        console.warn('背景音樂播放失敗:', e);
+        setTimeout(() => {
+            if (bgmAudio && !bgmPlaying) {
+                bgmAudio.play().catch(() => {});
+            }
+        }, 1000);
+    }
+}
 
+// 🔥 暫停背景音樂（遊戲結束時呼叫）
+function stopBGM() {
+    if (!bgmAudio || !bgmPlaying) return;
+    
+    try {
+        bgmAudio.pause();
+        bgmPlaying = false;
+        console.log('🎵 背景音樂已暫停');
+    } catch(e) {
+        console.warn('背景音樂暫停失敗:', e);
+    }
+}
 // ==================== API 呼叫 ====================
 function callApi(action, params = {}) {
     const url = new URL(GAS_BASE_URL);
@@ -948,7 +981,32 @@ function update() {
         }
     }
 }
+// ===== 龍蝦入鍋音效（合成） =====
+function playLobsterInPot() {
+    playTone(1000, 0.1, 'sine', 0.35);
+    setTimeout(() => playTone(1400, 0.1, 'sine', 0.35), 100);
+    setTimeout(() => playTone(1800, 0.15, 'sine', 0.35), 200);
+}
 
+// ===== 達標成功音效 =====
+function playSuccessSound() {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((freq, i) => {
+        setTimeout(() => playTone(freq, 0.15, 'sine', 0.3), i * 100);
+    });
+    setTimeout(() => {
+        [523, 659, 784].forEach((freq, i) => {
+            setTimeout(() => playTone(freq, 0.3, 'sine', 0.25), i * 60);
+        });
+    }, 450);
+}
+
+// ===== 失敗音效 =====
+function playFailSound() {
+    playTone(350, 0.3, 'sawtooth', 0.25);
+    setTimeout(() => playTone(250, 0.4, 'sawtooth', 0.25), 150);
+    setTimeout(() => playTone(150, 0.5, 'sawtooth', 0.2), 350);
+}
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
