@@ -134,6 +134,19 @@
             font-weight: 700;
         }
 
+        /* 🔥 新增：剩餘次數顯示 */
+        .play-info {
+            color: #ffaa88;
+            font-size: 15px;
+            margin-top: 8px;
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+            display: none;
+        }
+
         .btn-start {
             padding: 16px 56px;
             font-size: 20px;
@@ -361,8 +374,9 @@
         <div class="rules">
             🎯 目標：接到火鍋食材累積 <span class="highlight" id="thresholdDisplay">50</span> 分<br>
             🎁 獎勵：達成目標獲得 <span class="highlight" id="bonusDisplay">30</span> 點<br>
-            <span class="danger">💀 小心陷阱！</span><br>
-            <span class="info">📋 每日免費 1 次，後續每次扣 <span id="costDisplay">5</span> 點</span>
+            <span class="danger">🍰 小心陷阱甜點！</span><br>
+            <span class="info">📋 每日免費 <span id="freeDisplay">1</span> 次</span><br>
+            <span class="info">💰 可付費玩 <span id="paidDisplay">3</span> 次（每次扣 <span id="costDisplay">5</span> 點）</span>
         </div>
         <button class="btn-start" id="startBtn">🔥 開始遊戲</button>
         <div id="playStatus"></div>
@@ -397,31 +411,31 @@
 
 <script>
 // ============================================================
-//  火鍋達人 - 完整版（含聲音、刺激速度、流水帳）
+//  火鍋達人 - 完整版（最終修正）
 // ============================================================
 
 // ==================== 設定 ====================
 const CONFIG = {
-    gameTime: 30,
+    gameTime: 20,
     threshold: 50,
     bonusPoints: 30,
     maxPlays: 4,
     costPerPlay: 5,
-    trapMinCount: 12,
-    trapMaxCount: 20,
-    spawnInterval: 300,
+    trapMinCount: 15,
+    trapMaxCount: 25,
+    spawnInterval: 250,
     potWidth: 80,
     potHeight: 60,
     potY: 0,
     foodSize: 55,
     fallSpeedMin: 2.0,
-    fallSpeedMax: 7.5,
+    fallSpeedMax: 9.0,
 };
 
-// ==================== Emoji 對照表 ====================
+// ==================== Emoji 對照表（甜點陷阱） ====================
 const FOOD_EMOJIS = {
     cabbage: '🥬',
-    mushroom: '🍄‍🟫',
+    mushroom: '🍄',
     green_veg: '🥦',
     corn: '🌽',
     carrot: '🥕',
@@ -430,6 +444,7 @@ const FOOD_EMOJIS = {
     meat_1: '🥩',
     meat_2: '🥩',
     lobster: '🦞',
+    // 🔥 陷阱是甜點！（煮火鍋放甜點就是陷阱）
     trap_skull: '🧁',
     trap_warning: '🍧',
     trap_bomb: '🧋',
@@ -448,50 +463,93 @@ const FOOD_TYPES = [
     { id: 'meat_1', score: 2, weight: 10 },
     { id: 'meat_2', score: 2, weight: 10 },
     { id: 'lobster', score: 5, weight: 2 },
-    // 🔥 陷阱改用骷髏、警告、炸彈
     { id: 'trap_skull', score: -1, weight: 6 },
     { id: 'trap_warning', score: -1, weight: 6 },
     { id: 'trap_bomb', score: -1, weight: 6 }
 ];
 
 // ============================================================
-//  手機專用聲音系統
+//  聲音系統（手機專用 + 背景音樂）
 // ============================================================
 
 let audioCtx = null;
 let audioReady = false;
+let audioUnlocked = false;
 
-// 🔥 手機專用：初始化音頻（必須在用戶點擊後呼叫）
+// 🔥 背景音樂旋律（輕快循環）
+const BGM_MELODY = [
+    { note: 523, duration: 0.15 },  // C5
+    { note: 587, duration: 0.15 },  // D5
+    { note: 659, duration: 0.15 },  // E5
+    { note: 784, duration: 0.25 },  // G5
+    { note: 659, duration: 0.15 },  // E5
+    { note: 587, duration: 0.15 },  // D5
+    { note: 523, duration: 0.3 },   // C5
+    { note: 659, duration: 0.15 },  // E5
+    { note: 784, duration: 0.15 },  // G5
+    { note: 880, duration: 0.25 },  // A5
+    { note: 784, duration: 0.15 },  // G5
+    { note: 659, duration: 0.3 },   // E5
+];
+
+let bgmIndex = 0;
+let bgmInterval = null;
+let bgmRunning = false;
+
+function unlockAudio() {
+    if (audioUnlocked) return;
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') {
+            ctx.resume();
+        }
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.001, ctx.currentTime);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.01);
+        audioUnlocked = true;
+        audioCtx = ctx;
+        audioReady = true;
+        console.log('🔊 音頻已解鎖');
+    } catch(e) {
+        console.warn('音頻解鎖失敗:', e);
+    }
+}
+
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('click', unlockAudio, { once: true });
+
 function initAudio() {
     try {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
-        // 🔥 手機關鍵：resume() 讓聲音真正啟動
         if (audioCtx.state === 'suspended') {
             audioCtx.resume();
         }
         audioReady = true;
-        console.log('🔊 音頻已啟用，狀態:', audioCtx.state);
         return true;
     } catch (e) {
-        console.warn('音頻初始化失敗:', e);
         return false;
     }
 }
 
-// 🔥 播放音效（手機優化版）
 function playTone(freq, duration, type = 'sine', vol = 0.3) {
     try {
-        // 如果音頻未就緒，嘗試初始化
-        if (!audioReady || !audioCtx) {
-            initAudio();
+        if (!audioUnlocked) {
+            unlockAudio();
         }
         if (!audioCtx || audioCtx.state !== 'running') {
-            // 如果還是無法播放，跳過（不影響遊戲）
-            return;
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            if (!audioCtx || audioCtx.state !== 'running') {
+                return;
+            }
         }
-        
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = type;
@@ -502,12 +560,10 @@ function playTone(freq, duration, type = 'sine', vol = 0.3) {
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + duration);
-    } catch (e) {
-        // 靜默失敗
-    }
+    } catch (e) {}
 }
 
-// 各音效函數（保持不變，但內部會自動處理手機問題）
+// ===== 音效函數 =====
 function playFoodInPot() {
     playTone(900, 0.08, 'sine', 0.3);
     setTimeout(() => playTone(1300, 0.06, 'sine', 0.25), 70);
@@ -542,16 +598,13 @@ function playFailSound() {
     setTimeout(() => playTone(150, 0.5, 'sawtooth', 0.2), 350);
 }
 
-// 背景音樂（手機版 - 音量降低）
-let bgmInterval = null;
-let bgmRunning = false;
-
+// ===== 背景音樂（輕快循環） =====
 function startBGM() {
     if (bgmRunning) return;
-    // 🔥 確保音頻已初始化
     initAudio();
     bgmRunning = true;
-    playBGMNote();
+    bgmIndex = 0;
+    playNextBGMNote();
 }
 
 function stopBGM() {
@@ -562,13 +615,20 @@ function stopBGM() {
     }
 }
 
-function playBGMNote() {
+function playNextBGMNote() {
     if (!bgmRunning) return;
-    const notes = [440, 493, 554, 587, 659, 740];
-    const note = notes[Math.floor(Math.random() * notes.length)];
-    playTone(note, 0.3, 'sine', 0.04);  // 音量很低，不干擾遊戲
-    const interval = 600 + Math.random() * 900;
-    bgmInterval = setTimeout(playBGMNote, interval);
+    
+    const melody = BGM_MELODY;
+    const note = melody[bgmIndex % melody.length];
+    
+    // 播放音符（音量低，不干擾遊戲）
+    playTone(note.note, note.duration, 'sine', 0.06);
+    
+    bgmIndex++;
+    
+    // 下一個音符的間隔（稍微有節奏感）
+    const delay = note.duration * 1000 + 80;
+    bgmInterval = setTimeout(playNextBGMNote, delay);
 }
 
 // ==================== 遊戲狀態 ====================
@@ -633,7 +693,7 @@ function init() {
     initFoodPool();
     loadInitialData();
 
-    startBtn.addEventListener('click', startGame);
+    startBtn.addEventListener('click', fastEnterGame);
     retryBtn.addEventListener('click', goBack);
     replayBtn.addEventListener('click', showConfirmReplay);
     confirmYes.addEventListener('click', confirmReplay);
@@ -661,19 +721,7 @@ function resizeCanvas() {
         potX = (screenWidth - CONFIG.potWidth) / 2;
     }
 }
-// 在 init() 或 startGame() 中建立聲音元素
-function createAudioElements() {
-    // 用 Base64 產生極短的聲音（不用外部檔案）
-    // 或者直接用 Web Audio API + 強制 resume
-}
 
-// 更簡單：手機上強制 resume audio context
-function ensureAudio() {
-    if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-        console.log('🔊 音頻已恢復');
-    }
-}
 // ==================== API 呼叫 ====================
 function callApi(action, params = {}) {
     const url = new URL(GAS_BASE_URL);
@@ -713,6 +761,9 @@ async function loadInitialData() {
 
         if (statusData) {
             gameStatus = statusData;
+            document.getElementById('freeDisplay').textContent = statusData.freePlay ? '1' : '0';
+            document.getElementById('paidDisplay').textContent = statusData.remaining || 0;
+            
             if (statusData.available) {
                 startBtn.disabled = false;
                 let msg = statusData.freePlay ? '🎮 免費遊玩一次！' : '💎 花費 ' + statusData.cost + ' 點再玩一次！';
@@ -755,19 +806,28 @@ function selectFoodType() {
     return foodPool.pop();
 }
 
-// ==================== 遊戲主邏輯 ====================
-function startGame() {
-    if (gameRunning) return;
+// ==================== 動態難度 ====================
+function getDifficultyMultiplier(score) {
+    const multiplier = 1 + Math.floor(score / 10) * 0.3;
+    return Math.min(multiplier, 2.5);
+}
 
+// ==================== 遊戲主邏輯 ====================
+function fastEnterGame() {
     if (!gameStatus || !gameStatus.available) {
         showStatus('⚠️ ' + (gameStatus ? gameStatus.message : '今日無法遊玩'));
         return;
     }
 
-    // 🔥 初始化音頻並播放背景音樂
+    // 立即切換畫面
+    startScreen.style.display = 'none';
+    resultScreen.style.display = 'none';
+
+    // 初始化音頻 + 背景音樂
     initAudio();
     startBGM();
 
+    // 重置遊戲
     score = 0;
     timeLeft = CONFIG.gameTime;
     foods = [];
@@ -781,9 +841,6 @@ function startGame() {
     isWin = false;
     gameEnded = false;
     gameRunning = true;
-
-    startScreen.style.display = 'none';
-    resultScreen.style.display = 'none';
 
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(updateTimer, 1000);
@@ -814,21 +871,46 @@ function spawnFood() {
         if (trapCount >= targetTrapCount) return;
         if (trapCooldownTimer > 0) return;
         trapCount++;
-        trapCooldownTimer = 2.5;
+        trapCooldownTimer = 2.0;
     }
 
     const x = Math.random() * (canvas.width - CONFIG.foodSize);
-    // 🔥 速度變化更大，增加刺激感
-    const speedVariation = (Math.random() - 0.5) * 1.5;
-    const speed = CONFIG.fallSpeedMin + Math.random() * (CONFIG.fallSpeedMax - CONFIG.fallSpeedMin) + speedVariation;
+    
+    // 速度隨機
+    const r = Math.random();
+    let speed;
+    if (r < 0.15) {
+        speed = 7.5 + Math.random() * 2.0;
+    } else if (r < 0.40) {
+        speed = 5.0 + Math.random() * 2.5;
+    } else {
+        speed = 3.0 + Math.random() * 2.0;
+    }
+
+    // 套用難度倍率
+    const multiplier = getDifficultyMultiplier(score);
+    const finalSpeed = speed * multiplier;
 
     foods.push({
         type: foodType,
         x: x,
         y: -CONFIG.foodSize,
         size: CONFIG.foodSize,
-        speed: Math.max(1.0, speed),
+        speed: Math.min(finalSpeed, 12),
     });
+
+    // 有機率多掉一個
+    if (Math.random() < 0.15 * multiplier) {
+        const x2 = Math.random() * (canvas.width - CONFIG.foodSize);
+        const speed2 = (speed * 0.8 + Math.random() * 0.5) * multiplier;
+        foods.push({
+            type: selectFoodType(),
+            x: x2,
+            y: -CONFIG.foodSize,
+            size: CONFIG.foodSize,
+            speed: Math.min(speed2, 12),
+        });
+    }
 }
 
 function gameLoop() {
@@ -858,7 +940,6 @@ function update() {
             const change = food.type.score;
             score += change;
             
-            // 🔥 根據食材播放不同聲音
             const id = food.type.id;
             if (id === 'lobster') {
                 playLobsterInPot();
@@ -882,7 +963,6 @@ function update() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 木紋風背景
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#f5e6d3');
     gradient.addColorStop(0.5, '#e8d5c4');
@@ -890,7 +970,6 @@ function draw() {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 裝飾點點
     ctx.fillStyle = 'rgba(180, 140, 100, 0.15)';
     for (let i = 0; i < 20; i++) {
         const dotX = Math.random() * canvas.width;
@@ -900,7 +979,6 @@ function draw() {
         ctx.fill();
     }
 
-    // 繪製食材 (Emoji)
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (let food of foods) {
@@ -913,7 +991,6 @@ function draw() {
         ctx.shadowBlur = 0;
     }
 
-    // 繪製鍋子
     const potSize = CONFIG.potWidth * 0.85;
     ctx.font = potSize + 'px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
     ctx.textAlign = 'center';
@@ -923,13 +1000,11 @@ function draw() {
     ctx.fillText(FOOD_EMOJIS.pot, potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight/2 + 2);
     ctx.shadowBlur = 0;
 
-    // 鍋子陰影
     ctx.fillStyle = 'rgba(0,0,0,0.08)';
     ctx.beginPath();
     ctx.ellipse(potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight + 4, CONFIG.potWidth/2.2, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 計分板
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
     roundRect(ctx, 10, 10, 150, 58, 14, true, false);
 
@@ -942,7 +1017,6 @@ function draw() {
     ctx.fillStyle = '#ffd700';
     ctx.fillText(`⏱️ ${timeLeft}s`, 22, 42);
 
-    // 浮動文字
     for (let i = floatTexts.length - 1; i >= 0; i--) {
         const ft = floatTexts[i];
         ft.y -= 1.8;
@@ -975,7 +1049,6 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke) {
     if (stroke) ctx.stroke();
 }
 
-// ==================== 浮動文字 ====================
 function showFloatText(x, y, change, isSpecial) {
     const el = document.createElement('div');
     el.className = 'float-text';
@@ -1016,7 +1089,15 @@ function endGame() {
     if (spawnInterval) clearInterval(spawnInterval);
     if (animationId) cancelAnimationFrame(animationId);
 
-    // 🔥 立即顯示結果，不等待 API
+    // 🔥 除錯資訊
+    const debugInfo = {
+        gameStatus: gameStatus,
+        freePlay: gameStatus?.freePlay,
+        cost: gameStatus && !gameStatus.freePlay ? CONFIG.costPerPlay : 0
+    };
+    console.log('📊 除錯資訊:', JSON.stringify(debugInfo));
+
+    // 🔥 結果畫面
     resultScreen.style.display = 'flex';
     
     document.getElementById('resultEmoji').textContent = '⏳';
@@ -1030,22 +1111,23 @@ function endGame() {
 
     isWin = score >= CONFIG.threshold;
     const cost = gameStatus && !gameStatus.freePlay ? CONFIG.costPerPlay : 0;
+    
+    console.log('📊 最終 cost:', cost, '類型:', typeof cost);
 
-    // 🔥 先播放結果聲音（讓玩家有立即反饋）
     if (isWin) {
         playSuccessSound();
     } else {
         playFailSound();
     }
 
-    // 🔥 API 呼叫，2秒後自動跳轉
     submitResult(score, cost).then(data => {
         gameResultData = data;
-        // 等待 2 秒讓玩家看到結果
+        console.log('📊 submitResult 回傳:', data);
         setTimeout(() => {
             showResult(data);
         }, 2000);
-    }).catch(() => {
+    }).catch((err) => {
+        console.error('❌ submitResult 錯誤:', err);
         setTimeout(() => {
             showResult({ success: false, message: '網路錯誤' });
         }, 2000);
@@ -1164,7 +1246,6 @@ function handleTouchStart(e) {
     potX = Math.max(0, Math.min(x - CONFIG.potWidth/2, canvas.width - CONFIG.potWidth));
 }
 
-// ==================== UI 輔助 ====================
 function showStatus(msg) {
     playStatus.textContent = msg;
 }
