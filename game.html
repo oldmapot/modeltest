@@ -447,7 +447,8 @@ const IMAGES = {
   pot: 'https://i.ibb.co/sk9n2KH/26.png',         //火鍋鍋子
   successBg: 'https://i.ibb.co/03dfdsN/30.png',   //成功畫面
   failBg: 'https://i.ibb.co/Lz7gFY0M/29.png',     //失敗畫面
-  star: 'https://i.ibb.co/rR5PF3kZ/31.png',      //遊戲底圖
+  star: 'https://i.ibb.co/rR5PF3kZ/31.png',      //達標 winner字樣
+  bg: "https://i.ibb.co/sdcqjnV6/28.png",        //遊戲底圖
   // 🥦 蔬菜 +1 分
   cabbage: "https://i.ibb.co/MH2cTLP/1.png",      // 高麗菜
   mushroom: "https://i.ibb.co/Nnsm5ZzR/10.png",    // 香菇
@@ -794,16 +795,23 @@ function initFoodPool() {
 
 // 取得下一個出現的食材
 function selectFoodType() {
-  // 剩餘時間 5~15 秒間，有 15% 機率觸發龍蝦 (全場限 1 次)
-  if (!lobsterSpawned && gameTime <= 15 && gameTime >= 5 && Math.random() < 0.15) {
-    lobsterSpawned = true;
-    return FOOD_TYPES.find(f => f.type === 'lobster');
-  }
+    // 🔥 龍蝦出現條件：整場只出現 1 次，在剩餘 5~15 秒時觸發
+    if (!lobsterSpawned && timeLeft <= 15 && timeLeft >= 5) {
+        // 20% 機率出現龍蝦（每次判斷時）
+        if (Math.random() < 0.20) {
+            lobsterSpawned = true;
+            console.log("🦞 龍蝦出現了！時間剩餘:", timeLeft);
+            return FOOD_TYPES.find(f => f.id === 'lobster');
+        }
+    }
 
-  if (foodPool.length === 0) {
-    initFoodPool();
-  }
-  return foodPool.pop();
+    // 如果食材池空了，重新補貨
+    if (foodPool.length === 0) {
+        initFoodPool();
+    }
+    
+    // 從食材池取一個
+    return foodPool.pop();
 }
 function updateTimer() {
     timeLeft--;
