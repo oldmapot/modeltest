@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>火鍋達人 - 老娘鍋</title>
+    <title>火鍋達人</title>
     <style>
         * {
             margin: 0;
@@ -29,7 +29,7 @@
             width: 100%;
             max-width: 480px;
             aspect-ratio: 9 / 16;
-            background: #2d1a1a;
+            background: #f5e6d3;
             overflow: hidden;
             border-radius: 20px;
             box-shadow: 0 0 60px rgba(200, 50, 50, 0.25);
@@ -39,7 +39,7 @@
             width: 100%;
             height: 100%;
             display: block;
-            background: #2d1a1a;
+            background: #f5e6d3;
             touch-action: none;
             cursor: pointer;
         }
@@ -55,15 +55,15 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: #2d1a1a;
+            background: #f5e6d3;
             z-index: 30;
-            color: #fff;
+            color: #333;
         }
         #loadingScreen .spinner {
             width: 40px;
             height: 40px;
-            border: 4px solid rgba(255,215,0,0.2);
-            border-top: 4px solid #ffd700;
+            border: 4px solid rgba(139,0,0,0.2);
+            border-top: 4px solid #8b0000;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin-bottom: 16px;
@@ -73,7 +73,7 @@
         }
         #loadingScreen p {
             font-size: 16px;
-            color: #ffaa88;
+            color: #8b0000;
             letter-spacing: 2px;
         }
 
@@ -88,7 +88,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.75);
             z-index: 10;
             padding: 24px 20px;
         }
@@ -393,7 +393,7 @@
 
 <script>
 // ============================================================
-//  火鍋達人 - Emoji 完整版
+//  火鍋達人 - Emoji 完整版（修正視覺）
 // ============================================================
 
 // ==================== 設定 ====================
@@ -401,7 +401,7 @@ const CONFIG = {
     gameTime: 30,
     threshold: 50,
     bonusPoints: 30,
-    maxPlays: 4,              // 🔥 免費 1 次 + 付費 3 次 = 共 4 次
+    maxPlays: 4,
     costPerPlay: 5,
     trapMinCount: 10,
     trapMaxCount: 15,
@@ -409,7 +409,7 @@ const CONFIG = {
     potWidth: 80,
     potHeight: 60,
     potY: 0,
-    foodSize: 55,             // 🔥 Emoji 大小
+    foodSize: 55,
     fallSpeedMin: 2.8,
     fallSpeedMax: 4.8,
 };
@@ -428,26 +428,22 @@ const FOOD_EMOJIS = {
     lobster: '🦞',
     trap_fish: '🐟',
     trap_chicken: '🦴',
-    trap_egg: '🥚❌',
+    trap_egg: '🥚',
     pot: '🍲'
 };
 
 // ==================== 食材定義 ====================
 const FOOD_TYPES = [
-    // 蔬菜類 (+1分)
     { id: 'cabbage', score: 1, weight: 15 },
     { id: 'mushroom', score: 1, weight: 15 },
     { id: 'green_veg', score: 1, weight: 15 },
     { id: 'corn', score: 1, weight: 15 },
     { id: 'carrot', score: 1, weight: 15 },
-    // 海鮮與肉片 (+2分)
     { id: 'shrimp', score: 2, weight: 10 },
     { id: 'clam', score: 2, weight: 10 },
     { id: 'meat_1', score: 2, weight: 10 },
     { id: 'meat_2', score: 2, weight: 10 },
-    // 龍蝦 (+5分)
     { id: 'lobster', score: 5, weight: 2 },
-    // 陷阱類 (-1分)
     { id: 'trap_fish', score: -1, weight: 5 },
     { id: 'trap_chicken', score: -1, weight: 5 },
     { id: 'trap_egg', score: -1, weight: 5 }
@@ -474,7 +470,6 @@ let gameResultData = null;
 let gameStatus = null;
 let trapCooldownTimer = 0;
 let foodPool = [];
-let imagesLoaded = true;  // 🔥 Emoji 不需要載入圖片
 
 // ==================== DOM 元素 ====================
 const canvasEl = document.getElementById('gameCanvas');
@@ -496,15 +491,8 @@ function init() {
     userId = params.get('userId') || '';
     GAS_BASE_URL = params.get('api') || '';
 
-    if (!userId) {
-        showStatus('⚠️ 請先登入會員');
-        startBtn.disabled = true;
-        loadingScreen.style.display = 'none';
-        return;
-    }
-
-    if (!GAS_BASE_URL) {
-        showStatus('⚠️ 缺少 API 網址');
+    if (!userId || !GAS_BASE_URL) {
+        showStatus('⚠️ 請先登入會員或缺少 API 網址');
         startBtn.disabled = true;
         loadingScreen.style.display = 'none';
         return;
@@ -515,7 +503,6 @@ function init() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // 🔥 直接顯示開始畫面，背景載入資料
     loadingScreen.style.display = 'none';
     startScreen.style.display = 'flex';
     showStatus('⏳ 載入遊戲設定...');
@@ -742,23 +729,23 @@ function update() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 🔥 簡潔背景
+    // 🔥 木紋風背景（暖色調）
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#1a0a0a');
-    gradient.addColorStop(0.5, '#2d1a1a');
-    gradient.addColorStop(1, '#1a0a0a');
+    gradient.addColorStop(0, '#f5e6d3');
+    gradient.addColorStop(0.5, '#e8d5c4');
+    gradient.addColorStop(1, '#f5e6d3');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 繪製裝飾線
-    ctx.strokeStyle = 'rgba(255,215,0,0.08)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([10, 20]);
-    ctx.beginPath();
-    ctx.moveTo(0, canvas.height * 0.15);
-    ctx.lineTo(canvas.width, canvas.height * 0.15);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    // 裝飾點點（模擬桌面紋理）
+    ctx.fillStyle = 'rgba(180, 140, 100, 0.15)';
+    for (let i = 0; i < 30; i++) {
+        const dotX = Math.random() * canvas.width;
+        const dotY = Math.random() * canvas.height;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, Math.random() * 3 + 1, 0, Math.PI * 2);
+        ctx.fill();
+    }
 
     // 🔥 繪製食材 (Emoji)
     ctx.textAlign = 'center';
@@ -766,25 +753,38 @@ function draw() {
     for (let food of foods) {
         const emoji = FOOD_EMOJIS[food.type.id] || '❓';
         const fontSize = food.size * 1.0;
-        ctx.font = fontSize + 'px serif';
+        ctx.font = fontSize + 'px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+        ctx.shadowColor = 'rgba(0,0,0,0.2)';
+        ctx.shadowBlur = 8;
         ctx.fillText(emoji, food.x + food.size/2, food.y + food.size/2);
+        ctx.shadowBlur = 0;
     }
 
     // 🔥 繪製鍋子 (Emoji)
-    const potSize = CONFIG.potWidth * 0.9;
-    ctx.font = potSize + 'px serif';
+    const potSize = CONFIG.potWidth * 0.85;
+    ctx.font = potSize + 'px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(FOOD_EMOJIS.pot, potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight/2 + 4);
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 12;
+    ctx.fillText(FOOD_EMOJIS.pot, potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight/2 + 2);
+    ctx.shadowBlur = 0;
+
+    // 🔥 鍋子底部陰影（增加立體感）
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight + 4, CONFIG.potWidth/2.2, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
 
     // 計分板
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    roundRect(ctx, 10, 10, 150, 58, 12, true, false);
+    roundRect(ctx, 10, 10, 150, 58, 14, true, false);
 
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 17px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
+    ctx.shadowBlur = 0;
     ctx.fillText(`🏆 ${score} 分`, 22, 18);
     ctx.fillStyle = '#ffd700';
     ctx.fillText(`⏱️ ${timeLeft}s`, 22, 42);
@@ -917,7 +917,7 @@ function showResult(data) {
         title.textContent = '達標但儲存失敗';
         title.className = 'result-title lose';
         scoreEl.textContent = `得分：${score} 分`;
-        infoEl.textContent = data.message || '請先截圖後聯絡客服';
+        infoEl.textContent = data.message || '請截圖分數頁面，聯絡客服';
         bonusEl.textContent = '';
         replayBtn.style.display = 'none';
         
@@ -929,7 +929,6 @@ function showResult(data) {
         infoEl.textContent = data.success ? `剩餘可用次數：${remaining}` : data.message || '';
         bonusEl.textContent = '💪 差一點就達標了！';
 
-        // 🔥 顯示「再玩一次」按鈕
         if (data.success && remaining > 0 && CONFIG.costPerPlay > 0) {
             replayBtn.style.display = 'inline-block';
             replayBtn.textContent = `🔄 再玩一次（扣 ${CONFIG.costPerPlay} 點）`;
@@ -1008,12 +1007,6 @@ function goBack() {
     }
     window.location.href = memberPageUrl;
 }
-
-// ==================== GAS 端的 recordGameResult 需要同步更新 ====================
-/* 
- * 請在 GAS 中將 recordGameResult 的 MAX_PLAYS 改為 4
- * 並確保扣點流水帳有寫入「遊戲扣抵」
- */
 
 // ==================== 啟動 ====================
 document.addEventListener('DOMContentLoaded', init);
