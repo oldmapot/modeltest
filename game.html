@@ -385,7 +385,6 @@
             🎯 目標：接到食材累積 <span class="highlight" id="thresholdDisplay">50</span> 分<br>
             🎁 獎勵：達成目標獲得 <span class="highlight" id="bonusDisplay">30</span> 點<br>
             ⚠️ 陷阱會扣分！<br>
-            🦞 龍蝦超稀有！<span class="highlight">+10 分</span><br>
             <span class="info">📋 每日免費 1 次，後續每次扣 <span id="costDisplay">5</span> 點</span>
         </div>
         <button class="btn-start" id="startBtn">🔥 開始遊戲</button>
@@ -722,11 +721,12 @@ function spawnFood() {
     let foodType = selectFoodType();
     if (!foodType) return;
 
-    if (foodType.id === 'lobster') {
-        if (lobsterSpawned) return;
-        lobsterSpawned = true;
-        if (Math.random() > 0.5) return;
-    }
+    // ✅ 正確寫法
+if (foodType.id === 'lobster') {
+    if (lobsterSpawned) return;      // 已出現 → 不再出現
+    lobsterSpawned = true;           // 標記為已出現
+    // 🔥 龍蝦一旦被選中，就 100% 出現，不再隨機跳過
+}
 
     if (foodType.id === 'trap') {
         if (trapCount >= targetTrapCount) return;
