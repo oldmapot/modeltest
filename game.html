@@ -625,13 +625,12 @@ async function loadInitialData() {
     startBtn.disabled = true;
 
     try {
-        // 🔥 Promise.all 同步並行發送
         const [configData, statusData] = await Promise.all([
             callApi('getGameConfig'),
             callApi('checkGameStatus', { userId: userId })
         ]);
 
-        // 1. 寫回 CONFIG 並更新畫面顯示
+        // 1. 寫回 CONFIG 並更新畫面文字
         if (configData && configData.success) {
             CONFIG.threshold = configData.threshold || CONFIG.threshold;
             CONFIG.bonusPoints = configData.bonusPoints || CONFIG.bonusPoints;
@@ -645,7 +644,7 @@ async function loadInitialData() {
             document.getElementById('costDisplay').textContent = CONFIG.costPerPlay;
         }
 
-        // 2. 更新遊戲狀態 (gameStatus)
+        // 2. 更新遊戲狀態
         if (statusData) {
             gameStatus = statusData;
             if (statusData.available) {
@@ -657,6 +656,16 @@ async function loadInitialData() {
                 showStatus('⏳ ' + statusData.message);
             }
         }
+
+        // 🔥 補上這行！資料載入完後，重新繪製/初始化遊戲畫面上的食材
+        if (typeof initGameScene === 'function') {
+            initGameScene();
+        } else if (typeof resetGame === 'function') {
+            resetGame();
+        } else if (typeof draw === 'function') {
+            draw();
+        }
+
     } catch (err) {
         console.error('載入失敗:', err);
         showStatus('⚠️ 網路連線失敗，請重新整理');
