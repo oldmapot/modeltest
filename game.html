@@ -541,6 +541,49 @@ function toggleMute() {
         showStatus('🔊 音樂已開啟');
     }
 }
+
+// ============================================================
+//  音效（從 GitHub 載入）
+// ============================================================
+
+// 🔥 音效物件
+const SFX = {
+    foodInPot: null,
+    trapInPot: null,
+    loaded: false
+};
+
+// 🔥 載入音效（在點擊開始時呼叫）
+function loadSFX() {
+    if (SFX.loaded) return;
+    
+    try {
+        SFX.foodInPot = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/%E3%81%B1%E3%81%A3.mp3');
+        SFX.trapInPot = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/%E3%82%AD%E3%83%A3%E3%83%B3%E3%82%BB%E3%83%AB%E9%9F%B3_3.mp3');
+        SFX.loaded = true;
+        console.log('🎵 音效已載入');
+    } catch(e) {
+        console.warn('音效載入失敗:', e);
+    }
+}
+
+// 🔥 播放食材入鍋音效
+function playFoodSFX() {
+    if (!SFX.loaded || !SFX.foodInPot) return;
+    try {
+        SFX.foodInPot.currentTime = 0;  // 重置到開頭
+        SFX.foodInPot.play().catch(() => {});
+    } catch(e) {}
+}
+
+// 🔥 播放陷阱入鍋音效
+function playTrapSFX() {
+    if (!SFX.loaded || !SFX.trapInPot) return;
+    try {
+        SFX.trapInPot.currentTime = 0;  // 重置到開頭
+        SFX.trapInPot.play().catch(() => {});
+    } catch(e) {}
+}
 // ============================================================
 //  聲音系統（手機專用 + 背景音樂）
 // ============================================================
@@ -634,74 +677,6 @@ function playTone(freq, duration, type = 'sine', vol = 0.3) {
         osc.start();
         osc.stop(audioCtx.currentTime + duration);
     } catch (e) {}
-}
-
-// ===== 音效函數 =====
-function playFoodInPot() {
-    playTone(900, 0.08, 'sine', 0.3);
-    setTimeout(() => playTone(1300, 0.06, 'sine', 0.25), 70);
-}
-
-function playTrapInPot() {
-    playTone(150, 0.4, 'sawtooth', 0.35);
-    setTimeout(() => playTone(100, 0.3, 'sawtooth', 0.3), 120);
-}
-
-function playLobsterInPot() {
-    playTone(1000, 0.1, 'sine', 0.35);
-    setTimeout(() => playTone(1400, 0.1, 'sine', 0.35), 100);
-    setTimeout(() => playTone(1800, 0.15, 'sine', 0.35), 200);
-}
-
-function playSuccessSound() {
-    const notes = [523, 659, 784, 1047];
-    notes.forEach((freq, i) => {
-        setTimeout(() => playTone(freq, 0.15, 'sine', 0.3), i * 100);
-    });
-    setTimeout(() => {
-        [523, 659, 784].forEach((freq, i) => {
-            setTimeout(() => playTone(freq, 0.3, 'sine', 0.25), i * 60);
-        });
-    }, 450);
-}
-
-function playFailSound() {
-    playTone(350, 0.3, 'sawtooth', 0.25);
-    setTimeout(() => playTone(250, 0.4, 'sawtooth', 0.25), 150);
-    setTimeout(() => playTone(150, 0.5, 'sawtooth', 0.2), 350);
-}
-
-// ===== 背景音樂（輕快循環） =====
-function startBGM() {
-    if (bgmRunning) return;
-    initAudio();
-    bgmRunning = true;
-    bgmIndex = 0;
-    playNextBGMNote();
-}
-
-function stopBGM() {
-    bgmRunning = false;
-    if (bgmInterval) {
-        clearTimeout(bgmInterval);
-        bgmInterval = null;
-    }
-}
-
-function playNextBGMNote() {
-    if (!bgmRunning) return;
-    
-    const melody = BGM_MELODY;
-    const note = melody[bgmIndex % melody.length];
-    
-    // 播放音符（音量低，不干擾遊戲）
-    playTone(note.note, note.duration, 'sine', 0.06);
-    
-    bgmIndex++;
-    
-    // 下一個音符的間隔（稍微有節奏感）
-    const delay = note.duration * 1000 + 80;
-    bgmInterval = setTimeout(playNextBGMNote, delay);
 }
 
 // ==================== 遊戲狀態 ====================
@@ -896,11 +871,10 @@ function fastEnterGame() {
     startScreen.style.display = 'none';
     resultScreen.style.display = 'none';
 
-    
-     // 初始化音頻 + 背景音樂
-    initAudio();
-    initBGM();    // 🔥 載入背景音樂
-    startBGM();   // 🔥 播放背景音樂
+    // 🔥 載入音效 + 背景音樂
+    loadSFX();        // ← 載入音效
+    initBGM();
+    startBGM();
 
     // 重置遊戲
     score = 0;
@@ -926,7 +900,6 @@ function fastEnterGame() {
     if (animationId) cancelAnimationFrame(animationId);
     gameLoop();
 }
-
 function updateTimer() {
     timeLeft--;
     if (timeLeft <= 0) {
@@ -1017,11 +990,12 @@ function update() {
             
             const id = food.type.id;
             if (id === 'lobster') {
+                // 龍蝦用原本的 Web Audio 音效（比較特別）
                 playLobsterInPot();
             } else if (id === 'trap_skull' || id === 'trap_warning' || id === 'trap_bomb') {
-                playTrapInPot();
+                playTrapSFX();   // 🔥 改用新的陷阱音效
             } else {
-                playFoodInPot();
+                playFoodSFX();   // 🔥 改用新的食材音效
             }
             
             showFloatText(food.x + food.size/2, food.y, change, food.type.id === 'lobster');
