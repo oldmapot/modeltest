@@ -400,7 +400,7 @@
             <div class="result-info" id="resultInfo"></div>
             <div id="resultStars" class="stars-container"></div>
             <div class="result-bonus" id="resultBonus"></div>
-            <button class="btn-retry" id="retryBtn">🏠 返回</button>
+           <button class="btn-retry" id="retryBtn">🏠 返回</button>
             <button class="btn-replay" id="replayBtn" style="display:none;">🔄 再玩一次（扣 5 點）</button>
         </div>
     </div>
@@ -907,11 +907,23 @@ function endGame() {
     if (spawnInterval) clearInterval(spawnInterval);
     if (animationId) cancelAnimationFrame(animationId);
 
-    isWin = score >= CONFIG.threshold;
+    // 🔥 立即顯示結果畫面（避免空白等待）
+    resultScreen.style.display = 'flex';
+    
+    // 🔥 顯示載入狀態
+    document.getElementById('resultEmoji').textContent = '⏳';
+    document.getElementById('resultTitle').textContent = '結算中...';
+    document.getElementById('resultTitle').className = 'result-title';
+    document.getElementById('resultScore').textContent = `得分：${score} 分`;
+    document.getElementById('resultInfo').textContent = '請稍候...';
+    document.getElementById('resultBonus').textContent = '';
+    document.getElementById('resultStars').innerHTML = '';
+    document.getElementById('replayBtn').style.display = 'none';
 
-    // 計算這次遊戲花費
+    isWin = score >= CONFIG.threshold;
     const cost = gameStatus && !gameStatus.freePlay ? CONFIG.costPerPlay : 0;
 
+    // 🔥 呼叫 API 並更新結果
     submitResult(score, cost).then(data => {
         gameResultData = data;
         showResult(data);
@@ -921,8 +933,6 @@ function endGame() {
 }
 
 function showResult(data) {
-    resultScreen.style.display = 'flex';
-
     const emoji = document.getElementById('resultEmoji');
     const title = document.getElementById('resultTitle');
     const scoreEl = document.getElementById('resultScore');
@@ -934,6 +944,9 @@ function showResult(data) {
     const isWinLocal = isWin && data.success;
     const remaining = data.remaining || 0;
 
+    // 清除舊的星星
+    stars.innerHTML = '';
+
     if (isWinLocal) {
         emoji.textContent = '🎉';
         title.textContent = '太棒了！達標！';
@@ -941,18 +954,21 @@ function showResult(data) {
         scoreEl.textContent = `得分：${score} 分`;
         infoEl.textContent = '';
         bonusEl.textContent = `🎁 獲得 ${CONFIG.bonusPoints} 點！`;
-        stars.innerHTML = '';
+        
+        // 五星動畫
         for (let i = 0; i < 5; i++) {
             const span = document.createElement('span');
             span.className = 'star-icon';
             span.textContent = '⭐';
             stars.appendChild(span);
         }
+        
         const bgImg = IMAGES['successBg_img'];
         if (bgImg && bgImg.complete) {
             bg.style.backgroundImage = `url(${IMAGES.successBg})`;
         }
         replayBtn.style.display = 'none';
+        
     } else if (isWin && !data.success) {
         emoji.textContent = '⚠️';
         title.textContent = '達標但儲存失敗';
@@ -960,8 +976,8 @@ function showResult(data) {
         scoreEl.textContent = `得分：${score} 分`;
         infoEl.textContent = data.message || '請聯絡客服';
         bonusEl.textContent = '';
-        stars.innerHTML = '';
         replayBtn.style.display = 'none';
+        
     } else {
         emoji.textContent = '😅';
         title.textContent = '再接再厲！';
@@ -969,14 +985,12 @@ function showResult(data) {
         scoreEl.textContent = `得分：${score} 分 / 目標：${CONFIG.threshold} 分`;
         infoEl.textContent = data.success ? `剩餘可用次數：${remaining}` : data.message || '';
         bonusEl.textContent = '💪 差一點就達標了！';
-        stars.innerHTML = '';
 
         const bgImg = IMAGES['failBg_img'];
         if (bgImg && bgImg.complete) {
             bg.style.backgroundImage = `url(${IMAGES.failBg})`;
         }
 
-        // 🔥 顯示「再玩一次」按鈕（如果還有剩餘次數）
         if (data.success && remaining > 0 && CONFIG.costPerPlay > 0) {
             replayBtn.style.display = 'inline-block';
             replayBtn.textContent = `🔄 再玩一次（扣 ${CONFIG.costPerPlay} 點）`;
@@ -1057,12 +1071,16 @@ function showStatus(msg) {
 }
 
 function goBack() {
-    // 如果是在 LIFF 中，關閉 LIFF 視窗
-    if (typeof liff !== 'undefined' && liff.closeWindow) {
-        liff.closeWindow();
-    } else {
-        window.history.back();
+    // 🔥 直接跳回會員頁面（使用 location.href）
+    // 請把網址換成你的會員頁面實際網址
+    var memberPageUrl = 'https://oldmapot.github.io/modeltest/index.html';
+    
+    // 帶上 userId，讓會員頁面自動登入
+    if (userId) {
+        memberPageUrl += '?userId=' + encodeURIComponent(userId);
     }
+    
+    window.location.href = memberPageUrl;
 }
 
 // ==================== 啟動 ====================
