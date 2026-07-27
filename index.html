@@ -152,7 +152,7 @@
 
     <div class="brand-actions">
         <button class="event-brand-btn" onclick="openEvents('omp')">老娘精選</button>
-        <button class="event-brand-btn" onclick="openEvents('so')">一點甜好康</button>
+        <button class="event-brand-btn" onclick="openGame()">🎮 火鍋達人</button>
     </div>
     <button class="share-btn" onclick="autoCopyShare()">🚀 分享推薦碼，享好友消費回饋</button>
 </div>
@@ -560,7 +560,24 @@ async function doRegister() {
         showToast('網路連線錯誤，請稍後再試'); 
     }
 }
-
+// ============================================================
+// ✅ 開啟火鍋達人遊戲
+// ============================================================
+function openGame() {
+    if (!userId) {
+        showToast('⚠️ 請先登入會員');
+        return;
+    }
+    
+    // 遊戲頁面網址（請換成你的 GitHub Pages 網址）
+    const gameUrl = 'https://你的帳號.github.io/你的儲存庫/game.html';
+    
+    // 帶入 userId 和 GAS_URL
+    const fullUrl = gameUrl + '?userId=' + encodeURIComponent(userId) + '&api=' + encodeURIComponent(GAS_URL);
+    
+    // 在新視窗開啟遊戲
+    window.open(fullUrl, '_blank');
+}
 // ============================================================
 // ✅ 活動、推薦、點數明細、個人資料
 // ============================================================
