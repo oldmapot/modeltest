@@ -443,7 +443,6 @@ const CONFIG = {
 };
 
 // ==================== 圖片素材 ====================
-// 修正後的 13 張圖片對應
 const IMAGES = {
   // 🥦 蔬菜 +1 分
   cabbage: "https://i.ibb.co/MH2cTLP/1.png",      // 高麗菜
@@ -472,27 +471,23 @@ const IMAGES = {
 // ==================== 食材定義 ====================
 const FOOD_TYPES = [
   // 蔬菜類 (+1分)
-  { type: 'cabbage', score: 1, weight: 15 },
-  { type: 'mushroom', score: 1, weight: 15 },
-  { type: 'green_veg', score: 1, weight: 15 },
-  { type: 'corn', score: 1, weight: 15 },
-  { type: 'carrot', score: 1, weight: 15 },
-
+  { id: 'cabbage', score: 1, weight: 15 },
+  { id: 'mushroom', score: 1, weight: 15 },
+  { id: 'green_veg', score: 1, weight: 15 },
+  { id: 'corn', score: 1, weight: 15 },
+  { id: 'carrot', score: 1, weight: 15 },
   // 海鮮與肉片 (+2分)
-  { type: 'shrimp', score: 2, weight: 10 },
-  { type: 'clam', score: 2, weight: 10 },
-  { type: 'meat_1', score: 2, weight: 10 },
-  { type: 'meat_2', score: 2, weight: 10 },
-
+  { id: 'shrimp', score: 2, weight: 10 },
+  { id: 'clam', score: 2, weight: 10 },
+  { id: 'meat_1', score: 2, weight: 10 },
+  { id: 'meat_2', score: 2, weight: 10 },
   // 陷阱類 (-1分)
-  { type: 'trap_fish', score: -1, weight: 5 },
-  { type: 'trap_chicken', score: -1, weight: 5 },
-  { type: 'trap_egg', score: -1, weight: 5 },
-
-  // 龍蝦 (+10分) - 獨立處理，不放在常規抽籤權重中
-  { type: 'lobster', score: 10, weight: 0 }
+  { id: 'trap_fish', score: -1, weight: 5 },
+  { id: 'trap_chicken', score: -1, weight: 5 },
+  { id: 'trap_egg', score: -1, weight: 5 },
+  // 龍蝦 (+10分)
+  { id: 'lobster', score: 10, weight: 0 }
 ];
-
 // ==================== 遊戲狀態 ====================
 let canvas, ctx;
 let gameRunning = false;
@@ -920,19 +915,20 @@ function draw() {
     }
 
     for (let food of foods) {
-        const imgKey = food.type.id + '_img';
-        const img = IMAGES[imgKey];
-        if (img && img.complete) {
-            ctx.drawImage(img, food.x, food.y, food.size, food.size);
-        } else {
-            ctx.fillStyle = food.type.score > 0 ? '#4caf50' : '#ff4444';
-            ctx.fillRect(food.x, food.y, food.size, food.size);
-            ctx.fillStyle = '#fff';
-            ctx.font = '22px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(food.type.emoji, food.x + food.size/2, food.y + food.size/2 + 8);
-        }
+    const imgKey = food.type.id + '_img';  // 🔥 用 food.type.id 對應圖片
+    const img = IMAGES[imgKey];
+    if (img && img.complete) {
+        ctx.drawImage(img, food.x, food.y, food.size, food.size);
+    } else {
+        // fallback 用 Emoji
+        ctx.fillStyle = food.type.score > 0 ? '#4caf50' : '#ff4444';
+        ctx.fillRect(food.x, food.y, food.size, food.size);
+        ctx.fillStyle = '#fff';
+        ctx.font = '22px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(food.type.emoji || '?', food.x + food.size/2, food.y + food.size/2 + 8);
     }
+}
 
     const potImg = IMAGES['pot_img'];
     if (potImg && potImg.complete) {
