@@ -703,12 +703,14 @@ function spawnFood() {
     if (foodType.id === 'lobster') {
         if (lobsterSpawned) return;
         lobsterSpawned = true;
-        if (Math.random() > 0.3) return;
+        if (Math.random() > 0.5) return;
     }
 
     if (foodType.id === 'trap') {
         if (trapCount >= targetTrapCount) return;
+        if (trapCooldownTimer > 0) return;  // 🔥 冷卻中不生成
         trapCount++;
+        trapCooldownTimer = 3;  // 🔥 設定 3 秒冷卻
     }
 
     const x = Math.random() * (canvas.width - CONFIG.foodSize);
