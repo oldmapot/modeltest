@@ -467,7 +467,80 @@ const FOOD_TYPES = [
     { id: 'trap_warning', score: -1, weight: 6 },
     { id: 'trap_bomb', score: -1, weight: 6 }
 ];
+// ============================================================
+//  背景音樂（從 GitHub 載入的 Happy_smile.mp3）
+// ============================================================
 
+let bgmAudio = null;
+let bgmPlaying = false;
+let bgmReady = false;
+
+// 🔥 初始化背景音樂（點擊開始時呼叫）
+function initBGM() {
+    if (bgmReady) return;
+    
+    try {
+        bgmAudio = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/Happy_smile.mp3');
+        bgmAudio.loop = true;
+        bgmAudio.volume = 0.4;  // 音量 40%
+        
+        // 預載入音樂
+        bgmAudio.load();
+        bgmReady = true;
+        console.log('🎵 背景音樂已載入');
+    } catch(e) {
+        console.warn('背景音樂載入失敗:', e);
+    }
+}
+
+// 🔥 播放背景音樂（在 fastEnterGame 中呼叫）
+function startBGM() {
+    if (!bgmReady) {
+        initBGM();
+    }
+    
+    if (!bgmAudio || bgmPlaying) return;
+    
+    try {
+        bgmAudio.play();
+        bgmPlaying = true;
+        console.log('🎵 背景音樂播放中');
+    } catch(e) {
+        console.warn('背景音樂播放失敗:', e);
+        // 如果播放失敗，嘗試重新載入
+        setTimeout(() => {
+            if (bgmAudio && !bgmPlaying) {
+                bgmAudio.play().catch(() => {});
+            }
+        }, 1000);
+    }
+}
+
+// 🔥 暫停背景音樂（遊戲結束時呼叫）
+function stopBGM() {
+    if (!bgmAudio || !bgmPlaying) return;
+    
+    try {
+        bgmAudio.pause();
+        bgmPlaying = false;
+        console.log('🎵 背景音樂已暫停');
+    } catch(e) {
+        console.warn('背景音樂暫停失敗:', e);
+    }
+}
+
+// 🔥 切換靜音（可選功能）
+function toggleMute() {
+    if (!bgmAudio || !bgmReady) return;
+    
+    if (bgmAudio.volume > 0) {
+        bgmAudio.volume = 0;
+        showStatus('🔇 音樂已靜音');
+    } else {
+        bgmAudio.volume = 0.4;
+        showStatus('🔊 音樂已開啟');
+    }
+}
 // ============================================================
 //  聲音系統（手機專用 + 背景音樂）
 // ============================================================
@@ -823,9 +896,11 @@ function fastEnterGame() {
     startScreen.style.display = 'none';
     resultScreen.style.display = 'none';
 
-    // 初始化音頻 + 背景音樂
+    
+     // 初始化音頻 + 背景音樂
     initAudio();
-    startBGM();
+    initBGM();    // 🔥 載入背景音樂
+    startBGM();   // 🔥 播放背景音樂
 
     // 重置遊戲
     score = 0;
