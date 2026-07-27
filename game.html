@@ -1,11 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>火鍋達人 - 老娘鍋</title>
     <style>
-        /* ===== 全域設定 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -89,7 +88,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0,0,0,0.75);
+            background: rgba(0,0,0,0.8);
             z-index: 10;
             padding: 24px 20px;
         }
@@ -107,7 +106,7 @@
         #startScreen .subtitle {
             color: #ffaa88;
             font-size: 14px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         #startScreen .rules {
@@ -119,7 +118,7 @@
             padding: 16px 20px;
             border-radius: 14px;
             border: 1px solid rgba(255,255,255,0.08);
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             width: 100%;
             max-width: 320px;
         }
@@ -129,6 +128,10 @@
         }
         #startScreen .rules .danger {
             color: #ff6b6b;
+            font-weight: 700;
+        }
+        #startScreen .rules .info {
+            color: #4fc3f7;
             font-weight: 700;
         }
 
@@ -171,7 +174,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             z-index: 20;
             padding: 24px;
         }
@@ -183,7 +186,7 @@
             height: 100%;
             background-size: cover;
             background-position: center;
-            opacity: 0.25;
+            opacity: 0.2;
         }
         #resultScreen .result-content {
             position: relative;
@@ -194,9 +197,9 @@
         }
         #resultScreen .result-emoji { font-size: 64px; margin-bottom: 4px; }
         #resultScreen .result-title {
-            font-size: 30px;
+            font-size: 28px;
             font-weight: 700;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         #resultScreen .result-title.win { color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.4); }
         #resultScreen .result-title.lose { color: #ff6b6b; }
@@ -205,14 +208,17 @@
             font-size: 18px;
             margin-bottom: 2px;
         }
+        #resultScreen .result-info {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
         #resultScreen .result-bonus {
             color: #ffd700;
             font-size: 22px;
             font-weight: 700;
             margin-bottom: 12px;
         }
-
-        /* 五星動畫 */
         .stars-container {
             display: flex;
             justify-content: center;
@@ -249,15 +255,94 @@
             transition: all 0.2s ease;
         }
         .btn-retry:active { transform: scale(0.95); }
+        .btn-retry:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* 再玩一次按鈕（扣點） */
+        .btn-replay {
+            padding: 12px 36px;
+            font-size: 15px;
+            font-weight: 700;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #ff9800, #f57c00);
+            color: #fff;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: all 0.2s ease;
+        }
+        .btn-replay:active { transform: scale(0.95); }
+        .btn-replay:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* 確認視窗 */
+        #confirmOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        #confirmBox {
+            background: #2d1a1a;
+            border: 2px solid #ffd700;
+            border-radius: 20px;
+            padding: 30px 24px;
+            max-width: 340px;
+            width: 90%;
+            text-align: center;
+            color: #fff;
+        }
+        #confirmBox h3 {
+            color: #ffd700;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        #confirmBox p {
+            color: #ddd;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        #confirmBox .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        #confirmBox .btn-group button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        #confirmBox .btn-yes {
+            background: #ffd700;
+            color: #1a0a0a;
+        }
+        #confirmBox .btn-no {
+            background: #666;
+            color: #fff;
+        }
 
         /* ===== 浮動文字 ===== */
         .float-text {
-            position: absolute;
+            position: fixed;
             font-size: 28px;
             font-weight: 700;
             pointer-events: none;
             animation: floatUp 0.8s ease forwards;
-            z-index: 15;
+            z-index: 50;
             text-shadow: 0 2px 12px rgba(0,0,0,0.7);
         }
         .float-text.positive { color: #4caf50; }
@@ -265,15 +350,14 @@
         .float-text.special { color: #ffd700; font-size: 36px; }
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-80px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-100px) scale(1.2); }
         }
 
-        /* ===== 響應式 ===== */
         @media (max-width: 480px) {
             #startScreen h1 { font-size: 24px; }
             #startScreen .rules { font-size: 12px; padding: 12px 14px; }
             .btn-start { padding: 14px 40px; font-size: 18px; }
-            #resultScreen .result-title { font-size: 26px; }
+            #resultScreen .result-title { font-size: 24px; }
             .star-icon { font-size: 30px; }
         }
     </style>
@@ -281,7 +365,6 @@
 <body>
 
 <div id="gameContainer">
-    <!-- Canvas -->
     <canvas id="gameCanvas"></canvas>
 
     <!-- 載入畫面 -->
@@ -296,11 +379,12 @@
         <h1>火鍋達人</h1>
         <div class="subtitle">老娘鍋 獨家小遊戲</div>
         <div class="rules">
-            ⏱️ 時間：<span class="highlight">15 秒</span><br />
-            🎯 目標：接到食材累積 <span class="highlight">50 分</span><br />
-            🎁 獎勵：達成目標獲得 <span class="highlight" id="bonusDisplay">30</span> 點<br />
-            ⚠️ 陷阱會扣分！<br />
-            🦞 龍蝦超稀有！<span class="highlight">+10 分</span>
+            ⏱️ 時間：<span class="highlight" id="gameTimeDisplay">20</span> 秒<br>
+            🎯 目標：接到食材累積 <span class="highlight" id="thresholdDisplay">50</span> 分<br>
+            🎁 獎勵：達成目標獲得 <span class="highlight" id="bonusDisplay">30</span> 點<br>
+            ⚠️ 陷阱會扣分！<br>
+            🦞 龍蝦超稀有！<span class="highlight">+10 分</span><br>
+            <span class="info">📋 每日免費 1 次，後續每次扣 <span id="costDisplay">5</span> 點</span>
         </div>
         <button class="btn-start" id="startBtn">🔥 開始遊戲</button>
         <div id="playStatus"></div>
@@ -313,35 +397,51 @@
             <div class="result-emoji" id="resultEmoji">🎉</div>
             <div class="result-title" id="resultTitle">太棒了！</div>
             <div class="result-score" id="resultScore">得分：0 分</div>
+            <div class="result-info" id="resultInfo"></div>
             <div id="resultStars" class="stars-container"></div>
             <div class="result-bonus" id="resultBonus"></div>
             <button class="btn-retry" id="retryBtn">🏠 返回</button>
+            <button class="btn-replay" id="replayBtn" style="display:none;">🔄 再玩一次（扣 5 點）</button>
+        </div>
+    </div>
+
+    <!-- 確認視窗 -->
+    <div id="confirmOverlay">
+        <div id="confirmBox">
+            <h3>⚠️ 確認</h3>
+            <p id="confirmMessage">是否花費 5 點再玩一次？</p>
+            <div class="btn-group">
+                <button class="btn-yes" id="confirmYes">✅ 確定</button>
+                <button class="btn-no" id="confirmNo">❌ 取消</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
 // ============================================================
-//  火鍋達人 - 完整遊戲邏輯 (GitHub 版)
+//  火鍋達人 - 完整遊戲邏輯
 // ============================================================
 
 // ==================== 設定 ====================
 const CONFIG = {
-    gameTime: 15,
+    gameTime: 20,
     threshold: 50,
     bonusPoints: 30,
+    maxPlays: 3,
+    costPerPlay: 5,
     trapMinCount: 4,
     trapMaxCount: 6,
-    spawnInterval: 550,      // 毫秒
+    spawnInterval: 500,
     potWidth: 80,
     potHeight: 60,
+    potY: 0,
     foodSize: 50,
     fallSpeedMin: 1.8,
     fallSpeedMax: 3.8,
 };
 
 // ==================== 圖片素材 ====================
-// 🔥 請將以下網址換成你上傳到 i.ibb.co 的圖片網址！
 const IMAGES = {
     pot: 'https://i.ibb.co/sk9n2KH/26.png',
     vegetable: 'https://i.ibb.co/MH2cTLP/1.png',
@@ -381,8 +481,10 @@ let trapCount = 0;
 let targetTrapCount = 0;
 let imagesLoaded = false;
 let userId = '';
+let GAS_BASE_URL = 'https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec';
 let isWin = false;
-let GAS_BASE_URL = "https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec"; // 請設定你的 GAS 部署網址
+let gameResultData = null;
+let gameStatus = null; // 儲存遊戲狀態（免費/付費）
 
 // ==================== DOM 元素 ====================
 const canvasEl = document.getElementById('gameCanvas');
@@ -390,13 +492,16 @@ const startScreen = document.getElementById('startScreen');
 const resultScreen = document.getElementById('resultScreen');
 const startBtn = document.getElementById('startBtn');
 const retryBtn = document.getElementById('retryBtn');
+const replayBtn = document.getElementById('replayBtn');
 const loadingScreen = document.getElementById('loadingScreen');
 const playStatus = document.getElementById('playStatus');
-const bonusDisplay = document.getElementById('bonusDisplay');
+const confirmOverlay = document.getElementById('confirmOverlay');
+const confirmMessage = document.getElementById('confirmMessage');
+const confirmYes = document.getElementById('confirmYes');
+const confirmNo = document.getElementById('confirmNo');
 
 // ==================== 初始化 ====================
 function init() {
-    // 🔥 從 URL 取得 userId 和 GAS_URL
     const params = new URLSearchParams(window.location.search);
     userId = params.get('userId') || '';
     GAS_BASE_URL = params.get('api') || '';
@@ -415,24 +520,22 @@ function init() {
         return;
     }
 
-    // 設定 Canvas
     canvas = canvasEl;
     ctx = canvas.getContext('2d');
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    // 載入圖片
     loadAllImages(() => {
         loadingScreen.style.display = 'none';
-        // 讀取遊戲設定
         fetchGameConfig();
-        // 檢查今日是否可玩
-        checkAvailability();
+        checkGameStatus();
     });
 
-    // 事件監聽
     startBtn.addEventListener('click', startGame);
     retryBtn.addEventListener('click', goBack);
+    replayBtn.addEventListener('click', showConfirmReplay);
+    confirmYes.addEventListener('click', confirmReplay);
+    confirmNo.addEventListener('click', cancelReplay);
 
     canvas.addEventListener('mousemove', handleMove);
     canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -443,13 +546,17 @@ function resizeCanvas() {
     const rect = canvas.parentElement.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
-    // 調整鍋子尺寸（依畫面比例）
-    CONFIG.potWidth = Math.min(80, canvas.width * 0.2);
-    CONFIG.potHeight = CONFIG.potWidth * 0.75;
-    CONFIG.foodSize = Math.min(50, canvas.width * 0.12);
-    // 鍋子初始位置
+
+    const screenWidth = canvas.width;
+    const screenHeight = canvas.height;
+
+    CONFIG.potWidth = Math.max(70, screenWidth * 0.22);
+    CONFIG.potHeight = CONFIG.potWidth * 0.7;
+    CONFIG.potY = screenHeight - CONFIG.potHeight - (screenHeight * 0.10);
+    CONFIG.foodSize = Math.max(40, screenWidth * 0.13);
+
     if (potX === 0) {
-        potX = (canvas.width - CONFIG.potWidth) / 2;
+        potX = (screenWidth - CONFIG.potWidth) / 2;
     }
 }
 
@@ -466,19 +573,13 @@ function loadAllImages(callback) {
         img.onload = () => {
             IMAGES[key + '_img'] = img;
             loaded++;
-            if (loaded === total) {
-                imagesLoaded = true;
-                if (callback) callback();
-            }
+            if (loaded === total) { imagesLoaded = true; if (callback) callback(); }
         };
         img.onerror = () => {
             console.warn('⚠️ 圖片載入失敗:', key);
             IMAGES[key + '_img'] = null;
             loaded++;
-            if (loaded === total) {
-                imagesLoaded = true;
-                if (callback) callback();
-            }
+            if (loaded === total) { imagesLoaded = true; if (callback) callback(); }
         };
     }
 }
@@ -503,17 +604,24 @@ function fetchGameConfig() {
         if (data.success) {
             CONFIG.threshold = data.threshold || 50;
             CONFIG.bonusPoints = data.bonusPoints || 30;
-            CONFIG.gameTime = data.gameTime || 15;
-            bonusDisplay.textContent = CONFIG.bonusPoints;
+            CONFIG.gameTime = data.gameTime || 20;
+            CONFIG.maxPlays = data.maxPlays || 3;
+            CONFIG.costPerPlay = data.costPerPlay || 5;
+            document.getElementById('thresholdDisplay').textContent = CONFIG.threshold;
+            document.getElementById('bonusDisplay').textContent = CONFIG.bonusPoints;
+            document.getElementById('gameTimeDisplay').textContent = CONFIG.gameTime;
+            document.getElementById('costDisplay').textContent = CONFIG.costPerPlay;
         }
     }).catch(() => {});
 }
 
-function checkAvailability() {
-    callApi('checkGameAvailable', { userId: userId }).then(data => {
+function checkGameStatus() {
+    callApi('checkGameStatus', { userId: userId }).then(data => {
+        gameStatus = data;
         if (data.available) {
             startBtn.disabled = false;
-            showStatus('✅ ' + data.message);
+            let msg = data.freePlay ? '🎮 免費遊玩一次！' : '💎 花費 ' + data.cost + ' 點再玩一次！';
+            showStatus('✅ ' + msg);
         } else {
             startBtn.disabled = true;
             showStatus('⏳ ' + data.message);
@@ -523,13 +631,18 @@ function checkAvailability() {
     });
 }
 
-function submitResult(score) {
-    return callApi('recordGameResult', { userId: userId, score: score });
+function submitResult(score, cost) {
+    return callApi('recordGameResult', { userId: userId, score: score, cost: cost });
 }
 
 // ==================== 遊戲主邏輯 ====================
 function startGame() {
     if (gameRunning || !imagesLoaded) return;
+
+    if (!gameStatus || !gameStatus.available) {
+        showStatus('⚠️ ' + (gameStatus ? gameStatus.message : '今日無法遊玩'));
+        return;
+    }
 
     // 重置狀態
     score = 0;
@@ -546,15 +659,12 @@ function startGame() {
     startScreen.style.display = 'none';
     resultScreen.style.display = 'none';
 
-    // 計時器
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(updateTimer, 1000);
 
-    // 生成器
     if (spawnInterval) clearInterval(spawnInterval);
     spawnInterval = setInterval(spawnFood, CONFIG.spawnInterval);
 
-    // 動畫循環
     if (animationId) cancelAnimationFrame(animationId);
     gameLoop();
 }
@@ -628,13 +738,13 @@ function gameLoop() {
 }
 
 function update() {
+    const potBottom = CONFIG.potY + CONFIG.potHeight;
     for (let i = foods.length - 1; i >= 0; i--) {
         const food = foods[i];
         food.y += food.speed;
 
-        const potBottom = canvas.height - CONFIG.potHeight;
         if (food.y + food.size > potBottom &&
-            food.y + food.size < potBottom + 30 &&
+            food.y + food.size < potBottom + 20 &&
             food.x + food.size > potX &&
             food.x < potX + CONFIG.potWidth) {
 
@@ -654,7 +764,6 @@ function update() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 背景
     const bgImg = IMAGES['bg_img'];
     if (bgImg && bgImg.complete) {
         ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
@@ -663,7 +772,6 @@ function draw() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // 食材
     for (let food of foods) {
         const imgKey = food.type.id + '_img';
         const img = IMAGES[imgKey];
@@ -679,18 +787,16 @@ function draw() {
         }
     }
 
-    // 鍋子
     const potImg = IMAGES['pot_img'];
     if (potImg && potImg.complete) {
-        ctx.drawImage(potImg, potX, canvas.height - CONFIG.potHeight, CONFIG.potWidth, CONFIG.potHeight);
+        ctx.drawImage(potImg, potX, CONFIG.potY, CONFIG.potWidth, CONFIG.potHeight);
     } else {
         ctx.fillStyle = '#8B0000';
-        ctx.fillRect(potX, canvas.height - CONFIG.potHeight, CONFIG.potWidth, CONFIG.potHeight);
+        ctx.fillRect(potX, CONFIG.potY, CONFIG.potWidth, CONFIG.potHeight);
         ctx.fillStyle = '#ffd700';
-        ctx.fillRect(potX + 4, canvas.height - CONFIG.potHeight - 4, CONFIG.potWidth - 8, 6);
+        ctx.fillRect(potX + 4, CONFIG.potY - 4, CONFIG.potWidth - 8, 6);
     }
 
-    // 計分板
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     roundRect(ctx, 10, 10, 150, 58, 12, true, false);
 
@@ -701,7 +807,6 @@ function draw() {
     ctx.fillStyle = '#ffd700';
     ctx.fillText(`⏱️ ${timeLeft}s`, 22, 60);
 
-    // 浮動文字（DOM）
     for (let i = floatTexts.length - 1; i >= 0; i--) {
         const ft = floatTexts[i];
         ft.y -= 1.8;
@@ -745,7 +850,6 @@ function showFloatText(x, y, change, isSpecial) {
     const sign = change > 0 ? '+' : '';
     el.textContent = sign + change;
 
-    // 換算成絕對位置
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
@@ -774,11 +878,13 @@ function endGame() {
     if (spawnInterval) clearInterval(spawnInterval);
     if (animationId) cancelAnimationFrame(animationId);
 
-    // 判斷是否達標
     isWin = score >= CONFIG.threshold;
 
-    // 提交結果到後端
-    submitResult(score).then(data => {
+    // 計算這次遊戲花費
+    const cost = gameStatus && !gameStatus.freePlay ? CONFIG.costPerPlay : 0;
+
+    submitResult(score, cost).then(data => {
+        gameResultData = data;
         showResult(data);
     }).catch(() => {
         showResult({ success: false, message: '網路錯誤' });
@@ -791,18 +897,21 @@ function showResult(data) {
     const emoji = document.getElementById('resultEmoji');
     const title = document.getElementById('resultTitle');
     const scoreEl = document.getElementById('resultScore');
+    const infoEl = document.getElementById('resultInfo');
     const bonusEl = document.getElementById('resultBonus');
     const stars = document.getElementById('resultStars');
     const bg = document.getElementById('resultBg');
 
-    if (isWin && data.success) {
+    const isWinLocal = isWin && data.success;
+    const remaining = data.remaining || 0;
+
+    if (isWinLocal) {
         emoji.textContent = '🎉';
         title.textContent = '太棒了！達標！';
         title.className = 'result-title win';
         scoreEl.textContent = `得分：${score} 分`;
+        infoEl.textContent = '';
         bonusEl.textContent = `🎁 獲得 ${CONFIG.bonusPoints} 點！`;
-
-        // 五星
         stars.innerHTML = '';
         for (let i = 0; i < 5; i++) {
             const span = document.createElement('span');
@@ -810,24 +919,26 @@ function showResult(data) {
             span.textContent = '⭐';
             stars.appendChild(span);
         }
-
-        // 背景
         const bgImg = IMAGES['successBg_img'];
         if (bgImg && bgImg.complete) {
             bg.style.backgroundImage = `url(${IMAGES.successBg})`;
         }
+        replayBtn.style.display = 'none';
     } else if (isWin && !data.success) {
         emoji.textContent = '⚠️';
         title.textContent = '達標但儲存失敗';
         title.className = 'result-title lose';
         scoreEl.textContent = `得分：${score} 分`;
-        bonusEl.textContent = '❌ 贈點失敗，請聯絡客服';
+        infoEl.textContent = data.message || '請聯絡客服';
+        bonusEl.textContent = '';
         stars.innerHTML = '';
+        replayBtn.style.display = 'none';
     } else {
         emoji.textContent = '😅';
         title.textContent = '再接再厲！';
         title.className = 'result-title lose';
         scoreEl.textContent = `得分：${score} 分 / 目標：${CONFIG.threshold} 分`;
+        infoEl.textContent = data.success ? `剩餘可用次數：${remaining}` : data.message || '';
         bonusEl.textContent = '💪 差一點就達標了！';
         stars.innerHTML = '';
 
@@ -835,7 +946,54 @@ function showResult(data) {
         if (bgImg && bgImg.complete) {
             bg.style.backgroundImage = `url(${IMAGES.failBg})`;
         }
+
+        // 🔥 顯示「再玩一次」按鈕（如果還有剩餘次數）
+        if (data.success && remaining > 0 && CONFIG.costPerPlay > 0) {
+            replayBtn.style.display = 'inline-block';
+            replayBtn.textContent = `🔄 再玩一次（扣 ${CONFIG.costPerPlay} 點）`;
+            replayBtn.disabled = false;
+        } else {
+            replayBtn.style.display = 'none';
+        }
     }
+}
+
+// ==================== 再玩一次 ====================
+let replayCallback = null;
+
+function showConfirmReplay() {
+    const cost = CONFIG.costPerPlay;
+    confirmMessage.textContent = `是否花費 ${cost} 點再玩一次？\n（今日剩餘可用次數：${gameResultData?.remaining || 0}）`;
+    confirmOverlay.style.display = 'flex';
+}
+
+function confirmReplay() {
+    confirmOverlay.style.display = 'none';
+    // 重新檢查遊戲狀態
+    callApi('checkGameStatus', { userId: userId }).then(data => {
+        gameStatus = data;
+        if (data.available) {
+            // 關閉結果畫面，回到開始畫面
+            resultScreen.style.display = 'none';
+            startScreen.style.display = 'flex';
+            startBtn.disabled = false;
+            let msg = data.freePlay ? '🎮 免費遊玩一次！' : '💎 花費 ' + data.cost + ' 點再玩一次！';
+            showStatus('✅ ' + msg);
+            // 🔥 重新讀取最新會員資料，更新點數顯示
+            if (window.parent && window.parent.refreshMemberData) {
+                window.parent.refreshMemberData();
+            }
+        } else {
+            showStatus('⏳ ' + data.message);
+            replayBtn.style.display = 'none';
+        }
+    }).catch(() => {
+        showStatus('⚠️ 無法連線到伺服器');
+    });
+}
+
+function cancelReplay() {
+    confirmOverlay.style.display = 'none';
 }
 
 // ==================== 控制 ====================
@@ -870,13 +1028,7 @@ function showStatus(msg) {
 }
 
 function goBack() {
-    window.close();
-    // 或返回上一頁
-    if (window.history.length > 1) {
-        window.history.back();
-    } else {
-        window.location.href = 'about:blank';
-    }
+    window.history.back();
 }
 
 // ==================== 啟動 ====================
