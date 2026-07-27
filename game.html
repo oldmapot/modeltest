@@ -619,19 +619,30 @@ function fetchGameConfig() {
 }
 
 function checkGameStatus() {
-    callApi('checkGameStatus', { userId: userId }).then(data => {
-        gameStatus = data;
-        if (data.available) {
-            startBtn.disabled = false;
-            let msg = data.freePlay ? '🎮 免費遊玩一次！' : '💎 花費 ' + data.cost + ' 點再玩一次！';
-            showStatus('✅ ' + msg);
-        } else {
+    // 🔥 1. 先顯示「載入中」，並禁用按鈕
+    showStatus('⏳ 檢查遊戲狀態...');
+    startBtn.disabled = true;
+    
+    // 🔥 2. 呼叫 API
+    callApi('checkGameStatus', { userId: userId })
+        .then(data => {
+            gameStatus = data;
+            console.log('📊 遊戲狀態:', data); // 方便除錯
+            
+            if (data.available) {
+                startBtn.disabled = false;
+                let msg = data.freePlay ? '🎮 免費遊玩一次！' : '💎 花費 ' + data.cost + ' 點再玩一次！';
+                showStatus('✅ ' + msg);
+            } else {
+                startBtn.disabled = true;
+                showStatus('⏳ ' + data.message);
+            }
+        })
+        .catch(err => {
+            console.error('檢查遊戲狀態失敗:', err);
+            showStatus('⚠️ 無法連線到伺服器');
             startBtn.disabled = true;
-            showStatus('⏳ ' + data.message);
-        }
-    }).catch(() => {
-        showStatus('⚠️ 無法連線到伺服器');
-    });
+        });
 }
 
 function submitResult(score, cost) {
