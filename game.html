@@ -454,73 +454,102 @@ const FOOD_TYPES = [
     { id: 'trap_bomb', score: -1, weight: 6 }
 ];
 
-// ==================== 聲音系統 ====================
-let audioCtx = null;
+// ============================================================
+//  手機專用聲音系統
+// ============================================================
 
+let audioCtx = null;
+let audioReady = false;
+
+// 🔥 手機專用：初始化音頻（必須在用戶點擊後呼叫）
 function initAudio() {
-    if (!audioCtx) {
-        try {
+    try {
+        if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (e) {}
+        }
+        // 🔥 手機關鍵：resume() 讓聲音真正啟動
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        audioReady = true;
+        console.log('🔊 音頻已啟用，狀態:', audioCtx.state);
+        return true;
+    } catch (e) {
+        console.warn('音頻初始化失敗:', e);
+        return false;
     }
 }
 
-function playTone(frequency, duration, type = 'sine', volume = 0.3) {
+// 🔥 播放音效（手機優化版）
+function playTone(freq, duration, type = 'sine', vol = 0.3) {
     try {
-        initAudio();
-        if (!audioCtx) return;
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.type = type;
-        oscillator.frequency.value = frequency;
-        gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + duration);
-    } catch (e) {}
+        // 如果音頻未就緒，嘗試初始化
+        if (!audioReady || !audioCtx) {
+            initAudio();
+        }
+        if (!audioCtx || audioCtx.state !== 'running') {
+            // 如果還是無法播放，跳過（不影響遊戲）
+            return;
+        }
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+    } catch (e) {
+        // 靜默失敗
+    }
 }
 
+// 各音效函數（保持不變，但內部會自動處理手機問題）
 function playFoodInPot() {
-    playTone(900, 0.08, 'sine', 0.25);
-    setTimeout(() => playTone(1300, 0.06, 'sine', 0.2), 70);
+    playTone(900, 0.08, 'sine', 0.3);
+    setTimeout(() => playTone(1300, 0.06, 'sine', 0.25), 70);
 }
 
 function playTrapInPot() {
-    playTone(150, 0.4, 'sawtooth', 0.3);
-    setTimeout(() => playTone(100, 0.3, 'sawtooth', 0.25), 120);
+    playTone(150, 0.4, 'sawtooth', 0.35);
+    setTimeout(() => playTone(100, 0.3, 'sawtooth', 0.3), 120);
 }
 
 function playLobsterInPot() {
-    playTone(1000, 0.1, 'sine', 0.3);
-    setTimeout(() => playTone(1400, 0.1, 'sine', 0.3), 100);
-    setTimeout(() => playTone(1800, 0.15, 'sine', 0.3), 200);
+    playTone(1000, 0.1, 'sine', 0.35);
+    setTimeout(() => playTone(1400, 0.1, 'sine', 0.35), 100);
+    setTimeout(() => playTone(1800, 0.15, 'sine', 0.35), 200);
 }
 
 function playSuccessSound() {
     const notes = [523, 659, 784, 1047];
     notes.forEach((freq, i) => {
-        setTimeout(() => playTone(freq, 0.15, 'sine', 0.25), i * 100);
+        setTimeout(() => playTone(freq, 0.15, 'sine', 0.3), i * 100);
     });
     setTimeout(() => {
         [523, 659, 784].forEach((freq, i) => {
-            setTimeout(() => playTone(freq, 0.3, 'sine', 0.2), i * 60);
+            setTimeout(() => playTone(freq, 0.3, 'sine', 0.25), i * 60);
         });
     }, 450);
 }
 
 function playFailSound() {
-    playTone(350, 0.3, 'sawtooth', 0.2);
-    setTimeout(() => playTone(250, 0.4, 'sawtooth', 0.2), 150);
-    setTimeout(() => playTone(150, 0.5, 'sawtooth', 0.15), 350);
+    playTone(350, 0.3, 'sawtooth', 0.25);
+    setTimeout(() => playTone(250, 0.4, 'sawtooth', 0.25), 150);
+    setTimeout(() => playTone(150, 0.5, 'sawtooth', 0.2), 350);
 }
 
+// 背景音樂（手機版 - 音量降低）
 let bgmInterval = null;
 let bgmRunning = false;
 
 function startBGM() {
     if (bgmRunning) return;
+    // 🔥 確保音頻已初始化
+    initAudio();
     bgmRunning = true;
     playBGMNote();
 }
@@ -537,7 +566,7 @@ function playBGMNote() {
     if (!bgmRunning) return;
     const notes = [440, 493, 554, 587, 659, 740];
     const note = notes[Math.floor(Math.random() * notes.length)];
-    playTone(note, 0.3, 'sine', 0.04);
+    playTone(note, 0.3, 'sine', 0.04);  // 音量很低，不干擾遊戲
     const interval = 600 + Math.random() * 900;
     bgmInterval = setTimeout(playBGMNote, interval);
 }
@@ -632,7 +661,19 @@ function resizeCanvas() {
         potX = (screenWidth - CONFIG.potWidth) / 2;
     }
 }
+// 在 init() 或 startGame() 中建立聲音元素
+function createAudioElements() {
+    // 用 Base64 產生極短的聲音（不用外部檔案）
+    // 或者直接用 Web Audio API + 強制 resume
+}
 
+// 更簡單：手機上強制 resume audio context
+function ensureAudio() {
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+        console.log('🔊 音頻已恢復');
+    }
+}
 // ==================== API 呼叫 ====================
 function callApi(action, params = {}) {
     const url = new URL(GAS_BASE_URL);
