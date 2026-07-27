@@ -493,42 +493,6 @@ function initBGM() {
     }
 }
 
-// 🔥 播放背景音樂（在 fastEnterGame 中呼叫）
-function startBGM() {
-    if (!bgmReady) {
-        initBGM();
-    }
-    
-    if (!bgmAudio || bgmPlaying) return;
-    
-    try {
-        bgmAudio.play();
-        bgmPlaying = true;
-        console.log('🎵 背景音樂播放中');
-    } catch(e) {
-        console.warn('背景音樂播放失敗:', e);
-        // 如果播放失敗，嘗試重新載入
-        setTimeout(() => {
-            if (bgmAudio && !bgmPlaying) {
-                bgmAudio.play().catch(() => {});
-            }
-        }, 1000);
-    }
-}
-
-// 🔥 暫停背景音樂（遊戲結束時呼叫）
-function stopBGM() {
-    if (!bgmAudio || !bgmPlaying) return;
-    
-    try {
-        bgmAudio.pause();
-        bgmPlaying = false;
-        console.log('🎵 背景音樂已暫停');
-    } catch(e) {
-        console.warn('背景音樂暫停失敗:', e);
-    }
-}
-
 // 🔥 切換靜音（可選功能）
 function toggleMute() {
     if (!bgmAudio || !bgmReady) return;
@@ -587,30 +551,6 @@ function playTrapSFX() {
 // ============================================================
 //  聲音系統（手機專用 + 背景音樂）
 // ============================================================
-
-let audioCtx = null;
-let audioReady = false;
-let audioUnlocked = false;
-
-// 🔥 背景音樂旋律（輕快循環）
-const BGM_MELODY = [
-    { note: 523, duration: 0.15 },  // C5
-    { note: 587, duration: 0.15 },  // D5
-    { note: 659, duration: 0.15 },  // E5
-    { note: 784, duration: 0.25 },  // G5
-    { note: 659, duration: 0.15 },  // E5
-    { note: 587, duration: 0.15 },  // D5
-    { note: 523, duration: 0.3 },   // C5
-    { note: 659, duration: 0.15 },  // E5
-    { note: 784, duration: 0.15 },  // G5
-    { note: 880, duration: 0.25 },  // A5
-    { note: 784, duration: 0.15 },  // G5
-    { note: 659, duration: 0.3 },   // E5
-];
-
-let bgmIndex = 0;
-let bgmInterval = null;
-let bgmRunning = false;
 
 function unlockAudio() {
     if (audioUnlocked) return;
