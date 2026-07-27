@@ -443,48 +443,54 @@ const CONFIG = {
 };
 
 // ==================== 圖片素材 ====================
+// 修正後的 13 張圖片對應
 const IMAGES = {
-    pot: 'https://i.ibb.co/sk9n2KH/26.png',
-    // 🔥 蔬菜類（多種）
-    veg_1: 'https://i.ibb.co/MH2cTLP/1.png',
-    veg_2: 'https://i.ibb.co/Nnsm5ZzR/10.png',
-    veg_3: 'https://i.ibb.co/tMnnN12F/9.png',
-    veg_4: 'https://i.ibb.co/gbKF4gvH/8.png',
-    veg_5: 'https://i.ibb.co/C5Hdjw02/7.png',
-    // 🔥 海鮮類（多種）
-    seafood_1: 'https://i.ibb.co/vCXrXYSj/2.png',
-    seafood_2: 'https://i.ibb.co/pBfpgF5K/6.png',
-    meat: 'https://i.ibb.co/20gx6QW8/14.png',
-    lobster: 'https://i.ibb.co/gF6RBgVD/11.png',
-    // 🔥 陷阱類（多種）
-    trap_broken_egg: 'https://i.ibb.co/gF6RBgVD/11.png',   // 破蛋殼（如果你有專門的圖可以換）
-    trap_chicken_bone: 'https://i.ibb.co/htjq96p/5.png',   // 雞骨頭
-    trap_fish_bone: 'https://i.ibb.co/Fbysf7px/12.png',    // 魚骨
-    bg: 'https://i.ibb.co/sdcqjnV6/28.png',
-    successBg: 'https://i.ibb.co/03dfdsN/30.png',
-    failBg: 'https://i.ibb.co/Lz7gFY0M/29.png',
-    star: 'https://i.ibb.co/rR5PF3kZ/31.png',
+  // 🥦 蔬菜 +1 分
+  cabbage: "https://i.ibb.co/MH2cTLP/1.png",      // 高麗菜
+  mushroom: "https://i.ibb.co/Nnsm5ZzR/10.png",    // 香菇
+  green_veg: "https://i.ibb.co/tMnnN12F/9.png",   // 青菜
+  corn: "https://i.ibb.co/gbKF4gvH/8.png",        // 玉米
+  carrot: "https://i.ibb.co/C5Hdjw02/7.png",      // 蘿蔔
+
+  // 🦐 海鮮 +2 分
+  shrimp: "https://i.ibb.co/vCXrXYSj/2.png",      // 蝦子
+  clam: "https://i.ibb.co/pBfpgF5K/6.png",        // 蛤蜊
+
+  // 🥩 肉片 +2 分
+  meat_1: "https://i.ibb.co/20gx6QW8/14.png",     // 肉片 A
+  meat_2: "https://i.ibb.co/Fbysf7px/12.png",     // 肉片 B
+
+  // 🦞 稀有龍蝦 +10 分
+  lobster: "https://i.ibb.co/gF6RBgVD/11.png",    // 龍蝦 (專屬圖片)
+
+  // 🦴 陷阱 -1 分
+  trap_fish: "https://i.ibb.co/htjq96p/5.png",    // 魚骨
+  trap_chicken: "https://i.ibb.co/pjTCDG2q/4.png", // 雞骨
+  trap_egg: "https://i.ibb.co/DDhXytbf/3.png"     // 破蛋殼
 };
 
 // ==================== 食材定義 ====================
 const FOOD_TYPES = [
-    // 🔥 蔬菜類（多種）
-    { id: 'veg_1', name: '高麗菜', score: 1, emoji: '🥬', weight: 12 },
-    { id: 'veg_2', name: '玉米', score: 1, emoji: '🌽', weight: 10 },
-    { id: 'veg_3', name: '番茄', score: 1, emoji: '🍅', weight: 10 },
-    { id: 'veg_4', name: '洋蔥', score: 1, emoji: '🧅', weight: 8 },
-    { id: 'veg_5', name: '青椒', score: 1, emoji: '🫑', weight: 8 },
-    // 海鮮類
-    { id: 'seafood_1', name: '蝦子', score: 2, emoji: '🦐', weight: 14 },
-    { id: 'seafood_2', name: '蛤蜊', score: 2, emoji: '🦪', weight: 12 },
-    // 肉片
-    { id: 'meat', name: '肉片', score: 2, emoji: '🥩', weight: 18 },
-    // 龍蝦（稀有）
-    { id: 'lobster', name: '龍蝦', score: 10, emoji: '🦞', weight: 5, rare: true },
-    // 陷阱
-    { id: 'trap_broken_egg', name: '破蛋殼', score: -1, emoji: '🥚❌', weight: 10 },
-    { id: 'trap_chicken_bone', name: '雞骨頭', score: -1, emoji: '🦴', weight: 10 },
-    { id: 'trap_fish_bone', name: '魚骨', score: -1, emoji: '🐟', weight: 10 },
+  // 蔬菜類 (+1分)
+  { type: 'cabbage', score: 1, weight: 15 },
+  { type: 'mushroom', score: 1, weight: 15 },
+  { type: 'green_veg', score: 1, weight: 15 },
+  { type: 'corn', score: 1, weight: 15 },
+  { type: 'carrot', score: 1, weight: 15 },
+
+  // 海鮮與肉片 (+2分)
+  { type: 'shrimp', score: 2, weight: 10 },
+  { type: 'clam', score: 2, weight: 10 },
+  { type: 'meat_1', score: 2, weight: 10 },
+  { type: 'meat_2', score: 2, weight: 10 },
+
+  // 陷阱類 (-1分)
+  { type: 'trap_fish', score: -1, weight: 5 },
+  { type: 'trap_chicken', score: -1, weight: 5 },
+  { type: 'trap_egg', score: -1, weight: 5 },
+
+  // 龍蝦 (+10分) - 獨立處理，不放在常規抽籤權重中
+  { type: 'lobster', score: 10, weight: 0 }
 ];
 
 // ==================== 遊戲狀態 ====================
@@ -511,6 +517,7 @@ let isWin = false;
 let gameResultData = null;
 let gameStatus = null; // 儲存遊戲狀態（免費/付費）
 let trapCooldownTimer = 0;  // 陷阱冷卻計時器
+let foodPool = [];          // 洗牌食材池
 
 // ==================== DOM 元素 ====================
 const canvasEl = document.getElementById('gameCanvas');
@@ -551,12 +558,11 @@ function init() {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    loadAllImages(() => {
-        loadingScreen.style.display = 'none';
-        fetchGameConfig();
-        checkGameStatus();
-    });
-
+   loadAllImages(async () => {
+    loadingScreen.style.display = 'none';
+    // 🔥 改為同步並行請求，省去一半 API 等待時間
+    await loadInitialData();
+});
     startBtn.addEventListener('click', startGame);
     retryBtn.addEventListener('click', goBack);
     replayBtn.addEventListener('click', showConfirmReplay);
@@ -614,6 +620,49 @@ function loadAllImages(callback) {
 }
 
 // ==================== API 呼叫 ====================
+async function loadInitialData() {
+    showStatus('⏳ 載入遊戲資料與狀態...');
+    startBtn.disabled = true;
+
+    try {
+        // 🔥 Promise.all 同步並行發送
+        const [configData, statusData] = await Promise.all([
+            callApi('getGameConfig'),
+            callApi('checkGameStatus', { userId: userId })
+        ]);
+
+        // 1. 寫回 CONFIG 並更新畫面顯示
+        if (configData && configData.success) {
+            CONFIG.threshold = configData.threshold || CONFIG.threshold;
+            CONFIG.bonusPoints = configData.bonusPoints || CONFIG.bonusPoints;
+            CONFIG.gameTime = configData.gameTime || CONFIG.gameTime;
+            CONFIG.maxPlays = configData.maxPlays || CONFIG.maxPlays;
+            CONFIG.costPerPlay = configData.costPerPlay || CONFIG.costPerPlay;
+
+            document.getElementById('thresholdDisplay').textContent = CONFIG.threshold;
+            document.getElementById('bonusDisplay').textContent = CONFIG.bonusPoints;
+            document.getElementById('gameTimeDisplay').textContent = CONFIG.gameTime;
+            document.getElementById('costDisplay').textContent = CONFIG.costPerPlay;
+        }
+
+        // 2. 更新遊戲狀態 (gameStatus)
+        if (statusData) {
+            gameStatus = statusData;
+            if (statusData.available) {
+                startBtn.disabled = false;
+                let msg = statusData.freePlay ? '🎮 免費遊玩一次！' : '💎 花費 ' + statusData.cost + ' 點再玩一次！';
+                showStatus('✅ ' + msg);
+            } else {
+                startBtn.disabled = true;
+                showStatus('⏳ ' + statusData.message);
+            }
+        }
+    } catch (err) {
+        console.error('載入失敗:', err);
+        showStatus('⚠️ 網路連線失敗，請重新整理');
+        startBtn.disabled = true;
+    }
+}
 function callApi(action, params = {}) {
     const url = new URL(GAS_BASE_URL);
     url.searchParams.set('action', action);
@@ -684,31 +733,70 @@ function startGame() {
         return;
     }
 
-    // 重置狀態
+    // 重置遊戲變數
     score = 0;
     timeLeft = CONFIG.gameTime;
     foods = [];
     floatTexts = [];
-    lobsterSpawned = false;
+    
+    // 重置特殊食材與陷阱控管
+    lobsterSpawned = false; // 重置龍蝦出現狀態 (確保一局最多 1 次)
     trapCount = 0;
     targetTrapCount = Math.floor(Math.random() * (CONFIG.trapMaxCount - CONFIG.trapMinCount + 1)) + CONFIG.trapMinCount;
+    
+    // 🔑🔥 【關鍵新增】初始化並洗牌食材池，防止連續掉落同種食材
+    if (typeof initFoodPool === 'function') {
+        initFoodPool();
+    }
+
     isWin = false;
     gameEnded = false;
     gameRunning = true;
 
+    // 隱藏選單與結算畫面
     startScreen.style.display = 'none';
     resultScreen.style.display = 'none';
 
+    // 啟動倒數計時器
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(updateTimer, 1000);
 
+    // 啟動食材生成器
     if (spawnInterval) clearInterval(spawnInterval);
     spawnInterval = setInterval(spawnFood, CONFIG.spawnInterval);
 
+    // 啟動 Canvas 繪製迴圈
     if (animationId) cancelAnimationFrame(animationId);
     gameLoop();
 }
+// 初始化並打散食材池 (確保種類交錯不連刷)
+function initFoodPool() {
+  const normalFoods = FOOD_TYPES.filter(f => f.type !== 'lobster');
+  foodPool = [];
+  // 複製 3 組一般食材並打散
+  for (let i = 0; i < 3; i++) {
+    foodPool.push(...normalFoods);
+  }
+  // 洗牌 (Fisher-Yates Shuffle)
+  for (let i = foodPool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [foodPool[i], foodPool[j]] = [foodPool[j], foodPool[i]];
+  }
+}
 
+// 取得下一個出現的食材
+function selectFoodType() {
+  // 剩餘時間 5~15 秒間，有 15% 機率觸發龍蝦 (全場限 1 次)
+  if (!lobsterSpawned && gameTime <= 15 && gameTime >= 5 && Math.random() < 0.15) {
+    lobsterSpawned = true;
+    return FOOD_TYPES.find(f => f.type === 'lobster');
+  }
+
+  if (foodPool.length === 0) {
+    initFoodPool();
+  }
+  return foodPool.pop();
+}
 function updateTimer() {
     timeLeft--;
     if (timeLeft <= 0) {
