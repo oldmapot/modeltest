@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>火鍋達人 - 老娘鍋</title>
+    <style>
+        /* ===== 全域設定 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #1a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            aspect-ratio: 9 / 16;
+            background: #2d1a1a;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 0 60px rgba(200, 50, 50, 0.25);
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background: #2d1a1a;
+            touch-action: none;
+            cursor: pointer;
+        }
+
+        /* ===== 載入畫面 ===== */
+        #loadingScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #2d1a1a;
+            z-index: 30;
+            color: #fff;
+        }
+        #loadingScreen .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,215,0,0.2);
+            border-top: 4px solid #ffd700;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        #loadingScreen p {
+            font-size: 14px;
+            color: #ffaa88;
+            letter-spacing: 2px;
+        }
+
+        /* ===== 開始畫面 ===== */
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.75);
+            z-index: 10;
+            padding: 24px 20px;
+        }
+
+        #startScreen .logo {
+            font-size: 56px;
+            margin-bottom: 4px;
+        }
+        #startScreen h1 {
+            color: #ffd700;
+            font-size: 28px;
+            font-weight: 700;
+            text-shadow: 0 2px 20px rgba(255,215,0,0.3);
+        }
+        #startScreen .subtitle {
+            color: #ffaa88;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        #startScreen .rules {
+            color: #ddd;
+            font-size: 13px;
+            text-align: center;
+            line-height: 1.9;
+            background: rgba(255,255,255,0.06);
+            padding: 16px 20px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.08);
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 320px;
+        }
+        #startScreen .rules .highlight {
+            color: #ffd700;
+            font-weight: 700;
+        }
+        #startScreen .rules .danger {
+            color: #ff6b6b;
+            font-weight: 700;
+        }
+
+        .btn-start {
+            padding: 16px 56px;
+            font-size: 20px;
+            font-weight: 700;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #ff6b35, #e63946);
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 4px 24px rgba(230,57,70,0.5);
+            transition: all 0.2s ease;
+        }
+        .btn-start:active { transform: scale(0.95); }
+        .btn-start:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #playStatus {
+            color: #ffaa88;
+            font-size: 14px;
+            margin-top: 12px;
+            text-align: center;
+            min-height: 22px;
+        }
+
+        /* ===== 結果畫面 ===== */
+        #resultScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.8);
+            z-index: 20;
+            padding: 24px;
+        }
+        #resultScreen .result-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0.25;
+        }
+        #resultScreen .result-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            width: 100%;
+            max-width: 320px;
+        }
+        #resultScreen .result-emoji { font-size: 64px; margin-bottom: 4px; }
+        #resultScreen .result-title {
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+        #resultScreen .result-title.win { color: #ffd700; text-shadow: 0 0 30px rgba(255,215,0,0.4); }
+        #resultScreen .result-title.lose { color: #ff6b6b; }
+        #resultScreen .result-score {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+        #resultScreen .result-bonus {
+            color: #ffd700;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        /* 五星動畫 */
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin: 8px 0 12px 0;
+        }
+        .star-icon {
+            font-size: 38px;
+            opacity: 0;
+            transform: scale(0) rotate(-30deg);
+            animation: starBurst 0.5s ease forwards;
+        }
+        .star-icon:nth-child(1) { animation-delay: 0.1s; }
+        .star-icon:nth-child(2) { animation-delay: 0.25s; }
+        .star-icon:nth-child(3) { animation-delay: 0.4s; }
+        .star-icon:nth-child(4) { animation-delay: 0.55s; }
+        .star-icon:nth-child(5) { animation-delay: 0.7s; }
+        @keyframes starBurst {
+            0% { opacity: 0; transform: scale(0) rotate(-30deg); }
+            60% { opacity: 1; transform: scale(1.3) rotate(8deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0deg); }
+        }
+
+        .btn-retry {
+            padding: 14px 44px;
+            font-size: 17px;
+            font-weight: 700;
+            border: none;
+            border-radius: 30px;
+            background: #ffd700;
+            color: #1a0a0a;
+            cursor: pointer;
+            margin-top: 4px;
+            transition: all 0.2s ease;
+        }
+        .btn-retry:active { transform: scale(0.95); }
+
+        /* ===== 浮動文字 ===== */
+        .float-text {
+            position: absolute;
+            font-size: 28px;
+            font-weight: 700;
+            pointer-events: none;
+            animation: floatUp 0.8s ease forwards;
+            z-index: 15;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.7);
+        }
+        .float-text.positive { color: #4caf50; }
+        .float-text.negative { color: #ff4444; }
+        .float-text.special { color: #ffd700; font-size: 36px; }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.2); }
+        }
+
+        /* ===== 響應式 ===== */
+        @media (max-width: 480px) {
+            #startScreen h1 { font-size: 24px; }
+            #startScreen .rules { font-size: 12px; padding: 12px 14px; }
+            .btn-start { padding: 14px 40px; font-size: 18px; }
+            #resultScreen .result-title { font-size: 26px; }
+            .star-icon { font-size: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="gameContainer">
+    <!-- Canvas -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- 載入畫面 -->
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <p>🔥 火鍋準備中...</p>
+    </div>
+
+    <!-- 開始畫面 -->
+    <div id="startScreen">
+        <div class="logo">🍲</div>
+        <h1>火鍋達人</h1>
+        <div class="subtitle">老娘鍋 獨家小遊戲</div>
+        <div class="rules">
+            ⏱️ 時間：<span class="highlight">15 秒</span><br />
+            🎯 目標：接到食材累積 <span class="highlight">50 分</span><br />
+            🎁 獎勵：達成目標獲得 <span class="highlight" id="bonusDisplay">30</span> 點<br />
+            ⚠️ 陷阱會扣分！<br />
+            🦞 龍蝦超稀有！<span class="highlight">+10 分</span>
+        </div>
+        <button class="btn-start" id="startBtn">🔥 開始遊戲</button>
+        <div id="playStatus"></div>
+    </div>
+
+    <!-- 結果畫面 -->
+    <div id="resultScreen">
+        <div class="result-bg" id="resultBg"></div>
+        <div class="result-content">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <div class="result-title" id="resultTitle">太棒了！</div>
+            <div class="result-score" id="resultScore">得分：0 分</div>
+            <div id="resultStars" class="stars-container"></div>
+            <div class="result-bonus" id="resultBonus"></div>
+            <button class="btn-retry" id="retryBtn">🏠 返回</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+//  火鍋達人 - 完整遊戲邏輯 (GitHub 版)
+// ============================================================
+
+// ==================== 設定 ====================
+const CONFIG = {
+    gameTime: 15,
+    threshold: 50,
+    bonusPoints: 30,
+    trapMinCount: 4,
+    trapMaxCount: 6,
+    spawnInterval: 550,      // 毫秒
+    potWidth: 80,
+    potHeight: 60,
+    foodSize: 50,
+    fallSpeedMin: 1.8,
+    fallSpeedMax: 3.8,
+};
+
+// ==================== 圖片素材 ====================
+// 🔥 請將以下網址換成你上傳到 i.ibb.co 的圖片網址！
+const IMAGES = {
+    pot: 'https://i.ibb.co/sk9n2KH/26.png',
+    vegetable: 'https://i.ibb.co/MH2cTLP/1.png',
+    seafood: 'https://i.ibb.co/vCXrXYSj/2.png',
+    meat: 'https://i.ibb.co/20gx6QW8/14.png',
+    lobster: 'https://i.ibb.co/gF6RBgVD/11.png',
+    trap: 'https://i.ibb.co/htjq96p/5.png',
+    bg: 'https://i.ibb.co/sdcqjnV6/28.png',
+    successBg: 'https://i.ibb.co/03dfdsN/30.png',
+    failBg: 'https://i.ibb.co/Lz7gFY0M/29.png',
+    star: 'https://i.ibb.co/rR5PF3kZ/31.png',
+};
+
+// ==================== 食材定義 ====================
+const FOOD_TYPES = [
+    { id: 'vegetable', name: '蔬菜', score: 1, emoji: '🥬', weight: 28 },
+    { id: 'seafood', name: '海鮮', score: 2, emoji: '🦐', weight: 22 },
+    { id: 'meat', name: '肉片', score: 2, emoji: '🥩', weight: 20 },
+    { id: 'lobster', name: '龍蝦', score: 10, emoji: '🦞', weight: 2, rare: true },
+    { id: 'trap', name: '陷阱', score: -1, emoji: '💀', weight: 28 },
+];
+
+// ==================== 遊戲狀態 ====================
+let canvas, ctx;
+let gameRunning = false;
+let gameEnded = false;
+let score = 0;
+let timeLeft = CONFIG.gameTime;
+let potX = 0;
+let foods = [];
+let floatTexts = [];
+let timerInterval = null;
+let spawnInterval = null;
+let animationId = null;
+let lobsterSpawned = false;
+let trapCount = 0;
+let targetTrapCount = 0;
+let imagesLoaded = false;
+let userId = '';
+let isWin = false;
+let GAS_BASE_URL = ''; // 請設定你的 GAS 部署網址
+
+// ==================== DOM 元素 ====================
+const canvasEl = document.getElementById('gameCanvas');
+const startScreen = document.getElementById('startScreen');
+const resultScreen = document.getElementById('resultScreen');
+const startBtn = document.getElementById('startBtn');
+const retryBtn = document.getElementById('retryBtn');
+const loadingScreen = document.getElementById('loadingScreen');
+const playStatus = document.getElementById('playStatus');
+const bonusDisplay = document.getElementById('bonusDisplay');
+
+// ==================== 初始化 ====================
+function init() {
+    // 🔥 從 URL 取得 userId 和 GAS_URL
+    const params = new URLSearchParams(window.location.search);
+    userId = params.get('userId') || '';
+    GAS_BASE_URL = params.get('api') || '';
+
+    if (!userId) {
+        showStatus('⚠️ 請先登入會員');
+        startBtn.disabled = true;
+        loadingScreen.style.display = 'none';
+        return;
+    }
+
+    if (!GAS_BASE_URL) {
+        showStatus('⚠️ 缺少 API 網址');
+        startBtn.disabled = true;
+        loadingScreen.style.display = 'none';
+        return;
+    }
+
+    // 設定 Canvas
+    canvas = canvasEl;
+    ctx = canvas.getContext('2d');
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // 載入圖片
+    loadAllImages(() => {
+        loadingScreen.style.display = 'none';
+        // 讀取遊戲設定
+        fetchGameConfig();
+        // 檢查今日是否可玩
+        checkAvailability();
+    });
+
+    // 事件監聽
+    startBtn.addEventListener('click', startGame);
+    retryBtn.addEventListener('click', goBack);
+
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+}
+
+function resizeCanvas() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+    // 調整鍋子尺寸（依畫面比例）
+    CONFIG.potWidth = Math.min(80, canvas.width * 0.2);
+    CONFIG.potHeight = CONFIG.potWidth * 0.75;
+    CONFIG.foodSize = Math.min(50, canvas.width * 0.12);
+    // 鍋子初始位置
+    if (potX === 0) {
+        potX = (canvas.width - CONFIG.potWidth) / 2;
+    }
+}
+
+// ==================== 圖片載入 ====================
+function loadAllImages(callback) {
+    const keys = Object.keys(IMAGES);
+    let loaded = 0;
+    const total = keys.length;
+
+    for (let key of keys) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = IMAGES[key];
+        img.onload = () => {
+            IMAGES[key + '_img'] = img;
+            loaded++;
+            if (loaded === total) {
+                imagesLoaded = true;
+                if (callback) callback();
+            }
+        };
+        img.onerror = () => {
+            console.warn('⚠️ 圖片載入失敗:', key);
+            IMAGES[key + '_img'] = null;
+            loaded++;
+            if (loaded === total) {
+                imagesLoaded = true;
+                if (callback) callback();
+            }
+        };
+    }
+}
+
+// ==================== API 呼叫 ====================
+function callApi(action, params = {}) {
+    const url = new URL(GAS_BASE_URL);
+    url.searchParams.set('action', action);
+    for (let key in params) {
+        url.searchParams.set(key, params[key]);
+    }
+    return fetch(url.toString())
+        .then(res => res.json())
+        .catch(err => {
+            console.error('API 呼叫失敗:', err);
+            return { success: false, message: '網路錯誤' };
+        });
+}
+
+function fetchGameConfig() {
+    callApi('getGameConfig').then(data => {
+        if (data.success) {
+            CONFIG.threshold = data.threshold || 50;
+            CONFIG.bonusPoints = data.bonusPoints || 30;
+            CONFIG.gameTime = data.gameTime || 15;
+            bonusDisplay.textContent = CONFIG.bonusPoints;
+        }
+    }).catch(() => {});
+}
+
+function checkAvailability() {
+    callApi('checkGameAvailable', { userId: userId }).then(data => {
+        if (data.available) {
+            startBtn.disabled = false;
+            showStatus('✅ ' + data.message);
+        } else {
+            startBtn.disabled = true;
+            showStatus('⏳ ' + data.message);
+        }
+    }).catch(() => {
+        showStatus('⚠️ 無法連線到伺服器');
+    });
+}
+
+function submitResult(score) {
+    return callApi('recordGameResult', { userId: userId, score: score });
+}
+
+// ==================== 遊戲主邏輯 ====================
+function startGame() {
+    if (gameRunning || !imagesLoaded) return;
+
+    // 重置狀態
+    score = 0;
+    timeLeft = CONFIG.gameTime;
+    foods = [];
+    floatTexts = [];
+    lobsterSpawned = false;
+    trapCount = 0;
+    targetTrapCount = Math.floor(Math.random() * (CONFIG.trapMaxCount - CONFIG.trapMinCount + 1)) + CONFIG.trapMinCount;
+    isWin = false;
+    gameEnded = false;
+    gameRunning = true;
+
+    startScreen.style.display = 'none';
+    resultScreen.style.display = 'none';
+
+    // 計時器
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimer, 1000);
+
+    // 生成器
+    if (spawnInterval) clearInterval(spawnInterval);
+    spawnInterval = setInterval(spawnFood, CONFIG.spawnInterval);
+
+    // 動畫循環
+    if (animationId) cancelAnimationFrame(animationId);
+    gameLoop();
+}
+
+function updateTimer() {
+    timeLeft--;
+    if (timeLeft <= 0) {
+        timeLeft = 0;
+        endGame();
+    }
+}
+
+function spawnFood() {
+    if (!gameRunning || gameEnded) return;
+
+    let foodType = selectFoodType();
+    if (!foodType) return;
+
+    if (foodType.id === 'lobster') {
+        if (lobsterSpawned) return;
+        lobsterSpawned = true;
+        if (Math.random() > 0.3) return;
+    }
+
+    if (foodType.id === 'trap') {
+        if (trapCount >= targetTrapCount) return;
+        trapCount++;
+    }
+
+    const x = Math.random() * (canvas.width - CONFIG.foodSize);
+    const speed = CONFIG.fallSpeedMin + Math.random() * (CONFIG.fallSpeedMax - CONFIG.fallSpeedMin);
+
+    foods.push({
+        type: foodType,
+        x: x,
+        y: -CONFIG.foodSize,
+        size: CONFIG.foodSize,
+        speed: speed,
+    });
+}
+
+function selectFoodType() {
+    if (!lobsterSpawned && Math.random() < 0.015) {
+        return FOOD_TYPES.find(f => f.id === 'lobster');
+    }
+
+    let totalWeight = 0;
+    for (let f of FOOD_TYPES) {
+        if (f.id === 'lobster' && lobsterSpawned) continue;
+        if (f.id === 'trap' && trapCount >= targetTrapCount) continue;
+        totalWeight += f.weight;
+    }
+
+    let rand = Math.random() * totalWeight;
+    for (let f of FOOD_TYPES) {
+        if (f.id === 'lobster' && lobsterSpawned) continue;
+        if (f.id === 'trap' && trapCount >= targetTrapCount) continue;
+        rand -= f.weight;
+        if (rand <= 0) return f;
+    }
+    return FOOD_TYPES[0];
+}
+
+function gameLoop() {
+    if (!gameRunning) return;
+    if (gameEnded) { draw(); return; }
+
+    update();
+    draw();
+    animationId = requestAnimationFrame(gameLoop);
+}
+
+function update() {
+    for (let i = foods.length - 1; i >= 0; i--) {
+        const food = foods[i];
+        food.y += food.speed;
+
+        const potBottom = canvas.height - CONFIG.potHeight;
+        if (food.y + food.size > potBottom &&
+            food.y + food.size < potBottom + 30 &&
+            food.x + food.size > potX &&
+            food.x < potX + CONFIG.potWidth) {
+
+            const change = food.type.score;
+            score += change;
+            showFloatText(food.x + food.size/2, food.y, change, food.type.id === 'lobster');
+            foods.splice(i, 1);
+            continue;
+        }
+
+        if (food.y > canvas.height + 20) {
+            foods.splice(i, 1);
+        }
+    }
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 背景
+    const bgImg = IMAGES['bg_img'];
+    if (bgImg && bgImg.complete) {
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+    } else {
+        ctx.fillStyle = '#2d1a1a';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // 食材
+    for (let food of foods) {
+        const imgKey = food.type.id + '_img';
+        const img = IMAGES[imgKey];
+        if (img && img.complete) {
+            ctx.drawImage(img, food.x, food.y, food.size, food.size);
+        } else {
+            ctx.fillStyle = food.type.score > 0 ? '#4caf50' : '#ff4444';
+            ctx.fillRect(food.x, food.y, food.size, food.size);
+            ctx.fillStyle = '#fff';
+            ctx.font = '22px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(food.type.emoji, food.x + food.size/2, food.y + food.size/2 + 8);
+        }
+    }
+
+    // 鍋子
+    const potImg = IMAGES['pot_img'];
+    if (potImg && potImg.complete) {
+        ctx.drawImage(potImg, potX, canvas.height - CONFIG.potHeight, CONFIG.potWidth, CONFIG.potHeight);
+    } else {
+        ctx.fillStyle = '#8B0000';
+        ctx.fillRect(potX, canvas.height - CONFIG.potHeight, CONFIG.potWidth, CONFIG.potHeight);
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(potX + 4, canvas.height - CONFIG.potHeight - 4, CONFIG.potWidth - 8, 6);
+    }
+
+    // 計分板
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    roundRect(ctx, 10, 10, 150, 58, 12, true, false);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 17px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`🏆 ${score} 分`, 22, 37);
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText(`⏱️ ${timeLeft}s`, 22, 60);
+
+    // 浮動文字（DOM）
+    for (let i = floatTexts.length - 1; i >= 0; i--) {
+        const ft = floatTexts[i];
+        ft.y -= 1.8;
+        ft.life -= 0.025;
+        if (ft.life <= 0) {
+            ft.el.remove();
+            floatTexts.splice(i, 1);
+            continue;
+        }
+        ft.el.style.top = ft.y + 'px';
+        ft.el.style.left = ft.x + 'px';
+        ft.el.style.opacity = ft.life;
+        ft.el.style.transform = `scale(${1 + (1 - ft.life) * 0.3})`;
+    }
+}
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    if (fill) ctx.fill();
+    if (stroke) ctx.stroke();
+}
+
+// ==================== 浮動文字 ====================
+function showFloatText(x, y, change, isSpecial) {
+    const el = document.createElement('div');
+    el.className = 'float-text';
+    if (change > 0) el.classList.add('positive');
+    else if (change < 0) el.classList.add('negative');
+    if (isSpecial) el.classList.add('special');
+
+    const sign = change > 0 ? '+' : '';
+    el.textContent = sign + change;
+
+    // 換算成絕對位置
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const absX = (x / scaleX) + rect.left;
+    const absY = (y / scaleY) + rect.top;
+
+    el.style.left = absX + 'px';
+    el.style.top = absY + 'px';
+    document.body.appendChild(el);
+
+    floatTexts.push({
+        el: el,
+        x: absX,
+        y: absY,
+        life: 1.0
+    });
+}
+
+// ==================== 遊戲結束 ====================
+function endGame() {
+    if (gameEnded) return;
+    gameEnded = true;
+    gameRunning = false;
+
+    if (timerInterval) clearInterval(timerInterval);
+    if (spawnInterval) clearInterval(spawnInterval);
+    if (animationId) cancelAnimationFrame(animationId);
+
+    // 判斷是否達標
+    isWin = score >= CONFIG.threshold;
+
+    // 提交結果到後端
+    submitResult(score).then(data => {
+        showResult(data);
+    }).catch(() => {
+        showResult({ success: false, message: '網路錯誤' });
+    });
+}
+
+function showResult(data) {
+    resultScreen.style.display = 'flex';
+
+    const emoji = document.getElementById('resultEmoji');
+    const title = document.getElementById('resultTitle');
+    const scoreEl = document.getElementById('resultScore');
+    const bonusEl = document.getElementById('resultBonus');
+    const stars = document.getElementById('resultStars');
+    const bg = document.getElementById('resultBg');
+
+    if (isWin && data.success) {
+        emoji.textContent = '🎉';
+        title.textContent = '太棒了！達標！';
+        title.className = 'result-title win';
+        scoreEl.textContent = `得分：${score} 分`;
+        bonusEl.textContent = `🎁 獲得 ${CONFIG.bonusPoints} 點！`;
+
+        // 五星
+        stars.innerHTML = '';
+        for (let i = 0; i < 5; i++) {
+            const span = document.createElement('span');
+            span.className = 'star-icon';
+            span.textContent = '⭐';
+            stars.appendChild(span);
+        }
+
+        // 背景
+        const bgImg = IMAGES['successBg_img'];
+        if (bgImg && bgImg.complete) {
+            bg.style.backgroundImage = `url(${IMAGES.successBg})`;
+        }
+    } else if (isWin && !data.success) {
+        emoji.textContent = '⚠️';
+        title.textContent = '達標但儲存失敗';
+        title.className = 'result-title lose';
+        scoreEl.textContent = `得分：${score} 分`;
+        bonusEl.textContent = '❌ 贈點失敗，請聯絡客服';
+        stars.innerHTML = '';
+    } else {
+        emoji.textContent = '😅';
+        title.textContent = '再接再厲！';
+        title.className = 'result-title lose';
+        scoreEl.textContent = `得分：${score} 分 / 目標：${CONFIG.threshold} 分`;
+        bonusEl.textContent = '💪 差一點就達標了！';
+        stars.innerHTML = '';
+
+        const bgImg = IMAGES['failBg_img'];
+        if (bgImg && bgImg.complete) {
+            bg.style.backgroundImage = `url(${IMAGES.failBg})`;
+        }
+    }
+}
+
+// ==================== 控制 ====================
+function handleMove(e) {
+    if (!gameRunning) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    potX = Math.max(0, Math.min(x - CONFIG.potWidth/2, canvas.width - CONFIG.potWidth));
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    if (!gameRunning) return;
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+    potX = Math.max(0, Math.min(x - CONFIG.potWidth/2, canvas.width - CONFIG.potWidth));
+}
+
+function handleTouchStart(e) {
+    e.preventDefault();
+    if (!gameRunning) return;
+    const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
+    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+    potX = Math.max(0, Math.min(x - CONFIG.potWidth/2, canvas.width - CONFIG.potWidth));
+}
+
+// ==================== UI 輔助 ====================
+function showStatus(msg) {
+    playStatus.textContent = msg;
+}
+
+function goBack() {
+    window.close();
+    // 或返回上一頁
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        window.location.href = 'about:blank';
+    }
+}
+
+// ==================== 啟動 ====================
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
