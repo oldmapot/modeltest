@@ -417,7 +417,7 @@
 // ==================== 設定 ====================
 const CONFIG = {
     gameTime: 20,
-    threshold: 50,
+    threshold: 100,
     bonusPoints: 30,
     maxPlays: 4,
     costPerPlay: 5,
@@ -453,19 +453,20 @@ const FOOD_EMOJIS = {
 
 // ==================== 食材定義 ====================
 const FOOD_TYPES = [
-    { id: 'cabbage', score: 1, weight: 14 },
-    { id: 'mushroom', score: 1, weight: 14 },
-    { id: 'green_veg', score: 1, weight: 14 },
-    { id: 'corn', score: 1, weight: 14 },
-    { id: 'carrot', score: 1, weight: 14 },
-    { id: 'shrimp', score: 2, weight: 10 },
-    { id: 'clam', score: 2, weight: 10 },
-    { id: 'meat_1', score: 2, weight: 10 },
-    { id: 'meat_2', score: 2, weight: 10 },
-    { id: 'lobster', score: 5, weight: 2 },
-    { id: 'trap_skull', score: -1, weight: 6 },
-    { id: 'trap_warning', score: -1, weight: 6 },
-    { id: 'trap_bomb', score: -1, weight: 6 }
+    { id: 'cabbage', score: 1, weight: 15 },
+    { id: 'mushroom', score: 1, weight: 15 },
+    { id: 'green_veg', score: 1, weight: 15 },
+    { id: 'corn', score: 1, weight: 15 },
+    { id: 'carrot', score: 1, weight: 15 },
+    { id: 'shrimp', score: 2, weight: 15 },
+    { id: 'clam', score: 2, weight: 15 },
+    { id: 'meat_1', score: 2, weight: 15 },
+    { id: 'meat_2', score: 2, weight: 15 },
+    { id: 'lobster', score: 5, weight: 3 },
+    //陷阱扣點
+    { id: 'trap_skull', score: -1, weight: 10 },
+    { id: 'trap_warning', score: -1, weight: 10 },
+    { id: 'trap_bomb', score: -1, weight: 10 }
 ];
 // ============================================================
 //  背景音樂（從 GitHub 載入的 Happy_smile.mp3）
@@ -482,7 +483,7 @@ function initBGM() {
     try {
         bgmAudio = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/Upload%20files/Happy_smile.mp3');
         bgmAudio.loop = true;
-        bgmAudio.volume = 0.3;  // 音量 30%
+        bgmAudio.volume = 0.2;  // 音量 20%
         
         // 預載入音樂
         bgmAudio.load();
@@ -501,7 +502,7 @@ function toggleMute() {
         bgmAudio.volume = 0;
         showStatus('🔇 音樂已靜音');
     } else {
-        bgmAudio.volume = 0.3;
+        bgmAudio.volume = 0.2;
         showStatus('🔊 音樂已開啟');
     }
 }
