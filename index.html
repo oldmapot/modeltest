@@ -568,15 +568,13 @@ function openGame() {
         showToast('⚠️ 請先登入會員');
         return;
     }
-    
-    // 遊戲頁面網址（請換成你的 GitHub Pages 網址）
+
     const gameUrl = 'https://oldmapot.github.io/modeltest/game.html';
-    
-    // 帶入 userId 和 GAS_URL
-    const fullUrl = gameUrl + '?userId=' + encodeURIComponent(userId) + '&api=' + encodeURIComponent(GAS_URL);
-    
-    // 在新視窗開啟遊戲
-    window.open(fullUrl, '_blank');
+    const fullUrl = gameUrl + '?userId=' + encodeURIComponent(userId) + 
+                    '&api=' + encodeURIComponent(GAS_URL) +
+                    '&t=' + Date.now();
+
+    window.location.href = fullUrl;
 }
 // ============================================================
 // ✅ 活動、推薦、點數明細、個人資料
