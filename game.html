@@ -1158,8 +1158,10 @@ function endGame() {
 
     isWin = score >= CONFIG.threshold;
     const cost = gameStatus && !gameStatus.freePlay ? CONFIG.costPerPlay : 0;
-    
+     // 🔥🔥🔥 加這行
+    console.log("🔥🔥🔥 前端傳送的 cost 值:", cost);
     console.log('📊 最終 cost:', cost, '類型:', typeof cost);
+    
 
     if (isWin) {
         playSuccessSound();
