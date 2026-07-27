@@ -426,7 +426,7 @@
 
 // ==================== 設定 ====================
 const CONFIG = {
-    gameTime: 30,
+    gameTime: 20,
     threshold: 50,
     bonusPoints: 30,
     maxPlays: 3,
@@ -499,7 +499,9 @@ let floatTexts = [];
 let timerInterval = null;
 let spawnInterval = null;
 let animationId = null;
-let lobsterSpawned = false;
+let lobsterSpawned = false;      // 是否已出現過
+let lobsterSpawnTime = 0;        // 龍蝦出現的時間（用於計算間隔）
+let lobsterMaxCount = 2;         // 整場最多出現 1 次（或 2 次）
 let trapCount = 0;
 let targetTrapCount = 0;
 let imagesLoaded = false;
@@ -718,23 +720,26 @@ function updateTimer() {
 function spawnFood() {
     if (!gameRunning || gameEnded) return;
 
+    // 🔥 先決定要生成什麼食材
     let foodType = selectFoodType();
     if (!foodType) return;
 
-    // ✅ 正確寫法
-if (foodType.id === 'lobster') {
-    if (lobsterSpawned) return;      // 已出現 → 不再出現
-    lobsterSpawned = true;           // 標記為已出現
-    // 🔥 龍蝦一旦被選中，就 100% 出現，不再隨機跳過
-}
-
-    if (foodType.id === 'trap') {
-        if (trapCount >= targetTrapCount) return;
-        if (trapCooldownTimer > 0) return;  // 🔥 冷卻中不生成
-        trapCount++;
-        trapCooldownTimer = 3;  // 🔥 設定 3 秒冷卻
+    // 🔥 龍蝦控制（整場只出現 1 次）
+    if (foodType.id === 'lobster') {
+        if (lobsterSpawned) return;      // 已出現 → 不再出現
+        lobsterSpawned = true;           // 標記為已出現
+        // 龍蝦直接出現，不跳過
     }
 
+    // 🔥 陷阱控制（有數量限制 + 冷卻）
+    if (foodType.id === 'trap') {
+        if (trapCount >= targetTrapCount) return;
+        if (trapCooldownTimer > 0) return;
+        trapCount++;
+        trapCooldownTimer = 3;  // 3 秒冷卻
+    }
+
+    // 生成食材
     const x = Math.random() * (canvas.width - CONFIG.foodSize);
     const speed = CONFIG.fallSpeedMin + Math.random() * (CONFIG.fallSpeedMax - CONFIG.fallSpeedMin);
 
@@ -748,24 +753,18 @@ if (foodType.id === 'lobster') {
 }
 
 function selectFoodType() {
-    // 🔥 龍蝦出現機率提高（5% → 10%）
-    if (!lobsterSpawned && Math.random() < 0.10) {
-        return FOOD_TYPES.find(f => f.id === 'lobster');
-    }
-
-    // 🔥 計算總權重時，如果陷阱在冷卻中，跳過陷阱
+    // 🔥 移除龍蝦邏輯，只處理陷阱冷卻
+    
     let trapInCooldown = trapCooldownTimer > 0;
     
     let totalWeight = 0;
     for (let f of FOOD_TYPES) {
-        if (f.id === 'lobster' && lobsterSpawned) continue;
         if (f.id === 'trap' && (trapCount >= targetTrapCount || trapInCooldown)) continue;
         totalWeight += f.weight;
     }
 
     let rand = Math.random() * totalWeight;
     for (let f of FOOD_TYPES) {
-        if (f.id === 'lobster' && lobsterSpawned) continue;
         if (f.id === 'trap' && (trapCount >= targetTrapCount || trapInCooldown)) continue;
         rand -= f.weight;
         if (rand <= 0) return f;
