@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>火鍋達人</title>
+    <title>火鍋達人 - 老娘鍋</title>
     <style>
         * {
             margin: 0;
@@ -128,6 +128,10 @@
             color: #4fc3f7;
             font-weight: 700;
             font-size: 16px;
+        }
+        #startScreen .rules .danger {
+            color: #ff6b6b;
+            font-weight: 700;
         }
 
         .btn-start {
@@ -355,9 +359,9 @@
         <h1>火鍋達人</h1>
         <div class="subtitle">老娘一點心意 小遊戲</div>
         <div class="rules">
-            🎯 目標：接到食材累積 <span class="highlight" id="thresholdDisplay">50</span> 分<br>
+            🎯 目標：接到火鍋食材累積 <span class="highlight" id="thresholdDisplay">50</span> 分<br>
             🎁 獎勵：達成目標獲得 <span class="highlight" id="bonusDisplay">30</span> 點<br>
-            ⚠️ 小心陷阱！<br>
+            <span class="danger">💀 小心陷阱！</span><br>
             <span class="info">📋 每日免費 1 次，後續每次扣 <span id="costDisplay">5</span> 點</span>
         </div>
         <button class="btn-start" id="startBtn">🔥 開始遊戲</button>
@@ -393,7 +397,7 @@
 
 <script>
 // ============================================================
-//  火鍋達人 - Emoji 完整版（修正視覺）
+//  火鍋達人 - 完整版（含聲音、刺激速度、流水帳）
 // ============================================================
 
 // ==================== 設定 ====================
@@ -403,22 +407,22 @@ const CONFIG = {
     bonusPoints: 30,
     maxPlays: 4,
     costPerPlay: 5,
-    trapMinCount: 10,
-    trapMaxCount: 15,
-    spawnInterval: 400,
+    trapMinCount: 12,
+    trapMaxCount: 20,
+    spawnInterval: 300,
     potWidth: 80,
     potHeight: 60,
     potY: 0,
     foodSize: 55,
-    fallSpeedMin: 2.8,
-    fallSpeedMax: 4.8,
+    fallSpeedMin: 2.0,
+    fallSpeedMax: 7.5,
 };
 
 // ==================== Emoji 對照表 ====================
 const FOOD_EMOJIS = {
     cabbage: '🥬',
-    mushroom: '🍄',
-    green_veg: '🥗',
+    mushroom: '🍄‍🟫',
+    green_veg: '🥦',
     corn: '🌽',
     carrot: '🥕',
     shrimp: '🦐',
@@ -426,28 +430,117 @@ const FOOD_EMOJIS = {
     meat_1: '🥩',
     meat_2: '🥩',
     lobster: '🦞',
-    trap_fish: '🐟',
-    trap_chicken: '🦴',
-    trap_egg: '🥚',
+    trap_skull: '🧁',
+    trap_warning: '🍧',
+    trap_bomb: '🧋',
     pot: '🍲'
 };
 
 // ==================== 食材定義 ====================
 const FOOD_TYPES = [
-    { id: 'cabbage', score: 1, weight: 15 },
-    { id: 'mushroom', score: 1, weight: 15 },
-    { id: 'green_veg', score: 1, weight: 15 },
-    { id: 'corn', score: 1, weight: 15 },
-    { id: 'carrot', score: 1, weight: 15 },
+    { id: 'cabbage', score: 1, weight: 14 },
+    { id: 'mushroom', score: 1, weight: 14 },
+    { id: 'green_veg', score: 1, weight: 14 },
+    { id: 'corn', score: 1, weight: 14 },
+    { id: 'carrot', score: 1, weight: 14 },
     { id: 'shrimp', score: 2, weight: 10 },
     { id: 'clam', score: 2, weight: 10 },
     { id: 'meat_1', score: 2, weight: 10 },
     { id: 'meat_2', score: 2, weight: 10 },
     { id: 'lobster', score: 5, weight: 2 },
-    { id: 'trap_fish', score: -1, weight: 5 },
-    { id: 'trap_chicken', score: -1, weight: 5 },
-    { id: 'trap_egg', score: -1, weight: 5 }
+    // 🔥 陷阱改用骷髏、警告、炸彈
+    { id: 'trap_skull', score: -1, weight: 6 },
+    { id: 'trap_warning', score: -1, weight: 6 },
+    { id: 'trap_bomb', score: -1, weight: 6 }
 ];
+
+// ==================== 聲音系統 ====================
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {}
+    }
+}
+
+function playTone(frequency, duration, type = 'sine', volume = 0.3) {
+    try {
+        initAudio();
+        if (!audioCtx) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = type;
+        oscillator.frequency.value = frequency;
+        gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + duration);
+    } catch (e) {}
+}
+
+function playFoodInPot() {
+    playTone(900, 0.08, 'sine', 0.25);
+    setTimeout(() => playTone(1300, 0.06, 'sine', 0.2), 70);
+}
+
+function playTrapInPot() {
+    playTone(150, 0.4, 'sawtooth', 0.3);
+    setTimeout(() => playTone(100, 0.3, 'sawtooth', 0.25), 120);
+}
+
+function playLobsterInPot() {
+    playTone(1000, 0.1, 'sine', 0.3);
+    setTimeout(() => playTone(1400, 0.1, 'sine', 0.3), 100);
+    setTimeout(() => playTone(1800, 0.15, 'sine', 0.3), 200);
+}
+
+function playSuccessSound() {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((freq, i) => {
+        setTimeout(() => playTone(freq, 0.15, 'sine', 0.25), i * 100);
+    });
+    setTimeout(() => {
+        [523, 659, 784].forEach((freq, i) => {
+            setTimeout(() => playTone(freq, 0.3, 'sine', 0.2), i * 60);
+        });
+    }, 450);
+}
+
+function playFailSound() {
+    playTone(350, 0.3, 'sawtooth', 0.2);
+    setTimeout(() => playTone(250, 0.4, 'sawtooth', 0.2), 150);
+    setTimeout(() => playTone(150, 0.5, 'sawtooth', 0.15), 350);
+}
+
+let bgmInterval = null;
+let bgmRunning = false;
+
+function startBGM() {
+    if (bgmRunning) return;
+    bgmRunning = true;
+    playBGMNote();
+}
+
+function stopBGM() {
+    bgmRunning = false;
+    if (bgmInterval) {
+        clearTimeout(bgmInterval);
+        bgmInterval = null;
+    }
+}
+
+function playBGMNote() {
+    if (!bgmRunning) return;
+    const notes = [440, 493, 554, 587, 659, 740];
+    const note = notes[Math.floor(Math.random() * notes.length)];
+    playTone(note, 0.3, 'sine', 0.04);
+    const interval = 600 + Math.random() * 900;
+    bgmInterval = setTimeout(playBGMNote, interval);
+}
 
 // ==================== 遊戲狀態 ====================
 let canvas, ctx;
@@ -470,6 +563,7 @@ let gameResultData = null;
 let gameStatus = null;
 let trapCooldownTimer = 0;
 let foodPool = [];
+let resultShown = false;
 
 // ==================== DOM 元素 ====================
 const canvasEl = document.getElementById('gameCanvas');
@@ -629,7 +723,7 @@ function startGame() {
         return;
     }
 
-    // 🔥 點擊開始時初始化音頻並播放背景音樂
+    // 🔥 初始化音頻並播放背景音樂
     initAudio();
     startBGM();
 
@@ -640,6 +734,7 @@ function startGame() {
     trapCount = 0;
     targetTrapCount = Math.floor(Math.random() * (CONFIG.trapMaxCount - CONFIG.trapMinCount + 1)) + CONFIG.trapMinCount;
     trapCooldownTimer = 0;
+    resultShown = false;
     
     initFoodPool();
     isWin = false;
@@ -674,22 +769,24 @@ function spawnFood() {
     if (!foodType) return;
 
     // 陷阱控制
-    if (foodType.id === 'trap_fish' || foodType.id === 'trap_chicken' || foodType.id === 'trap_egg') {
+    if (foodType.id === 'trap_skull' || foodType.id === 'trap_warning' || foodType.id === 'trap_bomb') {
         if (trapCount >= targetTrapCount) return;
         if (trapCooldownTimer > 0) return;
         trapCount++;
-        trapCooldownTimer = 3;
+        trapCooldownTimer = 2.5;
     }
 
     const x = Math.random() * (canvas.width - CONFIG.foodSize);
-    const speed = CONFIG.fallSpeedMin + Math.random() * (CONFIG.fallSpeedMax - CONFIG.fallSpeedMin);
+    // 🔥 速度變化更大，增加刺激感
+    const speedVariation = (Math.random() - 0.5) * 1.5;
+    const speed = CONFIG.fallSpeedMin + Math.random() * (CONFIG.fallSpeedMax - CONFIG.fallSpeedMin) + speedVariation;
 
     foods.push({
         type: foodType,
         x: x,
         y: -CONFIG.foodSize,
         size: CONFIG.foodSize,
-        speed: speed,
+        speed: Math.max(1.0, speed),
     });
 }
 
@@ -723,11 +820,11 @@ function update() {
             // 🔥 根據食材播放不同聲音
             const id = food.type.id;
             if (id === 'lobster') {
-                playLobsterInPot();   // 龍蝦特殊聲音
-            } else if (id === 'trap_fish' || id === 'trap_chicken' || id === 'trap_egg') {
-                playTrapInPot();      // 陷阱聲音
+                playLobsterInPot();
+            } else if (id === 'trap_skull' || id === 'trap_warning' || id === 'trap_bomb') {
+                playTrapInPot();
             } else {
-                playFoodInPot();      // 一般食材聲音
+                playFoodInPot();
             }
             
             showFloatText(food.x + food.size/2, food.y, change, food.type.id === 'lobster');
@@ -740,10 +837,11 @@ function update() {
         }
     }
 }
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 🔥 木紋風背景（暖色調）
+    // 木紋風背景
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#f5e6d3');
     gradient.addColorStop(0.5, '#e8d5c4');
@@ -751,9 +849,9 @@ function draw() {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 裝飾點點（模擬桌面紋理）
+    // 裝飾點點
     ctx.fillStyle = 'rgba(180, 140, 100, 0.15)';
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 20; i++) {
         const dotX = Math.random() * canvas.width;
         const dotY = Math.random() * canvas.height;
         ctx.beginPath();
@@ -761,7 +859,7 @@ function draw() {
         ctx.fill();
     }
 
-    // 🔥 繪製食材 (Emoji)
+    // 繪製食材 (Emoji)
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (let food of foods) {
@@ -774,7 +872,7 @@ function draw() {
         ctx.shadowBlur = 0;
     }
 
-    // 🔥 繪製鍋子 (Emoji)
+    // 繪製鍋子
     const potSize = CONFIG.potWidth * 0.85;
     ctx.font = potSize + 'px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
     ctx.textAlign = 'center';
@@ -784,7 +882,7 @@ function draw() {
     ctx.fillText(FOOD_EMOJIS.pot, potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight/2 + 2);
     ctx.shadowBlur = 0;
 
-    // 🔥 鍋子底部陰影（增加立體感）
+    // 鍋子陰影
     ctx.fillStyle = 'rgba(0,0,0,0.08)';
     ctx.beginPath();
     ctx.ellipse(potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight + 4, CONFIG.potWidth/2.2, 6, 0, 0, Math.PI * 2);
@@ -864,135 +962,24 @@ function showFloatText(x, y, change, isSpecial) {
         life: 1.0
     });
 }
-// ============================================================
-//  聲音系統 (Web Audio API)
-// ============================================================
 
-let audioCtx = null;
-
-// 初始化 Audio Context（必須在用戶點擊後才建立）
-function initAudio() {
-    if (!audioCtx) {
-        try {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (e) {
-            console.warn('Web Audio API 不支援');
-        }
-    }
-}
-
-// 播放音調（通用）
-function playTone(frequency, duration, type = 'sine', volume = 0.3) {
-    try {
-        initAudio();
-        if (!audioCtx) return;
-        
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        
-        oscillator.type = type;
-        oscillator.frequency.value = frequency;
-        
-        gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + duration);
-    } catch (e) {
-        // 靜默失敗，不影響遊戲
-    }
-}
-
-// 🔥 1. 食材入鍋聲音（清脆）
-function playFoodInPot() {
-    playTone(800, 0.1, 'sine', 0.3);
-    setTimeout(() => playTone(1200, 0.08, 'sine', 0.2), 80);
-}
-
-// 🔥 2. 陷阱入鍋聲音（低沉）
-function playTrapInPot() {
-    playTone(200, 0.3, 'sawtooth', 0.25);
-    setTimeout(() => playTone(150, 0.4, 'sawtooth', 0.2), 100);
-}
-
-// 🔥 3. 龍蝦入鍋聲音（特別歡樂）
-function playLobsterInPot() {
-    playTone(1000, 0.1, 'sine', 0.3);
-    setTimeout(() => playTone(1400, 0.1, 'sine', 0.3), 100);
-    setTimeout(() => playTone(1800, 0.15, 'sine', 0.3), 200);
-}
-
-// 🔥 4. 達標成功聲音（歡樂）
-function playSuccessSound() {
-    const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
-    notes.forEach((freq, i) => {
-        setTimeout(() => playTone(freq, 0.2, 'sine', 0.25), i * 120);
-    });
-    // 再加一個和弦結尾
-    setTimeout(() => {
-        [523, 659, 784].forEach((freq, i) => {
-            setTimeout(() => playTone(freq, 0.4, 'sine', 0.2), i * 50);
-        });
-    }, 500);
-}
-
-// 🔥 5. 失敗聲音（低沈）
-function playFailSound() {
-    playTone(300, 0.4, 'sawtooth', 0.2);
-    setTimeout(() => playTone(200, 0.5, 'sawtooth', 0.2), 150);
-    setTimeout(() => playTone(150, 0.6, 'sawtooth', 0.15), 350);
-}
-
-// 🔥 6. 背景音樂（循環播放）
-let bgmInterval = null;
-let bgmRunning = false;
-
-function startBGM() {
-    if (bgmRunning) return;
-    bgmRunning = true;
-    playBGMNote();
-}
-
-function stopBGM() {
-    bgmRunning = false;
-    if (bgmInterval) {
-        clearTimeout(bgmInterval);
-        bgmInterval = null;
-    }
-}
-
-function playBGMNote() {
-    if (!bgmRunning) return;
-    
-    // 簡單的背景音樂：緩慢重複的音符
-    const notes = [440, 493, 554, 587, 659, 740, 830, 880];
-    const note = notes[Math.floor(Math.random() * notes.length)];
-    playTone(note, 0.3, 'sine', 0.05);
-    
-    // 隨機間隔 0.8~1.5 秒
-    const interval = 800 + Math.random() * 700;
-    bgmInterval = setTimeout(playBGMNote, interval);
-}
 // ==================== 遊戲結束 ====================
 function endGame() {
     if (gameEnded) return;
     gameEnded = true;
     gameRunning = false;
 
-    // 🔥 停止背景音樂
     stopBGM();
 
     if (timerInterval) clearInterval(timerInterval);
     if (spawnInterval) clearInterval(spawnInterval);
     if (animationId) cancelAnimationFrame(animationId);
 
+    // 🔥 立即顯示結果，不等待 API
     resultScreen.style.display = 'flex';
     
     document.getElementById('resultEmoji').textContent = '⏳';
-    document.getElementById('resultTitle').textContent = '結算中...';
+    document.getElementById('resultTitle').textContent = '計算中...';
     document.getElementById('resultTitle').className = 'result-title';
     document.getElementById('resultScore').textContent = `得分：${score} 分`;
     document.getElementById('resultInfo').textContent = '請稍候...';
@@ -1003,11 +990,24 @@ function endGame() {
     isWin = score >= CONFIG.threshold;
     const cost = gameStatus && !gameStatus.freePlay ? CONFIG.costPerPlay : 0;
 
+    // 🔥 先播放結果聲音（讓玩家有立即反饋）
+    if (isWin) {
+        playSuccessSound();
+    } else {
+        playFailSound();
+    }
+
+    // 🔥 API 呼叫，2秒後自動跳轉
     submitResult(score, cost).then(data => {
         gameResultData = data;
-        showResult(data);
+        // 等待 2 秒讓玩家看到結果
+        setTimeout(() => {
+            showResult(data);
+        }, 2000);
     }).catch(() => {
-        showResult({ success: false, message: '網路錯誤' });
+        setTimeout(() => {
+            showResult({ success: false, message: '網路錯誤' });
+        }, 2000);
     });
 }
 
@@ -1023,10 +1023,8 @@ function showResult(data) {
     const remaining = data.remaining || 0;
 
     stars.innerHTML = '';
-if (isWinLocal) {
-        // 🔥 達標成功聲音
-        playSuccessSound();
-        
+
+    if (isWinLocal) {
         emoji.textContent = '🎉';
         title.textContent = '太棒了！達標！';
         title.className = 'result-title win';
@@ -1047,15 +1045,11 @@ if (isWinLocal) {
         title.textContent = '達標但儲存失敗';
         title.className = 'result-title lose';
         scoreEl.textContent = `得分：${score} 分`;
-        infoEl.textContent = data.message || '請截圖分數頁面，聯絡客服';
+        infoEl.textContent = data.message || '請截圖分數畫面，聯絡客服';
         bonusEl.textContent = '';
         replayBtn.style.display = 'none';
         
     } else {
-        // 🔥 失敗聲音（只在不達標時播放）
-        if (!isWin) {
-            playFailSound();
-        }
         emoji.textContent = '😅';
         title.textContent = '再接再厲！';
         title.className = 'result-title lose';
