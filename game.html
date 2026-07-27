@@ -379,12 +379,11 @@
     <div id="startScreen">
         <div class="logo">🍲</div>
         <h1>火鍋達人</h1>
-        <div class="subtitle">老娘鍋 獨家小遊戲</div>
+        <div class="subtitle">老娘一點心意 小遊戲</div>
         <div class="rules">
-            ⏱️ 時間：<span class="highlight" id="gameTimeDisplay">20</span> 秒<br>
             🎯 目標：接到食材累積 <span class="highlight" id="thresholdDisplay">50</span> 分<br>
             🎁 獎勵：達成目標獲得 <span class="highlight" id="bonusDisplay">30</span> 點<br>
-            ⚠️ 陷阱會扣分！<br>
+            ⚠️ 小心陷阱！<br>
             <span class="info">📋 每日免費 1 次，後續每次扣 <span id="costDisplay">5</span> 點</span>
         </div>
         <button class="btn-start" id="startBtn">🔥 開始遊戲</button>
@@ -426,7 +425,7 @@
 
 // ==================== 設定 ====================
 const CONFIG = {
-    gameTime: 20,
+    gameTime: 30,
     threshold: 50,
     bonusPoints: 30,
     maxPlays: 3,
@@ -491,7 +490,7 @@ const FOOD_TYPES = [
   { id: 'trap_chicken', score: -1, weight: 5 },
   { id: 'trap_egg', score: -1, weight: 5 },
   // 龍蝦 (+10分)
-  { id: 'lobster', score: 10, weight: 0 }
+  { id: 'lobster', score: 5, weight: 0 }
 ];
 // ==================== 遊戲狀態 ====================
 let canvas, ctx;
@@ -505,9 +504,6 @@ let floatTexts = [];
 let timerInterval = null;
 let spawnInterval = null;
 let animationId = null;
-let lobsterSpawned = false;      // 是否已出現過
-let lobsterSpawnTime = 0;        // 龍蝦出現的時間（用於計算間隔）
-let lobsterMaxCount = 2;         // 整場最多出現 1 次（或 2 次）
 let trapCount = 0;
 let targetTrapCount = 0;
 let imagesLoaded = false;
@@ -780,11 +776,10 @@ function startGame() {
 }
 // 初始化並打散食材池 (確保種類交錯不連刷)
 function initFoodPool() {
-  const normalFoods = FOOD_TYPES.filter(f => f.type !== 'lobster');
+  // 🔥 不再排除龍蝦，所有食材都進池
   foodPool = [];
-  // 複製 3 組一般食材並打散
   for (let i = 0; i < 3; i++) {
-    foodPool.push(...normalFoods);
+    foodPool.push(...FOOD_TYPES);
   }
   // 洗牌 (Fisher-Yates Shuffle)
   for (let i = foodPool.length - 1; i > 0; i--) {
@@ -795,23 +790,11 @@ function initFoodPool() {
 
 // 取得下一個出現的食材
 function selectFoodType() {
-    // 🔥 龍蝦出現條件：整場只出現 1 次，在剩餘 5~15 秒時觸發
-    if (!lobsterSpawned && timeLeft <= 15 && timeLeft >= 5) {
-        // 20% 機率出現龍蝦（每次判斷時）
-        if (Math.random() < 0.20) {
-            lobsterSpawned = true;
-            console.log("🦞 龍蝦出現了！時間剩餘:", timeLeft);
-            return FOOD_TYPES.find(f => f.id === 'lobster');
-        }
-    }
-
-    // 如果食材池空了，重新補貨
-    if (foodPool.length === 0) {
-        initFoodPool();
-    }
-    
-    // 從食材池取一個
-    return foodPool.pop();
+  // 🔥 直接從食材池取，不再有龍蝦特殊判斷
+  if (foodPool.length === 0) {
+    initFoodPool();
+  }
+  return foodPool.pop();
 }
 function updateTimer() {
     timeLeft--;
@@ -822,38 +805,29 @@ function updateTimer() {
 }
 
 function spawnFood() {
-    if (!gameRunning || gameEnded) return;
+  if (!gameRunning || gameEnded) return;
 
-    // 🔥 先決定要生成什麼食材
-    let foodType = selectFoodType();
-    if (!foodType) return;
+  let foodType = selectFoodType();
+  if (!foodType) return;
 
-    // 🔥 龍蝦控制（整場只出現 1 次）
-    if (foodType.id === 'lobster') {
-        if (lobsterSpawned) return;      // 已出現 → 不再出現
-        lobsterSpawned = true;           // 標記為已出現
-        // 龍蝦直接出現，不跳過
-    }
+  // 🔥 不再有龍蝦特殊判斷，只有陷阱控制
+  if (foodType.id === 'trap_fish' || foodType.id === 'trap_chicken' || foodType.id === 'trap_egg') {
+    if (trapCount >= targetTrapCount) return;
+    if (trapCooldownTimer > 0) return;
+    trapCount++;
+    trapCooldownTimer = 3;
+  }
 
-    // 🔥 陷阱控制（有數量限制 + 冷卻）
-    if (foodType.id === 'trap') {
-        if (trapCount >= targetTrapCount) return;
-        if (trapCooldownTimer > 0) return;
-        trapCount++;
-        trapCooldownTimer = 3;  // 3 秒冷卻
-    }
+  const x = Math.random() * (canvas.width - CONFIG.foodSize);
+  const speed = CONFIG.fallSpeedMin + Math.random() * (CONFIG.fallSpeedMax - CONFIG.fallSpeedMin);
 
-    // 生成食材
-    const x = Math.random() * (canvas.width - CONFIG.foodSize);
-    const speed = CONFIG.fallSpeedMin + Math.random() * (CONFIG.fallSpeedMax - CONFIG.fallSpeedMin);
-
-    foods.push({
-        type: foodType,
-        x: x,
-        y: -CONFIG.foodSize,
-        size: CONFIG.foodSize,
-        speed: speed,
-    });
+  foods.push({
+    type: foodType,
+    x: x,
+    y: -CONFIG.foodSize,
+    size: CONFIG.foodSize,
+    speed: speed,
+  });
 }
 
 function selectFoodType() {
