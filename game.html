@@ -629,6 +629,10 @@ function startGame() {
         return;
     }
 
+    // 🔥 點擊開始時初始化音頻並播放背景音樂
+    initAudio();
+    startBGM();
+
     score = 0;
     timeLeft = CONFIG.gameTime;
     foods = [];
@@ -715,6 +719,17 @@ function update() {
 
             const change = food.type.score;
             score += change;
+            
+            // 🔥 根據食材播放不同聲音
+            const id = food.type.id;
+            if (id === 'lobster') {
+                playLobsterInPot();   // 龍蝦特殊聲音
+            } else if (id === 'trap_fish' || id === 'trap_chicken' || id === 'trap_egg') {
+                playTrapInPot();      // 陷阱聲音
+            } else {
+                playFoodInPot();      // 一般食材聲音
+            }
+            
             showFloatText(food.x + food.size/2, food.y, change, food.type.id === 'lobster');
             foods.splice(i, 1);
             continue;
@@ -725,7 +740,6 @@ function update() {
         }
     }
 }
-
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -850,12 +864,126 @@ function showFloatText(x, y, change, isSpecial) {
         life: 1.0
     });
 }
+// ============================================================
+//  聲音系統 (Web Audio API)
+// ============================================================
 
+let audioCtx = null;
+
+// 初始化 Audio Context（必須在用戶點擊後才建立）
+function initAudio() {
+    if (!audioCtx) {
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.warn('Web Audio API 不支援');
+        }
+    }
+}
+
+// 播放音調（通用）
+function playTone(frequency, duration, type = 'sine', volume = 0.3) {
+    try {
+        initAudio();
+        if (!audioCtx) return;
+        
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.type = type;
+        oscillator.frequency.value = frequency;
+        
+        gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + duration);
+    } catch (e) {
+        // 靜默失敗，不影響遊戲
+    }
+}
+
+// 🔥 1. 食材入鍋聲音（清脆）
+function playFoodInPot() {
+    playTone(800, 0.1, 'sine', 0.3);
+    setTimeout(() => playTone(1200, 0.08, 'sine', 0.2), 80);
+}
+
+// 🔥 2. 陷阱入鍋聲音（低沉）
+function playTrapInPot() {
+    playTone(200, 0.3, 'sawtooth', 0.25);
+    setTimeout(() => playTone(150, 0.4, 'sawtooth', 0.2), 100);
+}
+
+// 🔥 3. 龍蝦入鍋聲音（特別歡樂）
+function playLobsterInPot() {
+    playTone(1000, 0.1, 'sine', 0.3);
+    setTimeout(() => playTone(1400, 0.1, 'sine', 0.3), 100);
+    setTimeout(() => playTone(1800, 0.15, 'sine', 0.3), 200);
+}
+
+// 🔥 4. 達標成功聲音（歡樂）
+function playSuccessSound() {
+    const notes = [523, 659, 784, 1047]; // C5, E5, G5, C6
+    notes.forEach((freq, i) => {
+        setTimeout(() => playTone(freq, 0.2, 'sine', 0.25), i * 120);
+    });
+    // 再加一個和弦結尾
+    setTimeout(() => {
+        [523, 659, 784].forEach((freq, i) => {
+            setTimeout(() => playTone(freq, 0.4, 'sine', 0.2), i * 50);
+        });
+    }, 500);
+}
+
+// 🔥 5. 失敗聲音（低沈）
+function playFailSound() {
+    playTone(300, 0.4, 'sawtooth', 0.2);
+    setTimeout(() => playTone(200, 0.5, 'sawtooth', 0.2), 150);
+    setTimeout(() => playTone(150, 0.6, 'sawtooth', 0.15), 350);
+}
+
+// 🔥 6. 背景音樂（循環播放）
+let bgmInterval = null;
+let bgmRunning = false;
+
+function startBGM() {
+    if (bgmRunning) return;
+    bgmRunning = true;
+    playBGMNote();
+}
+
+function stopBGM() {
+    bgmRunning = false;
+    if (bgmInterval) {
+        clearTimeout(bgmInterval);
+        bgmInterval = null;
+    }
+}
+
+function playBGMNote() {
+    if (!bgmRunning) return;
+    
+    // 簡單的背景音樂：緩慢重複的音符
+    const notes = [440, 493, 554, 587, 659, 740, 830, 880];
+    const note = notes[Math.floor(Math.random() * notes.length)];
+    playTone(note, 0.3, 'sine', 0.05);
+    
+    // 隨機間隔 0.8~1.5 秒
+    const interval = 800 + Math.random() * 700;
+    bgmInterval = setTimeout(playBGMNote, interval);
+}
 // ==================== 遊戲結束 ====================
 function endGame() {
     if (gameEnded) return;
     gameEnded = true;
     gameRunning = false;
+
+    // 🔥 停止背景音樂
+    stopBGM();
 
     if (timerInterval) clearInterval(timerInterval);
     if (spawnInterval) clearInterval(spawnInterval);
@@ -895,8 +1023,10 @@ function showResult(data) {
     const remaining = data.remaining || 0;
 
     stars.innerHTML = '';
-
-    if (isWinLocal) {
+if (isWinLocal) {
+        // 🔥 達標成功聲音
+        playSuccessSound();
+        
         emoji.textContent = '🎉';
         title.textContent = '太棒了！達標！';
         title.className = 'result-title win';
@@ -922,6 +1052,10 @@ function showResult(data) {
         replayBtn.style.display = 'none';
         
     } else {
+        // 🔥 失敗聲音（只在不達標時播放）
+        if (!isWin) {
+            playFailSound();
+        }
         emoji.textContent = '😅';
         title.textContent = '再接再厲！';
         title.className = 'result-title lose';
