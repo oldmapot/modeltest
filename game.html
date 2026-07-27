@@ -490,7 +490,7 @@ const FOOD_TYPES = [
   { id: 'trap_chicken', score: -1, weight: 5 },
   { id: 'trap_egg', score: -1, weight: 5 },
   // 龍蝦 (+10分)
-  { id: 'lobster', score: 5, weight: 0 }
+  { id: 'lobster', score: 5, weight: 1 }
 ];
 // ==================== 遊戲狀態 ====================
 let canvas, ctx;
@@ -744,33 +744,25 @@ function startGame() {
     foods = [];
     floatTexts = [];
     
-    // 重置特殊食材與陷阱控管
-    lobsterSpawned = false; // 重置龍蝦出現狀態 (確保一局最多 1 次)
+    // 🔥 刪除 lobsterSpawned
     trapCount = 0;
     targetTrapCount = Math.floor(Math.random() * (CONFIG.trapMaxCount - CONFIG.trapMinCount + 1)) + CONFIG.trapMinCount;
     
-    // 🔑🔥 【關鍵新增】初始化並洗牌食材池，防止連續掉落同種食材
-    if (typeof initFoodPool === 'function') {
-        initFoodPool();
-    }
+    initFoodPool();  // 🔥 直接呼叫，不需要 typeof 檢查
 
     isWin = false;
     gameEnded = false;
     gameRunning = true;
 
-    // 隱藏選單與結算畫面
     startScreen.style.display = 'none';
     resultScreen.style.display = 'none';
 
-    // 啟動倒數計時器
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(updateTimer, 1000);
 
-    // 啟動食材生成器
     if (spawnInterval) clearInterval(spawnInterval);
     spawnInterval = setInterval(spawnFood, CONFIG.spawnInterval);
 
-    // 啟動 Canvas 繪製迴圈
     if (animationId) cancelAnimationFrame(animationId);
     gameLoop();
 }
@@ -828,26 +820,6 @@ function spawnFood() {
     size: CONFIG.foodSize,
     speed: speed,
   });
-}
-
-function selectFoodType() {
-    // 🔥 移除龍蝦邏輯，只處理陷阱冷卻
-    
-    let trapInCooldown = trapCooldownTimer > 0;
-    
-    let totalWeight = 0;
-    for (let f of FOOD_TYPES) {
-        if (f.id === 'trap' && (trapCount >= targetTrapCount || trapInCooldown)) continue;
-        totalWeight += f.weight;
-    }
-
-    let rand = Math.random() * totalWeight;
-    for (let f of FOOD_TYPES) {
-        if (f.id === 'trap' && (trapCount >= targetTrapCount || trapInCooldown)) continue;
-        rand -= f.weight;
-        if (rand <= 0) return f;
-    }
-    return FOOD_TYPES[0];
 }
 
 function gameLoop() {
