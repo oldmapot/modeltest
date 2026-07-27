@@ -439,6 +439,8 @@ const CONFIG = {
     foodSize: 50,
     fallSpeedMin: 1.8,
     fallSpeedMax: 3.8,
+    trapCooldown: 2,        // 陷阱出現後，2秒內不再出現陷阱
+    lobsterCooldown: 5,     // 龍蝦出現後，不再出現
 };
 
 // ==================== 圖片素材 ====================
@@ -485,6 +487,7 @@ let GAS_BASE_URL = 'https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpj
 let isWin = false;
 let gameResultData = null;
 let gameStatus = null; // 儲存遊戲狀態（免費/付費）
+let trapCooldownTimer = 0;  // 陷阱冷卻計時器
 
 // ==================== DOM 元素 ====================
 const canvasEl = document.getElementById('gameCanvas');
@@ -721,21 +724,25 @@ function spawnFood() {
 }
 
 function selectFoodType() {
-    if (!lobsterSpawned && Math.random() < 0.015) {
+    // 🔥 龍蝦出現機率提高（5% → 10%）
+    if (!lobsterSpawned && Math.random() < 0.10) {
         return FOOD_TYPES.find(f => f.id === 'lobster');
     }
 
+    // 🔥 計算總權重時，如果陷阱在冷卻中，跳過陷阱
+    let trapInCooldown = trapCooldownTimer > 0;
+    
     let totalWeight = 0;
     for (let f of FOOD_TYPES) {
         if (f.id === 'lobster' && lobsterSpawned) continue;
-        if (f.id === 'trap' && trapCount >= targetTrapCount) continue;
+        if (f.id === 'trap' && (trapCount >= targetTrapCount || trapInCooldown)) continue;
         totalWeight += f.weight;
     }
 
     let rand = Math.random() * totalWeight;
     for (let f of FOOD_TYPES) {
         if (f.id === 'lobster' && lobsterSpawned) continue;
-        if (f.id === 'trap' && trapCount >= targetTrapCount) continue;
+        if (f.id === 'trap' && (trapCount >= targetTrapCount || trapInCooldown)) continue;
         rand -= f.weight;
         if (rand <= 0) return f;
     }
@@ -752,6 +759,12 @@ function gameLoop() {
 }
 
 function update() {
+    // 🔥 更新陷阱冷卻（放在 for 迴圈外面）
+    if (trapCooldownTimer > 0) {
+        trapCooldownTimer -= 1/60;
+        if (trapCooldownTimer < 0) trapCooldownTimer = 0;
+    }
+    
     const potBottom = CONFIG.potY + CONFIG.potHeight;
     for (let i = foods.length - 1; i >= 0; i--) {
         const food = foods[i];
