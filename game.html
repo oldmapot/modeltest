@@ -480,9 +480,9 @@ function initBGM() {
     if (bgmReady) return;
     
     try {
-        bgmAudio = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/Happy_smile.mp3');
+        bgmAudio = new Audio('https://github.com/oldmapot/modeltest/blob/main/Upload%20files/Happy_smile.mp3');
         bgmAudio.loop = true;
-        bgmAudio.volume = 0.4;  // 音量 40%
+        bgmAudio.volume = 0.3;  // 音量 30%
         
         // 預載入音樂
         bgmAudio.load();
@@ -501,7 +501,7 @@ function toggleMute() {
         bgmAudio.volume = 0;
         showStatus('🔇 音樂已靜音');
     } else {
-        bgmAudio.volume = 0.4;
+        bgmAudio.volume = 0.3;
         showStatus('🔊 音樂已開啟');
     }
 }
@@ -522,8 +522,8 @@ function loadSFX() {
     if (SFX.loaded) return;
     
     try {
-        SFX.foodInPot = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/%E3%81%B1%E3%81%A3.mp3');
-        SFX.trapInPot = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/%E3%82%AD%E3%83%A3%E3%83%B3%E3%82%BB%E3%83%AB%E9%9F%B3_3.mp3');
+        SFX.foodInPot = new Audio('https://github.com/oldmapot/modeltest/blob/main/Upload%20files/%E9%99%B7%E9%98%B1%E5%85%A5%E9%8D%8B.mp3');
+        SFX.trapInPot = new Audio('https://github.com/oldmapot/modeltest/blob/main/Upload%20files/%E9%A3%9F%E6%9D%90%E5%85%A5%E9%8D%8B.mp3');
         SFX.loaded = true;
         console.log('🎵 音效已載入');
     } catch(e) {
