@@ -519,6 +519,17 @@ async function refreshAll() {
 async function fetchData(isReload) {
     if (isReload === undefined) isReload = false;
     try {
+        // 🔥🔥🔥 先檢查 LocalStorage 快取
+        var cachedData = getCachedMember(userId);
+        if (cachedData && !isReload) {
+            console.log('✅ 從快取載入會員資料');
+            userData = cachedData;
+            // 直接顯示會員畫面（不用等 API）
+            displayMemberUI(cachedData);
+            // 背景更新（不阻塞畫面）
+            refreshInBackground();
+            return;
+            }
         var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
         var url = GAS_URL + '?action=checkID&userId=' + userId + '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + '&referrerId=' + encodeURIComponent(referrerParam) + '&t=' + Date.now();
         var res = await fetch(url);
@@ -557,7 +568,41 @@ async function fetchData(isReload) {
         document.getElementById('loading').style.display = 'none';
     }
 }
+// 🔥 顯示會員畫面（從快取資料）
+function displayMemberUI(data) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('memberUI').style.display = 'block';
+    document.getElementById('welcomeUI').style.display = 'none';
+    document.getElementById('regUI').style.display = 'none';
+    
+    var displayPoints = data["目前剩餘點"] || data.points || 0;
+    document.getElementById('pointsDisplay').innerText = displayPoints;
+    
+    // 其他 UI 更新...
+    generateMemberCode();
+}
 
+// 🔥 背景更新（不阻塞畫面）
+async function refreshInBackground() {
+    try {
+        var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
+        var url = GAS_URL + '?action=checkID&userId=' + userId + '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + '&referrerId=' + encodeURIComponent(referrerParam) + '&t=' + Date.now();
+        var res = await fetch(url);
+        var newData = await res.json();
+        if (newData && newData.isMember) {
+            userData = newData;
+            setCachedMember(userId, newData);
+            // 更新點數顯示（如果變了）
+            var newPoints = newData["目前剩餘點"] || newData.points || 0;
+            var currentDisplay = document.getElementById('pointsDisplay').innerText;
+            if (newPoints != currentDisplay) {
+                document.getElementById('pointsDisplay').innerText = newPoints;
+            }
+        }
+    } catch(e) {
+        console.log('背景更新失敗:', e);
+    }
+}
 // ============================================================
 // ✅ 註冊
 // ============================================================
