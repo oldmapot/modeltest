@@ -519,28 +519,28 @@ async function refreshAll() {
 async function fetchData(isReload) {
     if (isReload === undefined) isReload = false;
     
-    // 🔥 1️⃣ 先檢查快取
+    // 🔥 1️⃣ 檢查快取（如果有，直接跳過 loading）
     var cachedData = getCachedMember(userId);
     if (cachedData && !isReload) {
         console.log('✅ 從快取載入會員資料');
         userData = cachedData;
+        document.getElementById('loading').style.display = 'none';
         displayMemberUI(cachedData);
         refreshInBackground();
         return;
     }
     
-    // 🔥 2️⃣ 立即關閉 loading
-    document.getElementById('loading').style.display = 'none';
+    // 🔥 2️⃣ 確保 loading 畫面顯示（不要關閉！）
+    document.getElementById('loading').style.display = 'flex';
     
-    // 🔥 3️⃣ 先顯示會員畫面（讓使用者看到東西）
-    document.getElementById('memberUI').style.display = 'block';
-    document.getElementById('welcomeUI').style.display = 'none';
-    document.getElementById('regUI').style.display = 'none';
-    document.getElementById('pointsDisplay').innerText = '...';
-    document.getElementById('welcomeQuote').innerText = '載入中...';
+    // 🔥 3️⃣ 設定等待詞（從 GAS 讀取或使用預設）
+    var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
+    var defaultTexts = currentFrom === 'so' ? 
+        ["正在為你的生活，加入一點甜...", "攪拌心意中，請稍候片刻..."] :
+        ["老娘正在翻帳本，幫你算驚喜...", "老娘正在火速趕來..."];
+    document.getElementById('loading-text').innerText = defaultTexts[Math.floor(Math.random() * defaultTexts.length)];
     
     try {
-        var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
         var url = GAS_URL + '?action=checkID&userId=' + userId + 
                   '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + 
                   '&referrerId=' + encodeURIComponent(referrerParam) + '&t=' + Date.now();
@@ -551,36 +551,25 @@ async function fetchData(isReload) {
         var data;
         try { data = JSON.parse(responseText); } catch(e) { throw new Error('伺服器回應格式錯誤'); }
         
+        // 🔥 4️⃣ 資料載入完成後，關閉 loading，顯示會員畫面
+        document.getElementById('loading').style.display = 'none';
+        
         if (data && data.isMember) {
             userData = data;
             setCachedMember(userId, data);
-            
-            // 更新點數
-            var displayPoints = data["目前剩餘點"] || data.points || 0;
-            document.getElementById('pointsDisplay').innerText = displayPoints;
-            
-            // 更新歡迎詞（使用 GAS 回傳的 welcomeQuote）
-            var welcomeQuote = data.welcomeQuote || "歡迎光臨！";
-            document.getElementById('welcomeQuote').innerText = welcomeQuote;
-            
-            // 產生 QR Code
-            if (data.shopKey) {
-                generateMemberCode();
-            }
-            
+            displayMemberUI(data);
             if (isReload) showToast('✅ 資料已更新');
         } else {
-            // 非會員 → 顯示歡迎頁
             document.getElementById('memberUI').style.display = 'none';
             document.getElementById('regUI').style.display = 'none';
             document.getElementById('welcomeUI').style.display = 'flex';
         }
     } catch(e) {
         console.error('Fetch Error:', e);
+        document.getElementById('loading').style.display = 'none';
         showToast('資料載入失敗，請稍後再試');
     }
 }
-
 // ============================================================
 // ✅ 背景更新（不阻塞畫面）
 // ============================================================
@@ -624,20 +613,16 @@ function displayMemberUI(data) {
     var displayPoints = data["目前剩餘點"] || data.points || 0;
     document.getElementById('pointsDisplay').innerText = displayPoints;
     
-    // 產生 QR Code
     if (data.shopKey) {
         generateMemberCode();
     }
     
-    // ============================================================
-    // 🔥 歡迎詞：優先使用文句池（GAS 回傳的 welcomeQuote）
-    // ============================================================
+    // 🔥 歡迎詞使用文句池
     var welcomeQuote = data.welcomeQuote || "歡迎光臨！";
     document.getElementById('welcomeQuote').innerText = welcomeQuote;
     
     console.log('✅ 會員畫面已顯示，點數:', displayPoints);
 }
-
 // ============================================================
 // ✅ 註冊
 // ============================================================
