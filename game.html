@@ -432,7 +432,7 @@ const CONFIG = {
     fallSpeedMax: 9.0,
 };
 
-// ==================== Emoji 對照表（甜點陷阱） ====================
+// ==================== Emoji 對照表 ====================
 const FOOD_EMOJIS = {
     cabbage: '🥬',
     mushroom: '🍄',
@@ -444,7 +444,6 @@ const FOOD_EMOJIS = {
     meat_1: '🥩',
     meat_2: '🥩',
     lobster: '🦞',
-    // 🔥 陷阱是甜點！（煮火鍋放甜點就是陷阱）
     trap_skull: '🧁',
     trap_warning: '🍧',
     trap_bomb: '🧋',
@@ -463,68 +462,34 @@ const FOOD_TYPES = [
     { id: 'meat_1', score: 2, weight: 15 },
     { id: 'meat_2', score: 2, weight: 15 },
     { id: 'lobster', score: 5, weight: 3 },
-    //陷阱扣點
     { id: 'trap_skull', score: -1, weight: 10 },
     { id: 'trap_warning', score: -1, weight: 10 },
     { id: 'trap_bomb', score: -1, weight: 10 }
 ];
-// ============================================================
-//  背景音樂（從 GitHub 載入的 Happy_smile.mp3）
-// ============================================================
-
-let bgmAudio = null;
-let bgmPlaying = false;
-let bgmReady = false;
-
-// 🔥 初始化背景音樂（點擊開始時呼叫）
-function initBGM() {
-    if (bgmReady) return;
-    
-    try {
-        bgmAudio = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/Upload%20files/Happy_smile.mp3');
-        bgmAudio.loop = true;
-        bgmAudio.volume = 0.1;  // 音量 20%
-        
-        // 預載入音樂
-        bgmAudio.load();
-        bgmReady = true;
-        console.log('🎵 背景音樂已載入');
-    } catch(e) {
-        console.warn('背景音樂載入失敗:', e);
-    }
-}
-
-// 🔥 切換靜音（可選功能）
-function toggleMute() {
-    if (!bgmAudio || !bgmReady) return;
-    
-    if (bgmAudio.volume > 0) {
-        bgmAudio.volume = 0;
-        showStatus('🔇 音樂已靜音');
-    } else {
-        bgmAudio.volume = 0.1;
-        showStatus('🔊 音樂已開啟');
-    }
-}
 
 // ============================================================
-//  音效（從 GitHub 載入）
+//  音效系統
 // ============================================================
+let audioCtx = null;
+let audioUnlocked = false;
+let audioReady = false;
 
-// 🔥 音效物件
 const SFX = {
     foodInPot: null,
     trapInPot: null,
     loaded: false
 };
 
-// 🔥 載入音效（在點擊開始時呼叫）
+// 🔥 音效節流控制
+let lastFoodSFXTime = 0;
+let lastTrapSFXTime = 0;
+const SFX_COOLDOWN = 80;
+
 function loadSFX() {
     if (SFX.loaded) return;
-    
     try {
-        SFX.foodInPot = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/Upload%20files/%E9%99%B7%E9%98%B1%E5%85%A5%E9%8D%8B.mp3');
-        SFX.trapInPot = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/Upload%20files/%E9%A3%9F%E6%9D%90%E5%85%A5%E9%8D%8B.mp3');
+        SFX.foodInPot = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/Upload%20files/%E9%A3%9F%E6%9D%90%E5%85%A5%E9%8D%8B.mp3');
+        SFX.trapInPot = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/Upload%20files/%E9%99%B7%E9%98%B1%E5%85%A5%E9%8D%8B.mp3');
         SFX.loaded = true;
         console.log('🎵 音效已載入');
     } catch(e) {
@@ -532,81 +497,40 @@ function loadSFX() {
     }
 }
 
-// 🔥 播放食材入鍋音效
-function playFoodSFX() {
+function playFoodSFXThrottled() {
+    const now = Date.now();
+    if (now - lastFoodSFXTime < SFX_COOLDOWN) return;
+    lastFoodSFXTime = now;
     if (!SFX.loaded || !SFX.foodInPot) return;
     try {
-        SFX.foodInPot.currentTime = 0;  // 重置到開頭
+        SFX.foodInPot.currentTime = 0;
         SFX.foodInPot.play().catch(() => {});
     } catch(e) {}
 }
 
-// 🔥 播放陷阱入鍋音效
-function playTrapSFX() {
+function playTrapSFXThrottled() {
+    const now = Date.now();
+    if (now - lastTrapSFXTime < SFX_COOLDOWN) return;
+    lastTrapSFXTime = now;
     if (!SFX.loaded || !SFX.trapInPot) return;
     try {
-        SFX.trapInPot.currentTime = 0;  // 重置到開頭
+        SFX.trapInPot.currentTime = 0;
         SFX.trapInPot.play().catch(() => {});
     } catch(e) {}
-}
-// ============================================================
-//  聲音系統（手機專用 + 背景音樂）
-// ============================================================
-
-function unlockAudio() {
-    if (audioUnlocked) return;
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        if (ctx.state === 'suspended') {
-            ctx.resume();
-        }
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        gain.gain.setValueAtTime(0.001, ctx.currentTime);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.01);
-        audioUnlocked = true;
-        audioCtx = ctx;
-        audioReady = true;
-        console.log('🔊 音頻已解鎖');
-    } catch(e) {
-        console.warn('音頻解鎖失敗:', e);
-    }
-}
-
-document.addEventListener('touchstart', unlockAudio, { once: true });
-document.addEventListener('click', unlockAudio, { once: true });
-
-function initAudio() {
-    try {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-        audioReady = true;
-        return true;
-    } catch (e) {
-        return false;
-    }
 }
 
 function playTone(freq, duration, type = 'sine', vol = 0.3) {
     try {
         if (!audioUnlocked) {
-            unlockAudio();
-        }
-        if (!audioCtx || audioCtx.state !== 'running') {
-            if (audioCtx && audioCtx.state === 'suspended') {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
-            if (!audioCtx || audioCtx.state !== 'running') {
-                return;
-            }
+            audioUnlocked = true;
         }
+        if (!audioCtx || audioCtx.state !== 'running') return;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = type;
@@ -618,6 +542,74 @@ function playTone(freq, duration, type = 'sine', vol = 0.3) {
         osc.start();
         osc.stop(audioCtx.currentTime + duration);
     } catch (e) {}
+}
+
+function playLobsterInPot() {
+    playTone(1000, 0.1, 'sine', 0.35);
+    setTimeout(() => playTone(1400, 0.1, 'sine', 0.35), 100);
+    setTimeout(() => playTone(1800, 0.15, 'sine', 0.35), 200);
+}
+
+function playSuccessSound() {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((freq, i) => {
+        setTimeout(() => playTone(freq, 0.15, 'sine', 0.3), i * 100);
+    });
+    setTimeout(() => {
+        [523, 659, 784].forEach((freq, i) => {
+            setTimeout(() => playTone(freq, 0.3, 'sine', 0.25), i * 60);
+        });
+    }, 450);
+}
+
+function playFailSound() {
+    playTone(350, 0.3, 'sawtooth', 0.25);
+    setTimeout(() => playTone(250, 0.4, 'sawtooth', 0.25), 150);
+    setTimeout(() => playTone(150, 0.5, 'sawtooth', 0.2), 350);
+}
+
+// ============================================================
+//  背景音樂
+// ============================================================
+let bgmAudio = null;
+let bgmPlaying = false;
+let bgmReady = false;
+
+function initBGM() {
+    if (bgmReady) return;
+    try {
+        bgmAudio = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/Upload%20files/Happy_smile.mp3');
+        bgmAudio.loop = true;
+        bgmAudio.volume = 0.1;
+        bgmAudio.load();
+        bgmReady = true;
+        console.log('🎵 背景音樂已載入');
+    } catch(e) {
+        console.warn('背景音樂載入失敗:', e);
+    }
+}
+
+function startBGM() {
+    if (!bgmReady) initBGM();
+    if (!bgmAudio || bgmPlaying) return;
+    try {
+        bgmAudio.play();
+        bgmPlaying = true;
+        console.log('🎵 背景音樂播放中');
+    } catch(e) {
+        console.warn('背景音樂播放失敗:', e);
+    }
+}
+
+function stopBGM() {
+    if (!bgmAudio || !bgmPlaying) return;
+    try {
+        bgmAudio.pause();
+        bgmPlaying = false;
+        console.log('🎵 背景音樂已暫停');
+    } catch(e) {
+        console.warn('背景音樂暫停失敗:', e);
+    }
 }
 
 // ==================== 遊戲狀態 ====================
@@ -635,13 +627,12 @@ let animationId = null;
 let trapCount = 0;
 let targetTrapCount = 0;
 let userId = '';
-let GAS_BASE_URL = 'https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec';
+let GAS_BASE_URL = '';
 let isWin = false;
 let gameResultData = null;
 let gameStatus = null;
 let trapCooldownTimer = 0;
 let foodPool = [];
-let resultShown = false;
 
 // ==================== DOM 元素 ====================
 const canvasEl = document.getElementById('gameCanvas');
@@ -661,10 +652,10 @@ const confirmNo = document.getElementById('confirmNo');
 function init() {
     const params = new URLSearchParams(window.location.search);
     userId = params.get('userId') || '';
-    GAS_BASE_URL = params.get('api') || '';
+    GAS_BASE_URL = params.get('api') || 'https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec';
 
-    if (!userId || !GAS_BASE_URL) {
-        showStatus('⚠️ 請先登入會員或缺少 API 網址');
+    if (!userId) {
+        showStatus('⚠️ 請先登入會員');
         startBtn.disabled = true;
         loadingScreen.style.display = 'none';
         return;
@@ -674,6 +665,9 @@ function init() {
     ctx = canvas.getContext('2d');
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
+
+    // 🔥 初始化控制（使用 Pointer Events）
+    initControls();
 
     loadingScreen.style.display = 'none';
     startScreen.style.display = 'flex';
@@ -687,11 +681,82 @@ function init() {
     replayBtn.addEventListener('click', showConfirmReplay);
     confirmYes.addEventListener('click', confirmReplay);
     confirmNo.addEventListener('click', cancelReplay);
-
-    canvas.addEventListener('mousemove', handleMove);
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
 }
+
+// ==================== 🔥 優化版控制系統（Pointer Events） ====================
+let isPointerDown = false;
+
+function initControls() {
+    // 移除舊的監聽器
+    canvas.removeEventListener('mousemove', handleMove);
+    canvas.removeEventListener('touchmove', handleTouchMove);
+    canvas.removeEventListener('touchstart', handleTouchStart);
+    
+    // 🔥 使用 Pointer Events（統一滑鼠 + 觸控）
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    canvas.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
+    canvas.addEventListener('pointerleave', onPointerUp);
+    
+    console.log('✅ 控制系統初始化完成');
+}
+
+function onPointerDown(e) {
+    isPointerDown = true;
+    e.preventDefault();
+    updatePotPosition(e.clientX);
+}
+
+function onPointerMove(e) {
+    if (isPointerDown) {
+        e.preventDefault();
+        updatePotPosition(e.clientX);
+    }
+}
+
+function onPointerUp(e) {
+    isPointerDown = false;
+    e.preventDefault();
+}
+
+// 🔥 備用觸控事件（相容性）
+function onTouchStartHandler(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (touch) {
+        isPointerDown = true;
+        updatePotPosition(touch.clientX);
+    }
+}
+
+function onTouchMoveHandler(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (touch && isPointerDown) {
+        updatePotPosition(touch.clientX);
+    }
+}
+
+function onTouchEndHandler(e) {
+    isPointerDown = false;
+    e.preventDefault();
+}
+
+// 🔥 更新鍋子位置
+function updatePotPosition(clientX) {
+    if (!gameRunning) return;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const canvasX = (clientX - rect.left) * scaleX;
+    const maxX = canvas.width - CONFIG.potWidth;
+    potX = Math.max(0, Math.min(canvasX - CONFIG.potWidth / 2, maxX));
+}
+
+// ==================== 舊版控制（保留但不使用） ====================
+function handleMove(e) {}
+function handleTouchMove(e) {}
+function handleTouchStart(e) {}
 
 function resizeCanvas() {
     const rect = canvas.parentElement.getBoundingClientRect();
@@ -706,44 +771,11 @@ function resizeCanvas() {
     CONFIG.potY = screenHeight - CONFIG.potHeight - (screenHeight * 0.08);
     CONFIG.foodSize = Math.max(50, screenWidth * 0.16);
 
-    if (potX === 0) {
-        potX = (screenWidth - CONFIG.potWidth) / 2;
-    }
-}
-// 🔥 播放背景音樂（在 fastEnterGame 中呼叫）
-function startBGM() {
-    if (!bgmReady) {
-        initBGM();
-    }
-    
-    if (!bgmAudio || bgmPlaying) return;
-    
-    try {
-        bgmAudio.play();
-        bgmPlaying = true;
-        console.log('🎵 背景音樂播放中');
-    } catch(e) {
-        console.warn('背景音樂播放失敗:', e);
-        setTimeout(() => {
-            if (bgmAudio && !bgmPlaying) {
-                bgmAudio.play().catch(() => {});
-            }
-        }, 1000);
+    if (potX === 0 || potX + CONFIG.potWidth > canvas.width) {
+        potX = (canvas.width - CONFIG.potWidth) / 2;
     }
 }
 
-// 🔥 暫停背景音樂（遊戲結束時呼叫）
-function stopBGM() {
-    if (!bgmAudio || !bgmPlaying) return;
-    
-    try {
-        bgmAudio.pause();
-        bgmPlaying = false;
-        console.log('🎵 背景音樂已暫停');
-    } catch(e) {
-        console.warn('背景音樂暫停失敗:', e);
-    }
-}
 // ==================== API 呼叫 ====================
 function callApi(action, params = {}) {
     const url = new URL(GAS_BASE_URL);
@@ -761,7 +793,6 @@ function callApi(action, params = {}) {
 
 async function loadInitialData() {
     startBtn.disabled = true;
-
     try {
         const [configData, statusData] = await Promise.all([
             callApi('getGameConfig'),
@@ -777,7 +808,6 @@ async function loadInitialData() {
 
             document.getElementById('thresholdDisplay').textContent = CONFIG.threshold;
             document.getElementById('bonusDisplay').textContent = CONFIG.bonusPoints;
-            document.getElementById('gameTimeDisplay').textContent = CONFIG.gameTime;
             document.getElementById('costDisplay').textContent = CONFIG.costPerPlay;
         }
 
@@ -795,9 +825,7 @@ async function loadInitialData() {
                 showStatus('⏳ ' + statusData.message);
             }
         }
-
         initFoodPool();
-
     } catch (err) {
         console.error('載入失敗:', err);
         showStatus('⚠️ 網路連線失敗，請重新整理');
@@ -822,13 +850,10 @@ function initFoodPool() {
 }
 
 function selectFoodType() {
-    if (foodPool.length === 0) {
-        initFoodPool();
-    }
+    if (foodPool.length === 0) initFoodPool();
     return foodPool.pop();
 }
 
-// ==================== 動態難度 ====================
 function getDifficultyMultiplier(score) {
     const multiplier = 1 + Math.floor(score / 10) * 0.3;
     return Math.min(multiplier, 2.5);
@@ -841,21 +866,14 @@ function fastEnterGame() {
         return;
     }
 
-    // 立即切換畫面
     startScreen.style.display = 'none';
     resultScreen.style.display = 'none';
-     // 🔥 背景音樂「延後」載入，不要阻塞遊戲
+    
     setTimeout(function() {
         loadSFX();
         initBGM();
         startBGM();
     }, 500);
-
-    // 🔥 載入音效 + 背景音樂
-    // 暫時關閉，測試加載速度
-//    loadSFX();        // ← 載入音效
-//    initBGM();
-//    startBGM();
 
     // 重置遊戲
     score = 0;
@@ -865,7 +883,6 @@ function fastEnterGame() {
     trapCount = 0;
     targetTrapCount = Math.floor(Math.random() * (CONFIG.trapMaxCount - CONFIG.trapMinCount + 1)) + CONFIG.trapMinCount;
     trapCooldownTimer = 0;
-    resultShown = false;
     
     initFoodPool();
     isWin = false;
@@ -881,6 +898,7 @@ function fastEnterGame() {
     if (animationId) cancelAnimationFrame(animationId);
     gameLoop();
 }
+
 function updateTimer() {
     timeLeft--;
     if (timeLeft <= 0) {
@@ -891,11 +909,9 @@ function updateTimer() {
 
 function spawnFood() {
     if (!gameRunning || gameEnded) return;
-
     let foodType = selectFoodType();
     if (!foodType) return;
 
-    // 陷阱控制
     if (foodType.id === 'trap_skull' || foodType.id === 'trap_warning' || foodType.id === 'trap_bomb') {
         if (trapCount >= targetTrapCount) return;
         if (trapCooldownTimer > 0) return;
@@ -904,19 +920,12 @@ function spawnFood() {
     }
 
     const x = Math.random() * (canvas.width - CONFIG.foodSize);
-    
-    // 速度隨機
     const r = Math.random();
     let speed;
-    if (r < 0.15) {
-        speed = 7.5 + Math.random() * 2.0;
-    } else if (r < 0.40) {
-        speed = 5.0 + Math.random() * 2.5;
-    } else {
-        speed = 3.0 + Math.random() * 2.0;
-    }
+    if (r < 0.15) speed = 7.5 + Math.random() * 2.0;
+    else if (r < 0.40) speed = 5.0 + Math.random() * 2.5;
+    else speed = 3.0 + Math.random() * 2.0;
 
-    // 套用難度倍率
     const multiplier = getDifficultyMultiplier(score);
     const finalSpeed = speed * multiplier;
 
@@ -928,7 +937,6 @@ function spawnFood() {
         speed: Math.min(finalSpeed, 12),
     });
 
-    // 有機率多掉一個
     if (Math.random() < 0.15 * multiplier) {
         const x2 = Math.random() * (canvas.width - CONFIG.foodSize);
         const speed2 = (speed * 0.8 + Math.random() * 0.5) * multiplier;
@@ -942,15 +950,22 @@ function spawnFood() {
     }
 }
 
+// ==================== 遊戲循環 ====================
 function gameLoop() {
     if (!gameRunning) return;
     if (gameEnded) { draw(); return; }
-    update();
-    draw();
-    animationId = requestAnimationFrame(gameLoop);
+    try {
+        update();
+        draw();
+        animationId = requestAnimationFrame(gameLoop);
+    } catch (e) {
+        console.error('❌ 遊戲循環錯誤:', e);
+        gameRunning = false;
+        endGame();
+    }
 }
 
-// ==================== 優化版 update ====================
+// ==================== update ====================
 function update() {
     if (trapCooldownTimer > 0) {
         trapCooldownTimer -= 1/60;
@@ -1004,11 +1019,10 @@ function update() {
     }
 }
 
-// ==================== 優化版 draw ====================
+// ==================== draw ====================
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 背景
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
     gradient.addColorStop(0, '#f5e6d3');
     gradient.addColorStop(0.5, '#e8d5c4');
@@ -1016,7 +1030,6 @@ function draw() {
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 裝飾點
     ctx.fillStyle = 'rgba(180, 140, 100, 0.15)';
     for (let i = 0; i < 20; i++) {
         const dotX = Math.random() * canvas.width;
@@ -1026,7 +1039,6 @@ function draw() {
         ctx.fill();
     }
 
-    // 繪製食物
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     for (let food of foods) {
@@ -1039,7 +1051,6 @@ function draw() {
         ctx.shadowBlur = 0;
     }
 
-    // 繪製鍋子
     const potSize = CONFIG.potWidth * 0.85;
     ctx.font = potSize + 'px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
     ctx.textAlign = 'center';
@@ -1049,13 +1060,11 @@ function draw() {
     ctx.fillText(FOOD_EMOJIS.pot, potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight/2 + 2);
     ctx.shadowBlur = 0;
 
-    // 鍋子陰影
     ctx.fillStyle = 'rgba(0,0,0,0.08)';
     ctx.beginPath();
     ctx.ellipse(potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight + 4, CONFIG.potWidth/2.2, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 分數和時間
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
     roundRect(ctx, 10, 10, 150, 58, 14, true, false);
 
@@ -1068,7 +1077,7 @@ function draw() {
     ctx.fillStyle = '#ffd700';
     ctx.fillText(`⏱️ ${timeLeft}s`, 22, 42);
 
-    // ===== 繪製浮動文字（Canvas 版本） =====
+    // 繪製浮動文字
     for (let i = floatTexts.length - 1; i >= 0; i--) {
         const ft = floatTexts[i];
         ft.y -= 1.8;
@@ -1097,25 +1106,7 @@ function draw() {
         ctx.restore();
     }
 }
-// ===== 達標成功音效 =====
-function playSuccessSound() {
-    const notes = [523, 659, 784, 1047];
-    notes.forEach((freq, i) => {
-        setTimeout(() => playTone(freq, 0.15, 'sine', 0.3), i * 100);
-    });
-    setTimeout(() => {
-        [523, 659, 784].forEach((freq, i) => {
-            setTimeout(() => playTone(freq, 0.3, 'sine', 0.25), i * 60);
-        });
-    }, 450);
-}
 
-// ===== 失敗音效 =====
-function playFailSound() {
-    playTone(350, 0.3, 'sawtooth', 0.25);
-    setTimeout(() => playTone(250, 0.4, 'sawtooth', 0.25), 150);
-    setTimeout(() => playTone(150, 0.5, 'sawtooth', 0.2), 350);
-}
 function roundRect(ctx, x, y, w, h, r, fill, stroke) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -1132,57 +1123,18 @@ function roundRect(ctx, x, y, w, h, r, fill, stroke) {
     if (stroke) ctx.stroke();
 }
 
-function showFloatText(x, y, change, isSpecial) {
-    const el = document.createElement('div');
-    el.className = 'float-text';
-    if (change > 0) el.classList.add('positive');
-    else if (change < 0) el.classList.add('negative');
-    if (isSpecial) el.classList.add('special');
-
-    const sign = change > 0 ? '+' : '';
-    el.textContent = sign + change;
-
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const absX = (x / scaleX) + rect.left;
-    const absY = (y / scaleY) + rect.top;
-
-    el.style.left = absX + 'px';
-    el.style.top = absY + 'px';
-    document.body.appendChild(el);
-
-    floatTexts.push({
-        el: el,
-        x: absX,
-        y: absY,
-        life: 1.0
-    });
-}
-
 // ==================== 遊戲結束 ====================
 function endGame() {
     if (gameEnded) return;
     gameEnded = true;
     gameRunning = false;
-
     stopBGM();
 
     if (timerInterval) clearInterval(timerInterval);
     if (spawnInterval) clearInterval(spawnInterval);
     if (animationId) cancelAnimationFrame(animationId);
 
-    // 🔥 除錯資訊
-    const debugInfo = {
-        gameStatus: gameStatus,
-        freePlay: gameStatus?.freePlay,
-        cost: gameStatus && !gameStatus.freePlay ? CONFIG.costPerPlay : 0
-    };
-    console.log('📊 除錯資訊:', JSON.stringify(debugInfo));
-
-    // 🔥 結果畫面
     resultScreen.style.display = 'flex';
-    
     document.getElementById('resultEmoji').textContent = '⏳';
     document.getElementById('resultTitle').textContent = '計算中...';
     document.getElementById('resultTitle').className = 'result-title';
@@ -1194,28 +1146,18 @@ function endGame() {
 
     isWin = score >= CONFIG.threshold;
     const cost = gameStatus && !gameStatus.freePlay ? CONFIG.costPerPlay : 0;
-     // 🔥🔥🔥 加這行
-    console.log("🔥🔥🔥 前端傳送的 cost 值:", cost);
-    console.log('📊 最終 cost:', cost, '類型:', typeof cost);
-    
+    console.log('📊 最終 cost:', cost);
 
-    if (isWin) {
-        playSuccessSound();
-    } else {
-        playFailSound();
-    }
+    if (isWin) playSuccessSound();
+    else playFailSound();
 
     submitResult(score, cost).then(data => {
         gameResultData = data;
         console.log('📊 submitResult 回傳:', data);
-        setTimeout(() => {
-            showResult(data);
-        }, 2000);
+        setTimeout(() => showResult(data), 2000);
     }).catch((err) => {
         console.error('❌ submitResult 錯誤:', err);
-        setTimeout(() => {
-            showResult({ success: false, message: '網路錯誤' });
-        }, 2000);
+        setTimeout(() => showResult({ success: false, message: '網路錯誤' }), 2000);
     });
 }
 
@@ -1229,7 +1171,6 @@ function showResult(data) {
 
     const isWinLocal = isWin && data.success;
     const remaining = data.remaining || 0;
-
     stars.innerHTML = '';
 
     if (isWinLocal) {
@@ -1239,7 +1180,6 @@ function showResult(data) {
         scoreEl.textContent = `得分：${score} 分`;
         infoEl.textContent = '';
         bonusEl.textContent = `🎁 獲得 ${CONFIG.bonusPoints} 點！`;
-        
         for (let i = 0; i < 5; i++) {
             const span = document.createElement('span');
             span.className = 'star-icon';
@@ -1247,7 +1187,6 @@ function showResult(data) {
             stars.appendChild(span);
         }
         replayBtn.style.display = 'none';
-        
     } else if (isWin && !data.success) {
         emoji.textContent = '⚠️';
         title.textContent = '達標但儲存失敗';
@@ -1256,7 +1195,6 @@ function showResult(data) {
         infoEl.textContent = data.message || '請截圖分數畫面，聯絡客服';
         bonusEl.textContent = '';
         replayBtn.style.display = 'none';
-        
     } else {
         emoji.textContent = '😅';
         title.textContent = '再接再厲！';
@@ -1264,7 +1202,6 @@ function showResult(data) {
         scoreEl.textContent = `得分：${score} 分 / 目標：${CONFIG.threshold} 分`;
         infoEl.textContent = data.success ? `剩餘可用次數：${remaining}` : data.message || '';
         bonusEl.textContent = '💪 差一點就達標了！';
-
         if (data.success && remaining > 0 && CONFIG.costPerPlay > 0) {
             replayBtn.style.display = 'inline-block';
             replayBtn.textContent = `🔄 再玩一次（扣 ${CONFIG.costPerPlay} 點）`;
@@ -1296,39 +1233,11 @@ function confirmReplay() {
             showStatus('⏳ ' + data.message);
             replayBtn.style.display = 'none';
         }
-    }).catch(() => {
-        showStatus('⚠️ 無法連線到伺服器');
-    });
+    }).catch(() => showStatus('⚠️ 無法連線到伺服器'));
 }
 
 function cancelReplay() {
     confirmOverlay.style.display = 'none';
-}
-
-// ==================== 控制 ====================
-function handleMove(e) {
-    if (!gameRunning) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    potX = Math.max(0, Math.min(x - CONFIG.potWidth/2, canvas.width - CONFIG.potWidth));
-}
-
-function handleTouchMove(e) {
-    e.preventDefault();
-    if (!gameRunning) return;
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
-    potX = Math.max(0, Math.min(x - CONFIG.potWidth/2, canvas.width - CONFIG.potWidth));
-}
-
-function handleTouchStart(e) {
-    e.preventDefault();
-    if (!gameRunning) return;
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
-    potX = Math.max(0, Math.min(x - CONFIG.potWidth/2, canvas.width - CONFIG.potWidth));
 }
 
 function showStatus(msg) {
@@ -1336,7 +1245,7 @@ function showStatus(msg) {
 }
 
 function goBack() {
-     window.history.back();  // 🔥 回到上一頁
+    window.history.back();
 }
 
 // ==================== 啟動 ====================
