@@ -518,55 +518,171 @@ async function refreshAll() {
 // ============================================================
 async function fetchData(isReload) {
     if (isReload === undefined) isReload = false;
+    
     try {
-        // 🔥🔥🔥 先檢查 LocalStorage 快取
+        // 🔥 先檢查快取
         var cachedData = getCachedMember(userId);
         if (cachedData && !isReload) {
-            console.log('✅ 從快取載入會員資料');
+            console.log('✅ 從快取載入');
             userData = cachedData;
-            // 直接顯示會員畫面（不用等 API）
             displayMemberUI(cachedData);
-            // 背景更新（不阻塞畫面）
             refreshInBackground();
             return;
-            }
-        var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        var url = GAS_URL + '?action=checkID&userId=' + userId + '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + '&referrerId=' + encodeURIComponent(referrerParam) + '&t=' + Date.now();
-        var res = await fetch(url);
-        if (!res.ok) { throw new Error('HTTP ' + res.status); }
-        var responseText = await res.text();
-        try { userData = JSON.parse(responseText); } catch(e) { throw new Error('伺服器回應格式錯誤'); }
-        if (userData.loadingTexts && userData.loadingTexts.length > 0) {
-            var randomIndex = Math.floor(Math.random() * userData.loadingTexts.length);
-            document.getElementById('loading-text').innerText = userData.loadingTexts[randomIndex];
         }
-        document.getElementById('loading').style.display = 'none';
-        if (userData && userData.isMember === true) {
-            document.getElementById('memberUI').style.display = 'block';
-            document.getElementById('welcomeUI').style.display = 'none';
-            document.getElementById('regUI').style.display = 'none';
-            var displayPoints = userData["目前剩餘點"] || userData.points || 0;
-            document.getElementById('pointsDisplay').innerText = displayPoints;
-            var welcomeQuotes = {
-                omp: ["熟悉的位子，老娘幫你留好了","老娘這鍋湯，專治各種不開心","歡迎回家，今天想喝什麼湯","進了老娘的門，就是家裡人","每一口美味，都在累積心意。","沒什麼事是老娘一鍋解決不了的。","累積一點心意，換一口老娘美味","來老娘這，吃飽喝足最幸福"],
-                swo: ["生活七八分苦？今天必須一點甜。","遇見你，就是一點甜...","點點心意，只為甜你的心。","生活苦甜參半，今天留給甜的那半。","給生活加點糖，一點甜正剛好。","一點甜，一點暖，一點幸福","今日宜加糖， 一點甜正好"]
+        
+        var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
+        
+        // ============================================================
+        // 🚀 第一階段：快速載入（用 getBasicMemberInfo，約 1-2 秒）
+        // ============================================================
+        console.log('🔄 第一階段：快速載入會員資料...');
+        var quickUrl = GAS_URL + '?action=getBasicMemberInfo&userId=' + userId + 
+                       '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + 
+                       '&t=' + Date.now();
+        
+        var quickRes = await fetch(quickUrl);
+        var quickData = await quickRes.json();
+        
+        console.log('✅ 快速載入完成，isMember:', quickData.isMember);
+        
+        if (quickData && quickData.isMember === true) {
+            // 🔥 組裝快速版 userData（補上缺少的欄位）
+            userData = {
+                isMember: true,
+                points: quickData.points || 0,
+                "目前剩餘點": quickData.points || 0,
+                profile: {
+                    name: quickData.name || "",
+                    phone: "",
+                    birthday: "",
+                    level: quickData.level || "一般會員",
+                    points: quickData.points || 0
+                },
+                shopCode: quickData.shopCode,
+                shopKey: quickData.shopKey,
+                qrPrefix: quickData.qrPrefix,
+                // 🔥 這些先給空值，背景再補
+                coupons: [],
+                myReferrals: [],
+                history: [],
+                expiringPoints: 0,
+                expiringDetails: [],
+                ompEvents: ["目前暫無活動，敬請期待"],
+                soEvents: ["目前暫無活動，敬請期待"],
+                shopInfo: [],
+                welcomeQuote: "",
+                loadingTexts: ["✨ 歡迎光臨 ✨"],
+                myReferrer: "無",
+                alreadyScanned: false,
+                expiredLink: false
             };
-            var quotes = currentFrom === 'so' ? welcomeQuotes.swo : welcomeQuotes.omp;
-            var randomQuoteIndex = Math.floor(Math.random() * quotes.length);
-            document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
-            generateMemberCode();
-            if (isReload) showToast('✅ 資料已更新');
+            
+            // 存入快取
+            setCachedMember(userId, userData);
+            
+            // 立即顯示會員畫面（點數 + QR Code）
+            displayMemberUI(userData);
+            
+            // ============================================================
+            // 🚀 第二階段：背景載入完整資料（優惠券、流水帳、推薦名單）
+            // ============================================================
+            console.log('🔄 第二階段：背景載入完整資料...');
+            loadFullDataInBackground();
+            
         } else {
+            // 非會員：顯示註冊畫面
+            document.getElementById('loading').style.display = 'none';
             document.getElementById('memberUI').style.display = 'none';
             document.getElementById('regUI').style.display = 'none';
             document.getElementById('welcomeUI').style.display = 'flex';
         }
-    } catch(e) { 
+        
+    } catch(e) {
         console.error('Fetch Error:', e);
         showToast('資料載入失敗，請稍後再試');
-    } finally {
         document.getElementById('loading').style.display = 'none';
     }
+}
+
+// ============================================================
+// ✅ 第二階段：背景載入完整資料
+// ============================================================
+function loadFullDataInBackground() {
+    // 延遲 300ms 後開始，確保 UI 已經渲染完成
+    setTimeout(function() {
+        console.log('🔄 背景載入完整資料...');
+        
+        var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
+        var fullUrl = GAS_URL + '?action=checkID&userId=' + userId + 
+                      '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + 
+                      '&referrerId=' + encodeURIComponent(referrerParam) + 
+                      '&t=' + Date.now();
+        
+        fetch(fullUrl)
+            .then(function(res) { return res.json(); })
+            .then(function(fullData) {
+                if (fullData && fullData.isMember) {
+                    console.log('✅ 背景載入完成，更新 UI');
+                    // 🔥 合併資料（保留點數，更新優惠券、流水帳等）
+                    var mergedData = userData || {};
+                    for (var key in fullData) {
+                        if (fullData.hasOwnProperty(key)) {
+                            mergedData[key] = fullData[key];
+                        }
+                    }
+                    userData = mergedData;
+                    setCachedMember(userId, mergedData);
+                    
+                    // 更新 UI（如果有顯示優惠券數量等）
+                    updateFullUI(mergedData);
+                }
+            })
+            .catch(function(err) {
+                console.log('⚠️ 背景載入失敗:', err);
+            });
+    }, 300);
+}
+
+// ============================================================
+// ✅ 更新完整 UI（背景載入完成後）
+// ============================================================
+function updateFullUI(data) {
+    // 更新優惠券數量（如果有顯示徽章的話）
+    var couponCount = data.coupons ? data.coupons.length : 0;
+    var badge = document.getElementById('couponBadge');
+    if (badge) {
+        badge.innerText = couponCount > 0 ? couponCount : '';
+    }
+    console.log('📊 背景載入完成，優惠券數量:', couponCount);
+}
+
+// ============================================================
+// ✅ 顯示會員畫面（快速版）
+// ============================================================
+function displayMemberUI(data) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('memberUI').style.display = 'block';
+    document.getElementById('welcomeUI').style.display = 'none';
+    document.getElementById('regUI').style.display = 'none';
+    
+    var displayPoints = data["目前剩餘點"] || data.points || 0;
+    document.getElementById('pointsDisplay').innerText = displayPoints;
+    
+    // 產生 QR Code
+    if (data.shopKey) {
+        generateMemberCode();
+    }
+    
+    // 顯示歡迎詞
+    var welcomeQuotes = {
+        omp: ["熟悉的位子，老娘幫你留好了","老娘這鍋湯，專治各種不開心","歡迎回家，今天想喝什麼湯","進了老娘的門，就是家裡人","每一口美味，都在累積心意。","沒什麼事是老娘一鍋解決不了的。","累積一點心意，換一口老娘美味","來老娘這，吃飽喝足最幸福"],
+        swo: ["生活七八分苦？今天必須一點甜。","遇見你，就是一點甜...","點點心意，只為甜你的心。","生活苦甜參半，今天留給甜的那半。","給生活加點糖，一點甜正剛好。","一點甜，一點暖，一點幸福","今日宜加糖， 一點甜正好"]
+    };
+    var quotes = currentFrom === 'so' ? welcomeQuotes.swo : welcomeQuotes.omp;
+    var randomQuoteIndex = Math.floor(Math.random() * quotes.length);
+    document.getElementById('welcomeQuote').innerText = quotes[randomQuoteIndex];
+    
+    console.log('✅ 會員畫面已顯示，點數:', displayPoints);
 }
 // 🔥 顯示會員畫面（從快取資料）
 function displayMemberUI(data) {
