@@ -483,7 +483,7 @@ function initBGM() {
     try {
         bgmAudio = new Audio('https://raw.githubusercontent.com/oldmapot/modeltest/main/Upload%20files/Happy_smile.mp3');
         bgmAudio.loop = true;
-        bgmAudio.volume = 0.2;  // 音量 20%
+        bgmAudio.volume = 0.1;  // 音量 20%
         
         // 預載入音樂
         bgmAudio.load();
@@ -502,7 +502,7 @@ function toggleMute() {
         bgmAudio.volume = 0;
         showStatus('🔇 音樂已靜音');
     } else {
-        bgmAudio.volume = 0.2;
+        bgmAudio.volume = 0.1;
         showStatus('🔊 音樂已開啟');
     }
 }
@@ -844,11 +844,18 @@ function fastEnterGame() {
     // 立即切換畫面
     startScreen.style.display = 'none';
     resultScreen.style.display = 'none';
+     // 🔥 背景音樂「延後」載入，不要阻塞遊戲
+    setTimeout(function() {
+        loadSFX();
+        initBGM();
+        startBGM();
+    }, 500);
 
     // 🔥 載入音效 + 背景音樂
-    loadSFX();        // ← 載入音效
-    initBGM();
-    startBGM();
+    // 暫時關閉，測試加載速度
+//    loadSFX();        // ← 載入音效
+//    initBGM();
+//    startBGM();
 
     // 重置遊戲
     score = 0;
@@ -1301,11 +1308,7 @@ function showStatus(msg) {
 }
 
 function goBack() {
-    var memberPageUrl = 'https://oldmapot.github.io/modeltest/index.html';
-    if (userId) {
-        memberPageUrl += '?userId=' + encodeURIComponent(userId);
-    }
-    window.location.href = memberPageUrl;
+     window.history.back();  // 🔥 回到上一頁
 }
 
 // ==================== 啟動 ====================
