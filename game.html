@@ -950,6 +950,7 @@ function gameLoop() {
     animationId = requestAnimationFrame(gameLoop);
 }
 
+// ==================== 優化版 update ====================
 function update() {
     if (trapCooldownTimer > 0) {
         trapCooldownTimer -= 1/60;
@@ -957,29 +958,42 @@ function update() {
     }
     
     const potBottom = CONFIG.potY + CONFIG.potHeight;
+    const potLeft = potX;
+    const potRight = potX + CONFIG.potWidth;
+    const foodHalfSize = CONFIG.foodSize / 2;
+    
     for (let i = foods.length - 1; i >= 0; i--) {
         const food = foods[i];
         food.y += food.speed;
 
-        if (food.y + food.size > potBottom &&
-            food.y + food.size < potBottom + 20 &&
-            food.x + food.size > potX &&
-            food.x < potX + CONFIG.potWidth) {
+        const foodCenterX = food.x + foodHalfSize;
+        const foodCenterY = food.y + foodHalfSize;
+        
+        if (foodCenterY > potBottom && 
+            foodCenterY < potBottom + 20 &&
+            foodCenterX > potLeft && 
+            foodCenterX < potRight) {
 
             const change = food.type.score;
             score += change;
             
             const id = food.type.id;
             if (id === 'lobster') {
-                // 龍蝦用原本的 Web Audio 音效（比較特別）
                 playLobsterInPot();
             } else if (id === 'trap_skull' || id === 'trap_warning' || id === 'trap_bomb') {
-                playTrapSFX();   // 🔥 改用新的陷阱音效
+                playTrapSFXThrottled();
             } else {
-                playFoodSFX();   // 🔥 改用新的食材音效
+                playFoodSFXThrottled();
             }
             
-            showFloatText(food.x + food.size/2, food.y, change, food.type.id === 'lobster');
+            floatTexts.push({
+                x: food.x + food.size/2,
+                y: food.y,
+                value: change,
+                life: 1.0,
+                isSpecial: food.type.id === 'lobster'
+            });
+            
             foods.splice(i, 1);
             continue;
         }
@@ -989,13 +1003,100 @@ function update() {
         }
     }
 }
-// ===== 龍蝦入鍋音效（合成） =====
-function playLobsterInPot() {
-    playTone(1000, 0.1, 'sine', 0.35);
-    setTimeout(() => playTone(1400, 0.1, 'sine', 0.35), 100);
-    setTimeout(() => playTone(1800, 0.15, 'sine', 0.35), 200);
-}
 
+// ==================== 優化版 draw ====================
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 背景
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, '#f5e6d3');
+    gradient.addColorStop(0.5, '#e8d5c4');
+    gradient.addColorStop(1, '#f5e6d3');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 裝飾點
+    ctx.fillStyle = 'rgba(180, 140, 100, 0.15)';
+    for (let i = 0; i < 20; i++) {
+        const dotX = Math.random() * canvas.width;
+        const dotY = Math.random() * canvas.height;
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, Math.random() * 3 + 1, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // 繪製食物
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let food of foods) {
+        const emoji = FOOD_EMOJIS[food.type.id] || '❓';
+        const fontSize = food.size * 1.0;
+        ctx.font = fontSize + 'px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+        ctx.shadowColor = 'rgba(0,0,0,0.2)';
+        ctx.shadowBlur = 8;
+        ctx.fillText(emoji, food.x + food.size/2, food.y + food.size/2);
+        ctx.shadowBlur = 0;
+    }
+
+    // 繪製鍋子
+    const potSize = CONFIG.potWidth * 0.85;
+    ctx.font = potSize + 'px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 12;
+    ctx.fillText(FOOD_EMOJIS.pot, potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight/2 + 2);
+    ctx.shadowBlur = 0;
+
+    // 鍋子陰影
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight + 4, CONFIG.potWidth/2.2, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 分數和時間
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    roundRect(ctx, 10, 10, 150, 58, 14, true, false);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 17px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.shadowBlur = 0;
+    ctx.fillText(`🏆 ${score} 分`, 22, 18);
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText(`⏱️ ${timeLeft}s`, 22, 42);
+
+    // ===== 繪製浮動文字（Canvas 版本） =====
+    for (let i = floatTexts.length - 1; i >= 0; i--) {
+        const ft = floatTexts[i];
+        ft.y -= 1.8;
+        ft.life -= 0.025;
+        
+        if (ft.life <= 0) {
+            floatTexts.splice(i, 1);
+            continue;
+        }
+        
+        const alpha = ft.life;
+        const scale = 1 + (1 - ft.life) * 0.3;
+        const color = ft.value > 0 ? '#4caf50' : '#ff4444';
+        const fontSize = ft.isSpecial ? 40 : 32;
+        
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.font = `bold ${fontSize * scale}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 10;
+        ctx.fillStyle = color;
+        const sign = ft.value > 0 ? '+' : '';
+        ctx.fillText(`${sign}${ft.value}`, ft.x, ft.y);
+        ctx.restore();
+    }
+}
 // ===== 達標成功音效 =====
 function playSuccessSound() {
     const notes = [523, 659, 784, 1047];
@@ -1015,79 +1116,6 @@ function playFailSound() {
     setTimeout(() => playTone(250, 0.4, 'sawtooth', 0.25), 150);
     setTimeout(() => playTone(150, 0.5, 'sawtooth', 0.2), 350);
 }
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#f5e6d3');
-    gradient.addColorStop(0.5, '#e8d5c4');
-    gradient.addColorStop(1, '#f5e6d3');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = 'rgba(180, 140, 100, 0.15)';
-    for (let i = 0; i < 20; i++) {
-        const dotX = Math.random() * canvas.width;
-        const dotY = Math.random() * canvas.height;
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, Math.random() * 3 + 1, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    for (let food of foods) {
-        const emoji = FOOD_EMOJIS[food.type.id] || '❓';
-        const fontSize = food.size * 1.0;
-        ctx.font = fontSize + 'px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
-        ctx.shadowColor = 'rgba(0,0,0,0.2)';
-        ctx.shadowBlur = 8;
-        ctx.fillText(emoji, food.x + food.size/2, food.y + food.size/2);
-        ctx.shadowBlur = 0;
-    }
-
-    const potSize = CONFIG.potWidth * 0.85;
-    ctx.font = potSize + 'px "Apple Color Emoji", "Segoe UI Emoji", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 12;
-    ctx.fillText(FOOD_EMOJIS.pot, potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight/2 + 2);
-    ctx.shadowBlur = 0;
-
-    ctx.fillStyle = 'rgba(0,0,0,0.08)';
-    ctx.beginPath();
-    ctx.ellipse(potX + CONFIG.potWidth/2, CONFIG.potY + CONFIG.potHeight + 4, CONFIG.potWidth/2.2, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    roundRect(ctx, 10, 10, 150, 58, 14, true, false);
-
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 17px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.shadowBlur = 0;
-    ctx.fillText(`🏆 ${score} 分`, 22, 18);
-    ctx.fillStyle = '#ffd700';
-    ctx.fillText(`⏱️ ${timeLeft}s`, 22, 42);
-
-    for (let i = floatTexts.length - 1; i >= 0; i--) {
-        const ft = floatTexts[i];
-        ft.y -= 1.8;
-        ft.life -= 0.025;
-        if (ft.life <= 0) {
-            ft.el.remove();
-            floatTexts.splice(i, 1);
-            continue;
-        }
-        ft.el.style.top = ft.y + 'px';
-        ft.el.style.left = ft.x + 'px';
-        ft.el.style.opacity = ft.life;
-        ft.el.style.transform = `scale(${1 + (1 - ft.life) * 0.3})`;
-    }
-}
-
 function roundRect(ctx, x, y, w, h, r, fill, stroke) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
