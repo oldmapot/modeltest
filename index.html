@@ -190,7 +190,41 @@ let userId = '', userData = null, currentFrom = 'omp', referrerParam = '', userT
 let countdownInterval = null;
 let currentCountdown = 60;
 
+// ============================================================
+//  LocalStorage 快取工具
+// ============================================================
 
+function getCachedMember(userId) {
+    var key = 'member_' + userId;
+    var cached = localStorage.getItem(key);
+    if (!cached) return null;
+    
+    try {
+        var data = JSON.parse(cached);
+        var cacheTime = data._cacheTime || 0;
+        var expiresIn = 5 * 60 * 1000; // 5 分鐘
+        
+        if (Date.now() - cacheTime > expiresIn) {
+            localStorage.removeItem(key);
+            return null;
+        }
+        
+        return data;
+    } catch(e) {
+        return null;
+    }
+}
+
+function setCachedMember(userId, data) {
+    data._cacheTime = Date.now();
+    var key = 'member_' + userId;
+    localStorage.setItem(key, JSON.stringify(data));
+}
+
+function clearCachedMember(userId) {
+    var key = 'member_' + userId;
+    localStorage.removeItem(key);
+}
 // ============================================================
 // ✅ 工具函數
 // ============================================================
