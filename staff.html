@@ -261,22 +261,24 @@ async function logout() {
     var loginId = (typeof staff !== 'undefined' && staff && staff.loginId) 
                   ? staff.loginId 
                   : (localStorage.getItem('staffLoginId') || '');
-                  
-    var deviceId = (typeof staff !== 'undefined' && staff && staff.deviceId) 
-                   ? staff.deviceId 
-                   : (localStorage.getItem('staffDeviceId') || '');
     
-    // 🔥 備份 device_id 到 sessionStorage
-    if (deviceId) {
-        sessionStorage.setItem('device_id_backup', deviceId);
-    }
+    // ❌ 刪除 deviceId 相關
+    // var deviceId = (typeof staff !== 'undefined' && staff && staff.deviceId) 
+    //                ? staff.deviceId 
+    //                : (localStorage.getItem('staffDeviceId') || '');
+    
+    // ❌ 刪除備份
+    // if (deviceId) {
+    //     sessionStorage.setItem('device_id_backup', deviceId);
+    // }
     
     isLoggedIn = false;
     if (typeof idleTimer !== 'undefined') clearTimeout(idleTimer);
     
     if (loginId) {
         try {
-            var url = `${GAS_URL}?action=staffLogout&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
+            // ✅ 只傳 loginId
+            var url = `${GAS_URL}?action=staffLogout&loginId=${encodeURIComponent(loginId)}`;
             await fetch(url);
             console.log("登出記錄已成功發送並寫入表格");
         } catch (e) { 
