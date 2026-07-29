@@ -6,14 +6,9 @@
     <title>老娘領地 - 夥伴登入</title>
     <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #8b0000 0%, #ab545a 100%);
             min-height: 100vh;
             display: flex;
@@ -21,7 +16,6 @@
             align-items: center;
             padding: 20px;
         }
-        
         .login-card {
             background: white;
             border-radius: 32px;
@@ -31,12 +25,6 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.2);
             text-align: center;
         }
-        
-        .logo {
-            margin-bottom: 2px;
-            text-align: center;
-        }
-
         .logo-img {
             width: 200px;
             height: 200px;
@@ -44,14 +32,12 @@
             object-fit: cover;
             display: inline-block;
         }
-        
         h1 {
             font-size: 28px;
             color: #8b0000;
             margin-bottom: 4px;
             font-weight: 700;
         }
-        
         .subtitle {
             color: #666;
             font-size: 14px;
@@ -59,12 +45,10 @@
             border-bottom: 1px solid #eee;
             padding-bottom: 16px;
         }
-        
         .input-group {
             margin-bottom: 16px;
             text-align: left;
         }
-        
         .input-group label {
             display: block;
             margin-bottom: 8px;
@@ -72,7 +56,6 @@
             color: #333;
             font-size: 14px;
         }
-        
         .input-group input {
             width: 100%;
             padding: 14px 16px;
@@ -82,14 +65,12 @@
             transition: all 0.3s ease;
             background: #f9f9f9;
         }
-        
         .input-group input:focus {
             outline: none;
             border-color: #8b0000;
             background: white;
             box-shadow: 0 0 0 3px rgba(139,0,0,0.1);
         }
-        
         .login-btn {
             width: 100%;
             padding: 16px;
@@ -103,23 +84,10 @@
             transition: all 0.3s ease;
             margin-top: 8px;
         }
-        
-        .login-btn:hover {
-            background: #6b0000;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(139,0,0,0.3);
-        }
-        
-        .login-btn:active {
-            transform: translateY(0);
-        }
-        
         .login-btn:disabled {
             background: #ccc;
             cursor: not-allowed;
-            transform: none;
         }
-        
         .error-message {
             background: #ffe5e5;
             color: #d00;
@@ -130,59 +98,9 @@
             display: none;
             text-align: center;
         }
-        
-        .success-message {
-            background: #e5ffe5;
-            color: #2e7d32;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 14px;
-            margin-top: 20px;
-            display: none;
-            text-align: center;
-        }
-        
-        .footer-note {
-            margin-top: 28px;
-            font-size: 12px;
-            color: #999;
-            text-align: center;
-        }
-        
-        .demo-hint {
-            background: #f5f5f5;
-            padding: 12px;
-            border-radius: 12px;
-            margin-top: 20px;
-            font-size: 16px;
-            color: #666;
-            text-align: left;
-        }
-        
-        .demo-hint strong {
-            color: #8b0000;
-        }
-        
-        .spinner {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 2px solid #fff;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            vertical-align: middle;
-            margin-right: 8px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
         .password-wrapper {
             position: relative;
         }
-        
         .toggle-password {
             position: absolute;
             right: 16px;
@@ -194,8 +112,6 @@
             cursor: pointer;
             color: #999;
         }
-
-        /* 分店選擇彈窗 */
         .branch-modal {
             position: fixed;
             top: 0;
@@ -208,7 +124,6 @@
             justify-content: center;
             align-items: center;
         }
-        
         .branch-modal-content {
             background: white;
             width: 90%;
@@ -217,14 +132,12 @@
             padding: 30px;
             text-align: center;
         }
-        
         .branch-title {
             font-size: 22px;
             color: #8b0000;
             margin-bottom: 20px;
             font-weight: bold;
         }
-        
         .staff-info {
             background: #f5f5f5;
             padding: 12px;
@@ -232,7 +145,6 @@
             margin-bottom: 20px;
             font-size: 16px;
         }
-        
         .branch-select {
             width: 100%;
             padding: 14px;
@@ -241,7 +153,6 @@
             font-size: 16px;
             margin-bottom: 20px;
         }
-        
         .confirm-btn {
             width: 100%;
             padding: 14px;
@@ -253,6 +164,49 @@
             font-weight: bold;
             cursor: pointer;
         }
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #fff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .demo-hint {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-size: 16px;
+            color: #666;
+            text-align: left;
+        }
+        .demo-hint strong { color: #8b0000; }
+        .footer-note {
+            margin-top: 28px;
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+        }
+        #debugInfo {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 12px;
+            text-align: left;
+            max-height: 150px;
+            overflow: auto;
+            border: 1px solid #ccc;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -260,16 +214,14 @@
         <div class="logo">
             <img src="https://i.postimg.cc/KvytPffF/wei-ming-ming-she-ji-(23).png" class="logo-img">
         </div>
-
         <h1>老娘領地</h1>
         <div class="subtitle">夥伴登入系統</div>
         
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="input-group">
                 <label>📱 登入帳號</label>
-                <input type="text" id="userId" placeholder="請輸入帳號" required autocomplete="off">
+                <input type="text" id="userId" placeholder="請輸入帳號" required>
             </div>
-            
             <div class="input-group">
                 <label>🔑 登入密碼</label>
                 <div class="password-wrapper">
@@ -277,22 +229,18 @@
                     <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
                 </div>
             </div>
-            
             <button type="submit" class="login-btn" id="loginBtn">登入系統</button>
         </form>
         
         <div id="errorMsg" class="error-message"></div>
-        <div id="successMsg" class="success-message"></div>
+        <div id="debugInfo"></div>
         
         <div class="demo-hint">
             <strong>💡 登入說明：</strong><br>
-            • 老娘夥伴限定登入，閒雜人等速速離開<br>
+            • 老娘夥伴限定登入<br>
             • 忘記密碼請聯絡管理員
         </div>
-        
-        <div class="footer-note">
-            © 老娘領地 夥伴端
-        </div>
+        <div class="footer-note">© 老娘領地 夥伴端</div>
     </div>
 
     <!-- 分店選擇彈窗 -->
@@ -308,39 +256,64 @@
     </div>
 
     <script>
+        // ============================================================
+        //  🔥 設定區
+        // ============================================================
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxlvZ-DzBBuZlqudFQF2RWTbVBD5GJwXdV0OYWxemjPaeq7aJxFN19kguOeOeGXLYM4uw/exec";
         const LIFF_ID = "2009625641-AYIKoXbw";
-        let currentStaff = null; // 儲存登入者資訊
-        
-        // 產生設備唯一 ID（Device Token）
-function getDeviceId() {
-    let deviceId = localStorage.getItem('device_id');
-    if (!deviceId) {
-        const screenInfo = `${screen.width}x${screen.height}`;
-        const timeStamp = Date.now();
-        const randomStr = Math.random().toString(36).substring(2, 15);
-        deviceId = btoa(`${screenInfo}_${timeStamp}_${randomStr}`).substring(0, 32);
-        localStorage.setItem('device_id', deviceId);
-    }
-    return deviceId;
-}
+        let currentStaff = null;
 
-// 取得設備名稱
-function getDeviceName() {
-    const ua = navigator.userAgent;
-    if (ua.indexOf('iPhone') > -1) return 'iPhone';
-    if (ua.indexOf('iPad') > -1) return 'iPad';
-    if (ua.indexOf('Android') > -1) return 'Android Phone';
-    return 'Unknown Device';
-}
-        
-        function togglePassword() {
-            const passwordInput = document.getElementById('keyword');
-            const type = passwordInput.type === 'password' ? 'text' : 'password';
-            passwordInput.type = type;
+        // ============================================================
+        //  🔥 除錯工具（顯示在頁面上）
+        // ============================================================
+        function debugLog(msg) {
+            console.log(msg);
+            const el = document.getElementById('debugInfo');
+            if (el) {
+                el.style.display = 'block';
+                el.innerHTML += new Date().toLocaleTimeString() + " - " + msg + "\n";
+                el.scrollTop = el.scrollHeight;
+            }
         }
 
-        // 取得分店清單
+        // ============================================================
+        //  🔥 輔助函數
+        // ============================================================
+        function togglePassword() {
+            const input = document.getElementById('keyword');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.style.display = 'block';
+            setTimeout(() => { el.style.display = 'none'; }, 5000);
+        }
+
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('device_id');
+            if (!deviceId) {
+                const screenInfo = `${screen.width}x${screen.height}`;
+                const timeStamp = Date.now();
+                const randomStr = Math.random().toString(36).substring(2, 15);
+                deviceId = btoa(`${screenInfo}_${timeStamp}_${randomStr}`).substring(0, 32);
+                localStorage.setItem('device_id', deviceId);
+            }
+            return deviceId;
+        }
+
+        function getDeviceName() {
+            const ua = navigator.userAgent;
+            if (ua.indexOf('iPhone') > -1) return 'iPhone';
+            if (ua.indexOf('iPad') > -1) return 'iPad';
+            if (ua.indexOf('Android') > -1) return 'Android Phone';
+            return 'Unknown Device';
+        }
+
+        // ============================================================
+        //  🔥 取得分店清單
+        // ============================================================
         async function getBranchList() {
             try {
                 const res = await fetch(`${GAS_URL}?action=getShopList`);
@@ -351,194 +324,179 @@ function getDeviceName() {
             }
         }
 
-        // 顯示分店選擇視窗
+        // ============================================================
+        //  🔥 顯示分店選擇視窗
+        // ============================================================
         async function showBranchModal(staff) {
             currentStaff = staff;
             const branches = await getBranchList();
-            
             document.getElementById('staffInfo').textContent = `👤 歡迎回來，${staff.name}`;
-            
             const select = document.getElementById('branchSelect');
             select.innerHTML = '<option value="">-- 請選擇分店 --</option>';
             branches.forEach(b => {
                 select.innerHTML += `<option value="${b}">${b}</option>`;
             });
-            
             document.getElementById('branchModal').style.display = 'flex';
         }
 
-       // ✅ 確認分店：將夥伴實際選擇的分店傳給後端寫入紀錄，並跳轉頁面
-async function confirmBranch() {
-    const branch = document.getElementById('branchSelect').value;
-    if (!branch) {
-        showError('⚠️ 請一定要選擇分店才能進入系統！');
-        return;
-    }
+        // ============================================================
+        //  🔥 確認分店
+        // ============================================================
+        async function confirmBranch() {
+            debugLog("🔍 confirmBranch 開始");
+            
+            const branch = document.getElementById('branchSelect').value;
+            if (!branch) {
+                showError('⚠️ 請選擇分店！');
+                return;
+            }
+            debugLog("✅ 選擇分店: " + branch);
 
-    const confirmBtn = document.querySelector('.confirm-btn');
-    if (confirmBtn) {
-        confirmBtn.disabled = true;
-        confirmBtn.textContent = '進入系統中...';
-    }
-
-    const userId = document.getElementById('userId').value.trim();
-    const keyword = document.getElementById('keyword').value.trim();
-    const clientIp = currentStaff.clientIp || '';
-    const lineUid = currentStaff.lineUid || '';
-
-    // 🔥 移除 deviceId 和 deviceName（已不再使用）
-    // const deviceId = getDeviceId();
-    // const deviceName = getDeviceName();
-
-    // ✅ 只傳必要的參數
-    const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
-    
-    console.log("📌 confirmBranch 請求 URL:", finalUrl);  // 加入除錯
-
-    try {
-        const response = await fetch(finalUrl);
-        const result = await response.json();
-        
-        console.log("📌 confirmBranch 後端回傳:", JSON.stringify(result));
-
-        if (result.success) {
-            const targetUrl = `staff.html?name=${encodeURIComponent(currentStaff.name)}&branch=${encodeURIComponent(branch)}&loginId=${encodeURIComponent(currentStaff.loginId)}&role=${encodeURIComponent(currentStaff.role || '')}&clientIp=${encodeURIComponent(clientIp)}`;
-            window.location.href = targetUrl;
-        } else {
-            showError(result.message || '登入失敗，請重新嘗試');
+            const confirmBtn = document.querySelector('.confirm-btn');
             if (confirmBtn) {
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = '確認進入系統';
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = '進入系統中...';
+            }
+
+            const userId = document.getElementById('userId').value.trim();
+            const keyword = document.getElementById('keyword').value.trim();
+            const clientIp = currentStaff.clientIp || '';
+            const lineUid = currentStaff.lineUid || '';
+
+            debugLog("📌 userId: " + userId);
+            debugLog("📌 lineUid: " + (lineUid || "(空)"));
+
+            // ✅ 只傳必要的參數，不傳 deviceId
+            const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
+            debugLog("📌 請求 URL: " + finalUrl);
+
+            try {
+                const response = await fetch(finalUrl);
+                const result = await response.json();
+                debugLog("📌 後端回傳: " + JSON.stringify(result));
+
+                if (result.success) {
+                    debugLog("✅ 登入成功，跳轉中...");
+                    const targetUrl = `staff.html?name=${encodeURIComponent(currentStaff.name)}&branch=${encodeURIComponent(branch)}&loginId=${encodeURIComponent(currentStaff.loginId)}&role=${encodeURIComponent(currentStaff.role || '')}&clientIp=${encodeURIComponent(clientIp)}`;
+                    window.location.href = targetUrl;
+                } else {
+                    showError(result.message || '登入失敗');
+                    if (confirmBtn) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.textContent = '確認進入系統';
+                    }
+                }
+            } catch (e) {
+                debugLog("❌ 錯誤: " + e.message);
+                showError('⚠️ 系統連線異常');
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = '確認進入系統';
+                }
             }
         }
-    } catch (e) {
-        console.error("更新登入分店失敗:", e);
-        showError('⚠️ 系統連線異常，請稍後再試');
-        if (confirmBtn) {
-            confirmBtn.disabled = false;
-            confirmBtn.textContent = '確認進入系統';
-        }
-    }
-}
 
-    // 🚀 核心登入函數（補上 IP 抓取，其餘不動）
-  async function handleLogin(event) {
-    event.preventDefault();
-    
-    const userId = document.getElementById('userId').value.trim();
-    const keyword = document.getElementById('keyword').value.trim();
-    const loginBtn = document.getElementById('loginBtn');
-    const errorMsgDiv = document.getElementById('errorMsg');
-    
-    if (!userId || !keyword) {
-        showError('請輸入完整的帳號和密碼');
-        return;
-    }
-    
-    loginBtn.disabled = true;
-    loginBtn.innerHTML = '<span class="spinner"></span> 驗證中...';
-    errorMsgDiv.style.display = 'none';
-    
-    try {
         // ============================================================
-        //  🔥 1. LIFF 初始化（複製自會員端）
+        //  🔥 核心登入函數
         // ============================================================
-        try {
-            await liff.init({ liffId: '2009625641-AYIKoXbw' });
+        async function handleLogin(event) {
+            event.preventDefault();
+            debugLog("========================================");
+            debugLog("🚀 handleLogin 開始");
             
-            if (!liff.isInClient()) {
-                console.log('❌ 請在 LINE App 內開啟');
-                showError('📱 僅支援手機 LINE App 開啟使用');
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '登入系統';
+            const userId = document.getElementById('userId').value.trim();
+            const keyword = document.getElementById('keyword').value.trim();
+            const loginBtn = document.getElementById('loginBtn');
+            
+            if (!userId || !keyword) {
+                showError('請輸入帳號和密碼');
                 return;
             }
-            
-            const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-            if (!isMobile) {
-                console.log('❌ 請使用手機 LINE App');
-                showError('📱 僅支援手機 LINE App 開啟使用');
+            debugLog("📌 userId: " + userId);
+
+            loginBtn.disabled = true;
+            loginBtn.innerHTML = '<span class="spinner"></span> 驗證中...';
+            document.getElementById('errorMsg').style.display = 'none';
+
+            try {
+                // 🔥 1. 取得 IP
+                debugLog("📌 取得 IP...");
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                const clientIp = ipData.ip;
+                debugLog("✅ IP: " + clientIp);
+
+                // 🔥 2. 初始化 LIFF
+                debugLog("📌 初始化 LIFF...");
+                let lineUid = '';
+                try {
+                    await liff.init({ liffId: LIFF_ID });
+                    debugLog("✅ LIFF 初始化成功");
+                    
+                    if (!liff.isInClient()) {
+                        debugLog("❌ 不在 LINE App 內");
+                        showError('📱 請在 LINE 應用程式中開啟此頁面！');
+                        loginBtn.disabled = false;
+                        loginBtn.innerHTML = '登入系統';
+                        return;
+                    }
+                    debugLog("✅ 確認在 LINE App 內");
+                    
+                    const profile = await liff.getProfile();
+                    lineUid = profile.userId;
+                    debugLog("✅ 取得 LINE UID: " + lineUid);
+                } catch(liffError) {
+                    debugLog("❌ LIFF 錯誤: " + liffError.message);
+                    showError('⚠️ LINE 初始化失敗，請確認在 LINE 中開啟');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '登入系統';
+                    return;
+                }
+
+                // 🔥 3. 發送登入請求（只傳必要參數）
+                const deviceId = getDeviceId();
+                const deviceName = getDeviceName();
+                
+                const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&clientIp=${encodeURIComponent(clientIp)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&skipLog=true`;
+                debugLog("📌 請求 URL: " + verifyUrl);
+
+                const response = await fetch(verifyUrl);
+                const result = await response.json();
+                debugLog("📌 後端回傳: " + JSON.stringify(result));
+
+                if (result.success) {
+                    debugLog("✅ 登入驗證成功");
+                    currentStaff = {
+                        name: result.name,
+                        role: result.role || "夥伴",
+                        loginId: result.loginId || userId,
+                        clientIp: clientIp,
+                        lineUid: lineUid
+                    };
+                    await showBranchModal(currentStaff);
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '登入系統';
+                } else {
+                    showError(result.message || '帳號或密碼錯誤');
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '登入系統';
+                }
+            } catch (error) {
+                debugLog("❌ 錯誤: " + error.message);
+                showError('⚠️ 系統連線異常，請稍後再試');
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = '登入系統';
-                return;
             }
-            
-            console.log('✅ 通過檢測：手機 LINE App');
-            
-        } catch(e) {
-            console.error('LIFF init error:', e);
-            showError('初始化失敗，請在 LINE App 中開啟');
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = '登入系統';
-            return;
         }
-        
-        // ============================================================
-        //  🔥 2. 取得 LINE UID（複製自會員端）
-        // ============================================================
-        const profile = await liff.getProfile();
-        const lineUid = profile.userId;
-        console.log("✅ 取得 LINE UID:", lineUid);
-        
-        // ============================================================
-        //  🔥 3. 取得 IP
-        // ============================================================
-        const ipRes = await fetch('https://api.ipify.org?format=json');
-        const ipData = await ipRes.json();
-        const clientIp = ipData.ip;
-
-        //const deviceId = getDeviceId();
-       // const deviceName = getDeviceName();
 
         // ============================================================
-        //  🔥 4. 發送登入請求（包含 lineUid）
+        //  🔥 頁面載入時自動執行測試
         // ============================================================
-        const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true`;
-        
-        console.log("📌 登入請求 URL:", verifyUrl);
-        
-        const response = await fetch(verifyUrl);
-        const result = await response.json();
-        
-        console.log("📌 後端回傳:", JSON.stringify(result));
-        
-        if (result.success) {
-            currentStaff = {
-                name: result.name,
-                role: result.role || "夥伴",
-                loginId: result.loginId || userId,
-                clientIp: clientIp,
-                lineUid: lineUid
-            };
-            
-            await showBranchModal(currentStaff);
-            
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = '登入系統';
-        } else {
-            showError(result.message || '帳號或密碼錯誤，請重新輸入');
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = '登入系統';
-        }
-        
-    } catch (error) {
-        console.error('登入失敗:', error);
-        showError('⚠️ 系統連線異常，請稍後再試');
-        loginBtn.disabled = false;
-        loginBtn.innerHTML = '登入系統';
-    }
-}
-    function showError(message) {
-        const errorMsgDiv = document.getElementById('errorMsg');
-        errorMsgDiv.textContent = message;
-        errorMsgDiv.style.display = 'block';
-        
-        setTimeout(() => {
-            errorMsgDiv.style.display = 'none';
-        }, 3000);
-    }
-    
-    document.getElementById('userId').focus();
-</script>
+        window.onload = function() {
+            debugLog("📌 頁面載入完成");
+            debugLog("📌 GAS_URL: " + GAS_URL);
+            debugLog("📌 LIFF_ID: " + LIFF_ID);
+        };
+    </script>
 </body>
 </html>
