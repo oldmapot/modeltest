@@ -449,7 +449,7 @@ async function handleLogin(event) {
         // 🔥🔥🔥 取得 LINE UID（從 LIFF）
         let lineUid = '';
         try {
-            await liff.init({ liffId: '2009761099-xXvMY51i' });
+            await liff.init({ liffId: '2009625641-AYIKoXbw' });
             const profile = await liff.getProfile();
             lineUid = profile.userId;
             console.log("✅ 取得 LINE UID:", lineUid);
