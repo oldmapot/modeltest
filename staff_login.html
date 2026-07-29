@@ -381,24 +381,25 @@ async function confirmBranch() {
         confirmBtn.textContent = '進入系統中...';
     }
 
-    // 抓取原本輸入的帳密與設備資訊
     const userId = document.getElementById('userId').value.trim();
     const keyword = document.getElementById('keyword').value.trim();
-    //const deviceId = getDeviceId();
-    //const deviceName = getDeviceName();
     const clientIp = currentStaff.clientIp || '';
-    const lineUid = currentStaff.lineUid || '';  // 🔥 確保有傳遞 lineUid
+    const lineUid = currentStaff.lineUid || '';
 
-    // 🔥 加入 lineUid 參數
-    const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
+    // 🔥 移除 deviceId 和 deviceName（已不再使用）
+    // const deviceId = getDeviceId();
+    // const deviceName = getDeviceName();
+
+    // ✅ 只傳必要的參數
+    const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
     
-    console.log("📌 confirmBranch 請求 URL:", finalUrl);  // 🔥 加入除錯日誌
+    console.log("📌 confirmBranch 請求 URL:", finalUrl);  // 加入除錯
 
     try {
         const response = await fetch(finalUrl);
         const result = await response.json();
         
-        console.log("📌 confirmBranch 後端回傳:", JSON.stringify(result));  // 🔥 加入除錯日誌
+        console.log("📌 confirmBranch 後端回傳:", JSON.stringify(result));
 
         if (result.success) {
             const targetUrl = `staff.html?name=${encodeURIComponent(currentStaff.name)}&branch=${encodeURIComponent(branch)}&loginId=${encodeURIComponent(currentStaff.loginId)}&role=${encodeURIComponent(currentStaff.role || '')}&clientIp=${encodeURIComponent(clientIp)}`;
@@ -486,8 +487,8 @@ async function confirmBranch() {
         const ipData = await ipRes.json();
         const clientIp = ipData.ip;
 
-        const deviceId = getDeviceId();
-        const deviceName = getDeviceName();
+        //const deviceId = getDeviceId();
+       // const deviceName = getDeviceName();
 
         // ============================================================
         //  🔥 4. 發送登入請求（包含 lineUid）
