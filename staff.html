@@ -69,14 +69,7 @@
         <button class="modal-btn" onclick="closeModal()">我了解了</button>
     </div>
 </div>
-<div class="scan-mode-selector" style="display:flex; gap:10px; margin:10px 0; justify-content:center;">
-    <button id="scanMemberBtn" class="mode-btn active" onclick="setScanMode('member')" style="padding:8px 16px; border-radius:20px; border:2px solid #00b900; background:#00b900; color:white; font-weight:bold;">
-        🧾 掃描消費
-    </button>
-    <button id="scanCouponBtn" class="mode-btn" onclick="setScanMode('coupon')" style="padding:8px 16px; border-radius:20px; border:2px solid #ff9800; background:white; color:#ff9800; font-weight:bold;">
-        🎫 掃描優惠券
-    </button>
-</div>
+
 <div id="cameraContainer" class="camera-preview-container">
     <video id="cameraPreview" autoplay playsinline muted></video>
     <canvas id="qrCanvas" style="display: none;"></canvas>
@@ -104,7 +97,14 @@
         <button class="btn btn-scan" id="scanBtn" onclick="openCamera()">📷 開啟相機 / 準備掃碼槍</button>
         <button class="btn-reset" onclick="resetMember()">重新整理</button>
     </div>
-
+<div class="scan-mode-selector" style="display:flex; gap:10px; margin:10px 0; justify-content:center;">
+    <button id="scanMemberBtn" class="mode-btn active" onclick="setScanMode('member')" style="padding:8px 16px; border-radius:20px; border:2px solid #00b900; background:#00b900; color:white; font-weight:bold;">
+        🧾 掃描消費
+    </button>
+    <button id="scanCouponBtn" class="mode-btn" onclick="setScanMode('coupon')" style="padding:8px 16px; border-radius:20px; border:2px solid #ff9800; background:white; color:#ff9800; font-weight:bold;">
+        🎫 掃描優惠券
+    </button>
+</div>
     <div class="member-info" id="member-ui">
         顧客：<b id="cus-name">-</b> <span id="member-level" class="member-level"></span><br>
         現有資產：<b id="cus-pts" style="color:red;">0</b> 點<br>
