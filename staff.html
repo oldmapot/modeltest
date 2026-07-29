@@ -69,7 +69,14 @@
         <button class="modal-btn" onclick="closeModal()">我了解了</button>
     </div>
 </div>
-
+<div class="scan-mode-selector" style="display:flex; gap:10px; margin:10px 0; justify-content:center;">
+    <button id="scanMemberBtn" class="mode-btn active" onclick="setScanMode('member')" style="padding:8px 16px; border-radius:20px; border:2px solid #00b900; background:#00b900; color:white; font-weight:bold;">
+        🧾 掃描消費
+    </button>
+    <button id="scanCouponBtn" class="mode-btn" onclick="setScanMode('coupon')" style="padding:8px 16px; border-radius:20px; border:2px solid #ff9800; background:white; color:#ff9800; font-weight:bold;">
+        🎫 掃描優惠券
+    </button>
+</div>
 <div id="cameraContainer" class="camera-preview-container">
     <video id="cameraPreview" autoplay playsinline muted></video>
     <canvas id="qrCanvas" style="display: none;"></canvas>
@@ -377,10 +384,41 @@ function parseScannedCode(scannedText) {
     return { type: "member", userId: clean };
 }
     
+// ============================================================
+//  🔥 掃描模式（預設為掃描消費）
+// ============================================================
+let scanMode = 'member';  // 'member' = 掃描消費, 'coupon' = 掃描優惠券
+
+function setScanMode(mode) {
+    scanMode = mode;
+    console.log("📌 掃描模式切換為:", mode === 'member' ? '🧾 掃描消費' : '🎫 掃描優惠券');
+    
+    // 更新按鈕樣式
+    const memberBtn = document.getElementById('scanMemberBtn');
+    const couponBtn = document.getElementById('scanCouponBtn');
+    
+    if (mode === 'member') {
+        memberBtn.style.background = '#00b900';
+        memberBtn.style.color = 'white';
+        memberBtn.style.borderColor = '#00b900';
+        couponBtn.style.background = 'white';
+        couponBtn.style.color = '#ff9800';
+        couponBtn.style.borderColor = '#ff9800';
+    } else {
+        couponBtn.style.background = '#ff9800';
+        couponBtn.style.color = 'white';
+        couponBtn.style.borderColor = '#ff9800';
+        memberBtn.style.background = 'white';
+        memberBtn.style.color = '#00b900';
+        memberBtn.style.borderColor = '#00b900';
+    }
+}
+
 async function onScanSuccess(scannedText) {
     const startTime = Date.now();
     console.log("⏱️ ==== 掃描流程開始 ====");
     console.log("⏱️ 0ms - 掃描開始");
+    console.log("📌 當前掃描模式:", scanMode === 'member' ? '🧾 掃描消費' : '🎫 掃描優惠券');
     
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
@@ -396,16 +434,28 @@ async function onScanSuccess(scannedText) {
     
     resetIdleTimer();
     
-    console.log("⏱️", Date.now() - startTime, "ms - 取得優惠券前綴");
-    await getCouponPrefixes();
-    const parsed = parseScannedCode(scannedText);
+    // 🔥 只有「掃描優惠券」模式才需要取得前綴
+    let parsed;
+    if (scanMode === 'coupon') {
+        console.log("⏱️", Date.now() - startTime, "ms - 取得優惠券前綴");
+        await getCouponPrefixes();
+        parsed = parseScannedCode(scannedText);
+        console.log("📌 解析結果（優惠券模式）:", parsed);
+    } else {
+        // 掃描消費模式：直接視為會員 QR Code
+        console.log("⏱️", Date.now() - startTime, "ms - 跳過優惠券前綴檢查（掃描消費模式）");
+        parsed = parseScannedCode(scannedText);
+        console.log("📌 解析結果（會員模式）:", parsed);
+    }
     
     try {
         showLoading("連線中...");
         console.log("⏱️", Date.now() - startTime, "ms - 顯示載入中");
         
+        // ============================================================
+        //  🔥 優惠券處理
+        // ============================================================
         if (parsed.type === "coupon") {
-            // 優惠券處理...
             const realStaffName = staff.name;
             const realStaffBranch = staff.branch;
             const clientIp = await getUserIP();
@@ -476,6 +526,9 @@ async function onScanSuccess(scannedText) {
             return;
         }
         
+        // ============================================================
+        //  🔥 會員處理
+        // ============================================================
         if (parsed.type === "member") {
             if (!parsed.userId) {
                 hideLoading();
@@ -553,7 +606,6 @@ async function onScanSuccess(scannedText) {
         showModal("系統連線失敗：" + err.message);
     }
 }
-
 async function openCamera() {
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
