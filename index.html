@@ -743,8 +743,28 @@ function shareWithTargetPicker() {
         return;
     }
     
+    console.log("🔍 開始分享流程");
+    console.log("📌 userId:", userId);
+    
     const referrer = userId + '|' + Date.now();
     const shareUrl = 'https://liff.line.me/' + LIFF_ID + '?from=' + currentFrom + '&referrer=' + encodeURIComponent(referrer);
+    
+    console.log("📌 shareUrl:", shareUrl);
+    
+    // 🔥 檢查 liff 是否可用
+    if (typeof liff === 'undefined') {
+        console.error("❌ liff 未定義");
+        showToast('⚠️ LIFF 尚未初始化，請重新開啟頁面');
+        return;
+    }
+    
+    if (!liff.isInClient()) {
+        console.warn("⚠️ 不在 LINE 客戶端中");
+        showToast('⚠️ 請在 LINE 中開啟此頁面');
+        return;
+    }
+    
+    console.log("✅ 準備呼叫 shareTargetPicker");
     
     liff.shareTargetPicker([
         {
@@ -803,11 +823,17 @@ function shareWithTargetPicker() {
                 }
             }
         }
-    ]).then(function() {
+    ])
+    .then(function(result) {
+        console.log("✅ shareTargetPicker 成功:", result);
         showToast('✅ 分享成功！');
-    }).catch(function(error) {
-        console.error('分享失敗:', error);
-        showToast('⚠️ 分享取消或失敗');
+    })
+    .catch(function(error) {
+        console.error("❌ shareTargetPicker 失敗:", error);
+        console.error("  錯誤名稱:", error.name);
+        console.error("  錯誤訊息:", error.message);
+        console.error("  錯誤代碼:", error.code);
+        showToast('⚠️ 分享取消或失敗：' + (error.message || '未知錯誤'));
     });
 }
 // ============================================================
