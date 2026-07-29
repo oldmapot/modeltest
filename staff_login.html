@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>老娘領地 - 夥伴登入</title>
-     <!-- 🔥 載入 LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
     <style>
         * {
@@ -309,77 +308,23 @@
     </div>
 
     <script>
-        // ============================================================
-//  🧪 LIFF 診斷測試（暫時加入）
-// ============================================================
-async function testLiff() {
-    console.log("🔍 開始 LIFF 測試...");
-    try {
-        // 步驟 1：嘗試初始化
-        console.log("📌 步驟 1: 初始化 LIFF...");
-        await liff.init({ liffId: '2009625641-AYIKoXbw' });
-        console.log("✅ LIFF 初始化成功！");
-        
-        // 步驟 2：檢查是否在 LINE 客戶端
-        console.log("📌 步驟 2: 檢查環境...");
-        console.log("  isInClient:", liff.isInClient());
-        console.log("  isLoggedIn:", liff.isLoggedIn());
-        
-        if (!liff.isInClient()) {
-            console.log("❌ 不在 LINE 客戶端中");
-            alert("❌ 請在 LINE 應用程式中開啟此頁面！");
-            return;
-        }
-        
-        // 步驟 3：嘗試取得 Profile
-        console.log("📌 步驟 3: 取得使用者資料...");
-        const profile = await liff.getProfile();
-        console.log("✅ 取得 Profile 成功！");
-        console.log("  userId:", profile.userId);
-        console.log("  displayName:", profile.displayName);
-        console.log("  pictureUrl:", profile.pictureUrl);
-        console.log("  statusMessage:", profile.statusMessage);
-        
-        alert("✅ LIFF 測試成功！\n\nLINE UID: " + profile.userId + "\n姓名: " + profile.displayName);
-        
-    } catch (error) {
-        console.error("❌ LIFF 測試失敗:", error);
-        console.error("  錯誤名稱:", error.name);
-        console.error("  錯誤訊息:", error.message);
-        console.error("  錯誤代碼:", error.code);
-        alert("❌ LIFF 測試失敗！\n\n錯誤訊息：" + error.message + "\n\n請查看 Console 詳細資訊。");
-    }
-}
-
-// 🔥 頁面載入時自動執行測試
-window.onload = function() {
-    testLiff();
-};
-// ============================================================
-//  🧪 LIFF 診斷測試（暫時加入）結束
-// ============================================================
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxlvZ-DzBBuZlqudFQF2RWTbVBD5GJwXdV0OYWxemjPaeq7aJxFN19kguOeOeGXLYM4uw/exec";
         
         let currentStaff = null; // 儲存登入者資訊
         
-// 產生設備唯一 ID（Device Token）- 修正版
+        // 產生設備唯一 ID（Device Token）
 function getDeviceId() {
-    // 🔥 從 localStorage 讀取，如果不存在才產生
     let deviceId = localStorage.getItem('device_id');
     if (!deviceId) {
-        // 🔥 使用更穩定的識別方式
         const screenInfo = `${screen.width}x${screen.height}`;
-        const userAgent = navigator.userAgent;
         const timeStamp = Date.now();
         const randomStr = Math.random().toString(36).substring(2, 15);
-        deviceId = btoa(`${screenInfo}_${userAgent}_${timeStamp}_${randomStr}`).substring(0, 32);
+        deviceId = btoa(`${screenInfo}_${timeStamp}_${randomStr}`).substring(0, 32);
         localStorage.setItem('device_id', deviceId);
-        console.log("📌 產生新的設備 ID:", deviceId);
-    } else {
-        console.log("📌 讀取已存在的設備 ID:", deviceId);
     }
     return deviceId;
 }
+
 // 取得設備名稱
 function getDeviceName() {
     const ua = navigator.userAgent;
@@ -436,21 +381,22 @@ async function confirmBranch() {
         confirmBtn.textContent = '進入系統中...';
     }
 
+    // 抓取原本輸入的帳密與設備資訊
     const userId = document.getElementById('userId').value.trim();
     const keyword = document.getElementById('keyword').value.trim();
-    //const deviceId = getDeviceId(); 不再檢查deviceId
-    //const deviceName = getDeviceName();
+    const deviceId = getDeviceId();
+    const deviceName = getDeviceName();
     const clientIp = currentStaff.clientIp || '';
-    const lineUid = currentStaff.lineUid || '';  // 🔥🔥🔥 從 currentStaff 讀取 LINE UID
 
-    // 🔥🔥🔥 加入 lineUid 參數
-    const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
-
+    // 🔥 關鍵修正：將選好的 branch 一併帶給後端 GAS！
+   const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
+// 沒有 skipLog，預設 false，會寫入紀錄
     try {
         const response = await fetch(finalUrl);
         const result = await response.json();
 
         if (result.success) {
+            // 後端更新/寫入成功後，帶著完整資訊跳轉頁面
             const targetUrl = `staff.html?name=${encodeURIComponent(currentStaff.name)}&branch=${encodeURIComponent(branch)}&loginId=${encodeURIComponent(currentStaff.loginId)}&role=${encodeURIComponent(currentStaff.role || '')}&clientIp=${encodeURIComponent(clientIp)}`;
             window.location.href = targetUrl;
         } else {
@@ -469,9 +415,9 @@ async function confirmBranch() {
         }
     }
 }
+
     // 🚀 核心登入函數（補上 IP 抓取，其餘不動）
-   // 🚀 核心登入函數
-async function handleLogin(event) {
+  async function handleLogin(event) {
     event.preventDefault();
     
     const userId = document.getElementById('userId').value.trim();
@@ -489,30 +435,30 @@ async function handleLogin(event) {
     errorMsgDiv.style.display = 'none';
     
     try {
-        // 抓取 IP
         const ipRes = await fetch('https://api.ipify.org?format=json');
         const ipData = await ipRes.json();
         const clientIp = ipData.ip;
 
-        //const deviceId = getDeviceId();
-        //const deviceName = getDeviceName();
+        const deviceId = getDeviceId();
+        const deviceName = getDeviceName();
 
-        // 🔥🔥🔥 取得 LINE UID（從 LIFF）
+        // 🔥 嘗試初始化 LIFF 並取得 LINE UID
         let lineUid = '';
         try {
             await liff.init({ liffId: '2009625641-AYIKoXbw' });
             const profile = await liff.getProfile();
             lineUid = profile.userId;
             console.log("✅ 取得 LINE UID:", lineUid);
-        } catch(e) {
-            console.error("❌ 取得 LINE UID 失敗:", e);
-            showError('⚠️ 無法取得 LINE UID，請確認在 LINE 中開啟');
+        } catch (liffError) {
+            // 🔥 如果 LIFF 初始化失敗（例如在電腦瀏覽器），顯示錯誤並停止登入
+            console.error("❌ LIFF 初始化失敗:", liffError);
+            showError('⚠️ 請在 LINE 應用程式中開啟此頁面');
             loginBtn.disabled = false;
             loginBtn.innerHTML = '登入系統';
-            return;
+            return; // 🔥 中斷登入
         }
 
-        // 🔥🔥🔥 加入 lineUid 參數
+        // ✅ 只有成功取得 LINE UID 才會繼續
         const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true`;
         
         console.log("📌 登入請求 URL:", verifyUrl);
@@ -528,7 +474,7 @@ async function handleLogin(event) {
                 role: result.role || "夥伴",
                 loginId: result.loginId || userId,
                 clientIp: clientIp,
-                lineUid: lineUid  // 🔥 儲存 LINE UID
+                lineUid: lineUid
             };
             
             await showBranchModal(currentStaff);
