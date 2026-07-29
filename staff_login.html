@@ -264,19 +264,7 @@
         let currentStaff = null;
         let _lineUid = '';  // 🔥 儲存 LINE UID
 
-        // ============================================================
-        //  🔥 除錯工具（顯示在頁面上）
-        // ============================================================
-        function debugLog(msg) {
-            console.log(msg);
-            const el = document.getElementById('debugInfo');
-            if (el) {
-                el.style.display = 'block';
-                el.innerHTML += new Date().toLocaleTimeString() + " - " + msg + "\n";
-                el.scrollTop = el.scrollHeight;
-            }
-        }
-
+        
         // ============================================================
         //  🔥 輔助函數
         // ============================================================
