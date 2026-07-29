@@ -154,7 +154,7 @@
         <button class="event-brand-btn" onclick="openEvents('omp')">老娘精選</button>
         <button class="event-brand-btn" onclick="openGame()">🎮 火鍋達人</button>
     </div>
-    <button class="share-btn" onclick="autoCopyShare()">🚀 分享推薦碼，享好友消費回饋</button>
+    <button class="share-btn" onclick="shareWithTargetPicker()">🚀 分享推薦碼，享好友消費回饋</button>
 </div>
 
 <!-- 註冊頁 -->
@@ -737,29 +737,78 @@ function openProfile() {
 // ============================================================
 // ✅ 分享推薦碼
 // ============================================================
-function autoCopyShare() { 
-    var now = Date.now();
-    var rawReferrer = userId + '|' + now;
-    var encodedReferrer = encodeURIComponent(rawReferrer);
-    var shareUrl = 'https://liff.line.me/' + LIFF_ID + '?from=' + currentFrom + '&referrer=' + encodedReferrer;
-    var shareText = '✨ 發現高雄隱藏版美味 ✨\n立即加入領取新客禮：\n' + shareUrl;
-    navigator.clipboard.writeText(shareText)
-        .then(function() {
-            openModal('<div class="share-modal-content"><div class="share-title">✅ 推薦連結已複製！</div><div class="share-body">連結有效期為 14 天<br>趕快發給好友領取新客招待禮吧 💕</div></div>');
-        })
-        .catch(function() {
-            var textArea = document.createElement("textarea");
-            textArea.value = shareText;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showToast('✅ 推薦碼已複製');
-            } catch (err) {
-                showToast('複製失敗，請手動截圖分享');
+function shareWithTargetPicker() {
+    if (!userId) {
+        showToast('⚠️ 請先登入會員');
+        return;
+    }
+    
+    const referrer = userId + '|' + Date.now();
+    const shareUrl = 'https://liff.line.me/' + LIFF_ID + '?from=' + currentFrom + '&referrer=' + encodeURIComponent(referrer);
+    
+    liff.shareTargetPicker([
+        {
+            type: 'flex',
+            altText: '老娘的一點心意 - 邀請你一起享受美味！',
+            contents: {
+                type: 'bubble',
+                hero: {
+                    type: 'image',
+                    url: 'https://i.ibb.co/d0fcN62N/11-288x.png',
+                    size: 'full',
+                    aspectRatio: '20:13',
+                    aspectMode: 'cover'
+                },
+                body: {
+                    type: 'box',
+                    layout: 'vertical',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: '🍲 老娘的一點心意',
+                            weight: 'bold',
+                            size: 'lg',
+                            color: '#8b0000'
+                        },
+                        {
+                            type: 'text',
+                            text: '邀請你一起享受美味！🎉',
+                            size: 'md'
+                        },
+                        {
+                            type: 'text',
+                            text: '成功加入可獲得新客好禮 🎁',
+                            size: 'sm',
+                            color: '#888888'
+                        }
+                    ]
+                },
+                footer: {
+                    type: 'box',
+                    layout: 'vertical',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'button',
+                            style: 'primary',
+                            color: '#8b0000',
+                            action: {
+                                type: 'uri',
+                                label: '🎁 領取新客禮',
+                                uri: shareUrl
+                            }
+                        }
+                    ]
+                }
             }
-            document.body.removeChild(textArea);
-        }); 
+        }
+    ]).then(function() {
+        showToast('✅ 分享成功！');
+    }).catch(function(error) {
+        console.error('分享失敗:', error);
+        showToast('⚠️ 分享取消或失敗');
+    });
 }
 // ============================================================
 // ✅ 阻擋畫面（只能在 LINE App 內使用）
