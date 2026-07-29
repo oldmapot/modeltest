@@ -311,19 +311,24 @@
         
         let currentStaff = null; // 儲存登入者資訊
         
-        // 產生設備唯一 ID（Device Token）
+// 產生設備唯一 ID（Device Token）- 修正版
 function getDeviceId() {
+    // 🔥 從 localStorage 讀取，如果不存在才產生
     let deviceId = localStorage.getItem('device_id');
     if (!deviceId) {
+        // 🔥 使用更穩定的識別方式
         const screenInfo = `${screen.width}x${screen.height}`;
+        const userAgent = navigator.userAgent;
         const timeStamp = Date.now();
         const randomStr = Math.random().toString(36).substring(2, 15);
-        deviceId = btoa(`${screenInfo}_${timeStamp}_${randomStr}`).substring(0, 32);
+        deviceId = btoa(`${screenInfo}_${userAgent}_${timeStamp}_${randomStr}`).substring(0, 32);
         localStorage.setItem('device_id', deviceId);
+        console.log("📌 產生新的設備 ID:", deviceId);
+    } else {
+        console.log("📌 讀取已存在的設備 ID:", deviceId);
     }
     return deviceId;
 }
-
 // 取得設備名稱
 function getDeviceName() {
     const ua = navigator.userAgent;
