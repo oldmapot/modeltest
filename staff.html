@@ -878,21 +878,9 @@ async function submitData() {
             }
             console.log("⏱️ ==== 集點流程完成 ====", Date.now() - startTime, "ms");
             
-            // 清除表單，保留會員資料（讓店員可以繼續為同會員結帳）
-            // resetMember();  // ← 可選擇是否清除
-            // 改為只清表單，保留會員資料
-            document.getElementById('totalSpend').value = "";
-            document.getElementById('ticketSpend').value = "";
-            document.getElementById('redeemAmount').value = "";
-            document.getElementById('buyTicket').value = "";
-            document.getElementById('new-pts').innerText = "0";
-            document.getElementById('after-pts').innerText = currentPoints;
-            document.getElementById('max-hint').innerText = "0";
-            document.getElementById('redeemTip').innerText = "";
-            document.getElementById('ticketMode').checked = false;
-            toggleMode();
-            document.getElementById('totalSpend').focus();
-            
+            // 🔥 自動清除會員資料（掃描下一筆時重新查詢）
+            resetMember();
+            showToast("✅ 集點完成，已清除會員資料");
         } else {
             alert(`❌ 集點失敗：${result.message || "未知錯誤"}`);
         }
