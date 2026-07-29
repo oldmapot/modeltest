@@ -471,41 +471,43 @@
         //  🔥 initLiff（複製會員端邏輯）
         // ============================================================
         async function initLiff() {
-            try {
-                await liff.init({ liffId: LIFF_ID });
-                
-                if (!liff.isInClient()) {
-                    debugLog('❌ 請在 LINE App 內開啟');
-                    showError('📱 僅支援手機 LINE App 開啟使用');
-                    return;
-                }
-                
-                const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-                if (!isMobile) {
-                    debugLog('❌ 請使用手機 LINE App');
-                    showError('📱 僅支援手機 LINE App 開啟使用');
-                    return;
-                }
-                
-                debugLog('✅ 通過檢測：手機 LINE App');
-                
-                // 🔥 關鍵：強制檢查 LINE 登入狀態（複製會員端）
-                if (!liff.isLoggedIn()) {
-                    debugLog('⏳ LINE 未登入，跳轉登入...');
-                    liff.login();
-                    return;
-                }
-                
-                const profile = await liff.getProfile();
-                _lineUid = profile.userId;
-                debugLog('✅ 取得 LINE UID: ' + _lineUid);
-                
-            } catch(e) {
-                debugLog('❌ LIFF 初始化錯誤: ' + e.message);
-                showError('初始化失敗，請在 LINE App 中開啟');
-            }
+    try {
+        await liff.init({ liffId: LIFF_ID });
+        
+        if (!liff.isInClient()) {
+            debugLog('❌ 請在 LINE App 內開啟');
+            showError('📱 僅支援手機 LINE App 開啟使用');
+            return;
         }
-
+        
+        const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+        if (!isMobile) {
+            debugLog('❌ 請使用手機 LINE App');
+            showError('📱 僅支援手機 LINE App 開啟使用');
+            return;
+        }
+        
+        debugLog('✅ 通過檢測：手機 LINE App');
+        
+        // 🔥 關鍵：強制檢查 LINE 登入狀態
+        if (!liff.isLoggedIn()) {
+            debugLog('⏳ LINE 未登入，跳轉登入...');
+            liff.login();
+            return;
+        }
+        
+        const profile = await liff.getProfile();
+        _lineUid = profile.userId;
+        debugLog('✅ 取得 LINE UID: ' + _lineUid);
+        
+        // ❌ 不要在這裡自動呼叫 handleLogin 或 fetchData
+        // ✅ 只儲存 _lineUid，等待使用者點擊登入按鈕
+        
+    } catch(e) {
+        debugLog('❌ LIFF 初始化錯誤: ' + e.message);
+        showError('初始化失敗，請在 LINE App 中開啟');
+    }
+}
         // ============================================================
         //  ✅ 啟動（跟會員端一樣）
         // ============================================================
