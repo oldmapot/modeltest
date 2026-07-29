@@ -659,8 +659,8 @@ async function submitData() {
 
     resetIdleTimer();
 
-    // 🔥 1️⃣ 產生唯一交易 ID（防重複）
-    const transactionId = Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+     // 🔥 產生固定交易 ID
+    const transactionId = generateTransactionId(customerId);
 
     const params = new URLSearchParams({
         action: "addPoints",
@@ -675,7 +675,7 @@ async function submitData() {
         eventMultiplier: config.eventMultiplier,
         loginId: staff.loginId || "",
         deviceId: staff.deviceId || "",
-        transactionId: transactionId  // 🔥 2️⃣ 傳送給後端
+        transactionId: transactionId  // 🔥 傳送固定交易 ID
     });
 
     let maxRetries = 3;
