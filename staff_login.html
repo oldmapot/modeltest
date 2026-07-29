@@ -233,7 +233,7 @@
         </form>
         
         <div id="errorMsg" class="error-message"></div>
-        <div id="debugInfo"></div>
+       
         
         <div class="demo-hint">
             <strong>💡 登入說明：</strong><br>
@@ -264,19 +264,7 @@
         let currentStaff = null;
         let _lineUid = '';  // 🔥 儲存 LINE UID
 
-        // ============================================================
-        //  🔥 除錯工具（顯示在頁面上）
-        // ============================================================
-        function debugLog(msg) {
-            console.log(msg);
-            const el = document.getElementById('debugInfo');
-            if (el) {
-                el.style.display = 'block';
-                el.innerHTML += new Date().toLocaleTimeString() + " - " + msg + "\n";
-                el.scrollTop = el.scrollHeight;
-            }
-        }
-
+       
         // ============================================================
         //  🔥 輔助函數
         // ============================================================
@@ -343,130 +331,67 @@
         // ============================================================
         //  🔥 確認分店
         // ============================================================
-        async function confirmBranch() {
-            const branch = document.getElementById('branchSelect').value;
-            if (!branch) {
-                showError('⚠️ 請一定要選擇分店才能進入系統！');
-                return;
-            }
-
-            const confirmBtn = document.querySelector('.confirm-btn');
-            if (confirmBtn) {
-                confirmBtn.disabled = true;
-                confirmBtn.textContent = '進入系統中...';
-            }
-
-            // 🔥 防呆處理：確保所有變數都有值
-            const userId = encodeURIComponent((document.getElementById('userId').value || '').trim());
-            const keyword = encodeURIComponent((document.getElementById('keyword').value || '').trim());
-            const clientIp = encodeURIComponent(currentStaff.clientIp || '');
-            const lineUid = encodeURIComponent(currentStaff.lineUid || '');
-            const branchEncoded = encodeURIComponent(branch || '');
-
-            const finalUrl = `${GAS_URL}?action=staffLogin&userId=${userId}&keyword=${keyword}&lineUid=${lineUid}&clientIp=${clientIp}&branch=${branchEncoded}`;
-            
-            console.log("📌 confirmBranch 請求 URL:", finalUrl);
-
-            try {
-                const response = await fetch(finalUrl, {
-                    method: 'GET',
-                    redirect: 'follow'
-                });
-                const result = await response.json();
-                
-                console.log("📌 confirmBranch 後端回傳:", JSON.stringify(result));
-
-                if (result.success) {
-                    const targetUrl = `staff.html?name=${encodeURIComponent(currentStaff.name)}&branch=${encodeURIComponent(branch)}&loginId=${encodeURIComponent(currentStaff.loginId)}&role=${encodeURIComponent(currentStaff.role || '')}&clientIp=${encodeURIComponent(clientIp)}`;
-                    window.location.href = targetUrl;
-                } else {
-                    showError(result.message || '登入失敗，請重新嘗試');
-                    if (confirmBtn) {
-                        confirmBtn.disabled = false;
-                        confirmBtn.textContent = '確認進入系統';
-                    }
-                }
-            } catch (e) {
-                console.error("更新登入分店失敗:", e);
-                showError('⚠️ 系統連線異常，請稍後再試');
-                if (confirmBtn) {
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = '確認進入系統';
-                }
-            }
-        }
+        confirmBranch
 
         // ============================================================
         //  🔥 核心登入函數（簡化版，只負責發送登入請求）
         // ============================================================
-        async function handleLogin(event) {
-            event.preventDefault();
-            
-            const userId = document.getElementById('userId').value.trim();
-            const keyword = document.getElementById('keyword').value.trim();
-            const loginBtn = document.getElementById('loginBtn');
-            
-            if (!userId || !keyword) {
-                showError('請輸入完整的帳號和密碼');
-                return;
-            }
-            
-            loginBtn.disabled = true;
-            loginBtn.innerHTML = '<span class="spinner"></span> 驗證中...';
-            document.getElementById('errorMsg').style.display = 'none';
-            
-            try {
-                // 🔥 取得 IP
-                const ipRes = await fetch('https://api.ipify.org?format=json');
-                const ipData = await ipRes.json();
-                const clientIp = ipData.ip;
+       async function handleLogin(event) {
+    event.preventDefault();
+    
+    const userId = document.getElementById('userId').value.trim();
+    const keyword = document.getElementById('keyword').value.trim();
+    const loginBtn = document.getElementById('loginBtn');
+    
+    if (!userId || !keyword) {
+        showError('請輸入完整的帳號和密碼');
+        return;
+    }
+    
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<span class="spinner"></span> 驗證中...';
+    document.getElementById('errorMsg').style.display = 'none';
+    
+    try {
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipRes.json();
+        const clientIp = ipData.ip;
 
-                const deviceId = getDeviceId();
-                const deviceName = getDeviceName();
+        const deviceId = getDeviceId();
+        const deviceName = getDeviceName();
+        const lineUid = _lineUid || '';
 
-                // 🔥 使用 initLiff 中取得的 LINE UID
-                const lineUid = _lineUid || '';
-
-                // 🔥 拼裝 URL
-                const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true`;
-                
-                console.log("📌 登入請求 URL:", verifyUrl);
-                
-                const response = await fetch(verifyUrl, {
-                    method: 'GET',
-                    redirect: 'follow'
-                });
-                const result = await response.json();
-                
-                console.log("📌 後端回傳:", JSON.stringify(result));
-                
-                if (result.success) {
-                    currentStaff = {
-                        name: result.name,
-                        role: result.role || "夥伴",
-                        loginId: result.loginId || userId,
-                        clientIp: clientIp,
-                        lineUid: lineUid
-                    };
-                    
-                    await showBranchModal(currentStaff);
-                    
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = '登入系統';
-                } else {
-                    showError(result.message || '帳號或密碼錯誤，請重新輸入');
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = '登入系統';
-                }
-                
-            } catch (error) {
-                console.error('登入失敗:', error);
-                showError('⚠️ 系統連線異常，請稍後再試');
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '登入系統';
-            }
+        const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true`;
+        
+        const response = await fetch(verifyUrl);
+        const result = await response.json();
+        
+        if (result.success) {
+            currentStaff = {
+                name: result.name,
+                role: result.role || "夥伴",
+                loginId: result.loginId || userId,
+                clientIp: clientIp,
+                lineUid: lineUid
+            };
+            
+            await showBranchModal(currentStaff);
+            
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '登入系統';
+        } else {
+            showError(result.message || '帳號或密碼錯誤，請重新輸入');
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '登入系統';
         }
-
+        
+    } catch (error) {
+        console.error('登入失敗:', error);
+        showError('⚠️ 系統連線異常，請稍後再試');
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '登入系統';
+    }
+}
         // ============================================================
         //  🔥 initLiff（複製會員端邏輯）
         // ============================================================
@@ -475,37 +400,28 @@
         await liff.init({ liffId: LIFF_ID });
         
         if (!liff.isInClient()) {
-            debugLog('❌ 請在 LINE App 內開啟');
-            showError('📱 僅支援手機 LINE App 開啟使用');
+            showError('📱 請在 LINE 應用程式中開啟此頁面！');
             return;
         }
         
         const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
         if (!isMobile) {
-            debugLog('❌ 請使用手機 LINE App');
-            showError('📱 僅支援手機 LINE App 開啟使用');
+            showError('📱 請使用手機 LINE App 開啟此頁面！');
             return;
         }
         
-        debugLog('✅ 通過檢測：手機 LINE App');
-        
-        // 🔥 關鍵：強制檢查 LINE 登入狀態
         if (!liff.isLoggedIn()) {
-            debugLog('⏳ LINE 未登入，跳轉登入...');
             liff.login();
             return;
         }
         
         const profile = await liff.getProfile();
         _lineUid = profile.userId;
-        debugLog('✅ 取得 LINE UID: ' + _lineUid);
-        
-        // ❌ 不要在這裡自動呼叫 handleLogin 或 fetchData
-        // ✅ 只儲存 _lineUid，等待使用者點擊登入按鈕
+        console.log('✅ 取得 LINE UID:', _lineUid);
         
     } catch(e) {
-        debugLog('❌ LIFF 初始化錯誤: ' + e.message);
-        showError('初始化失敗，請在 LINE App 中開啟');
+        console.error('LIFF 初始化錯誤:', e);
+        showError('初始化失敗，請重新開啟頁面');
     }
 }
         // ============================================================
