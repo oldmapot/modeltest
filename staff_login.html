@@ -385,22 +385,21 @@ async function confirmBranch() {
         confirmBtn.textContent = '進入系統中...';
     }
 
-    // 抓取原本輸入的帳密與設備資訊
     const userId = document.getElementById('userId').value.trim();
     const keyword = document.getElementById('keyword').value.trim();
     const deviceId = getDeviceId();
     const deviceName = getDeviceName();
     const clientIp = currentStaff.clientIp || '';
+    const lineUid = currentStaff.lineUid || '';  // 🔥🔥🔥 從 currentStaff 讀取 LINE UID
 
-    // 🔥 關鍵修正：將選好的 branch 一併帶給後端 GAS！
-   const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
-// 沒有 skipLog，預設 false，會寫入紀錄
+    // 🔥🔥🔥 加入 lineUid 參數
+    const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
+
     try {
         const response = await fetch(finalUrl);
         const result = await response.json();
 
         if (result.success) {
-            // 後端更新/寫入成功後，帶著完整資訊跳轉頁面
             const targetUrl = `staff.html?name=${encodeURIComponent(currentStaff.name)}&branch=${encodeURIComponent(branch)}&loginId=${encodeURIComponent(currentStaff.loginId)}&role=${encodeURIComponent(currentStaff.role || '')}&clientIp=${encodeURIComponent(clientIp)}`;
             window.location.href = targetUrl;
         } else {
@@ -419,69 +418,85 @@ async function confirmBranch() {
         }
     }
 }
-
     // 🚀 核心登入函數（補上 IP 抓取，其餘不動）
-    async function handleLogin(event) {
-        event.preventDefault();
-        
-        const userId = document.getElementById('userId').value.trim();
-        const keyword = document.getElementById('keyword').value.trim();
-        const loginBtn = document.getElementById('loginBtn');
-        const errorMsgDiv = document.getElementById('errorMsg');
-        
-        if (!userId || !keyword) {
-            showError('請輸入完整的帳號和密碼');
+   // 🚀 核心登入函數
+async function handleLogin(event) {
+    event.preventDefault();
+    
+    const userId = document.getElementById('userId').value.trim();
+    const keyword = document.getElementById('keyword').value.trim();
+    const loginBtn = document.getElementById('loginBtn');
+    const errorMsgDiv = document.getElementById('errorMsg');
+    
+    if (!userId || !keyword) {
+        showError('請輸入完整的帳號和密碼');
+        return;
+    }
+    
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = '<span class="spinner"></span> 驗證中...';
+    errorMsgDiv.style.display = 'none';
+    
+    try {
+        // 抓取 IP
+        const ipRes = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipRes.json();
+        const clientIp = ipData.ip;
+
+        const deviceId = getDeviceId();
+        const deviceName = getDeviceName();
+
+        // 🔥🔥🔥 取得 LINE UID（從 LIFF）
+        let lineUid = '';
+        try {
+            await liff.init({ liffId: '2009761099-xXvMY51i' });
+            const profile = await liff.getProfile();
+            lineUid = profile.userId;
+            console.log("✅ 取得 LINE UID:", lineUid);
+        } catch(e) {
+            console.error("❌ 取得 LINE UID 失敗:", e);
+            showError('⚠️ 無法取得 LINE UID，請確認在 LINE 中開啟');
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '登入系統';
             return;
         }
-        
-        loginBtn.disabled = true;
-        loginBtn.innerHTML = '<span class="spinner"></span> 驗證中...';
-        errorMsgDiv.style.display = 'none';
-        
-        try {
-            // 🌐 【新增：抓取 IP】這是唯一多加的東西
-            const ipRes = await fetch('https://api.ipify.org?format=json');
-            const ipData = await ipRes.json();
-            const clientIp = ipData.ip;
 
-            const deviceId = getDeviceId();
-            const deviceName = getDeviceName();
-
-            // ✅ 拼接妳原本的 verifyUrl，並帶入 clientIp
-           const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true`;
+        // 🔥🔥🔥 加入 lineUid 參數
+        const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true`;
+        
+        console.log("📌 登入請求 URL:", verifyUrl);
+        
+        const response = await fetch(verifyUrl);
+        const result = await response.json();
+        
+        console.log("📌 後端回傳:", JSON.stringify(result));
+        
+        if (result.success) {
+            currentStaff = {
+                name: result.name,
+                role: result.role || "夥伴",
+                loginId: result.loginId || userId,
+                clientIp: clientIp,
+                lineUid: lineUid  // 🔥 儲存 LINE UID
+            };
             
-            const response = await fetch(verifyUrl);
-            const result = await response.json();
+            await showBranchModal(currentStaff);
             
-            if (result.success) {
-                // 儲存完整的登入資訊
-                currentStaff = {
-                    name: result.name,
-                    role: result.role || "夥伴",
-                    loginId: result.loginId || userId,
-                    clientIp: clientIp // 存起來給後面 confirmBranch 用
-                };
-                
-                // 驗證通過 → 彈窗選擇分店
-                await showBranchModal(currentStaff);
-                
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '登入系統';
-            } else {
-                // 這裡會顯示妳後端傳回來的「非店內網路」或「帳密錯誤」
-                showError(result.message || '帳號或密碼錯誤，請重新輸入');
-                loginBtn.disabled = false;
-                loginBtn.innerHTML = '登入系統';
-            }
-            
-        } catch (error) {
-            console.error('登入失敗:', error);
-            showError('⚠️ IP位址錯誤，無法登入！');
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '登入系統';
+        } else {
+            showError(result.message || '帳號或密碼錯誤，請重新輸入');
             loginBtn.disabled = false;
             loginBtn.innerHTML = '登入系統';
         }
+        
+    } catch (error) {
+        console.error('登入失敗:', error);
+        showError('⚠️ 系統連線異常，請稍後再試');
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '登入系統';
     }
-
+}
     function showError(message) {
         const errorMsgDiv = document.getElementById('errorMsg');
         errorMsgDiv.textContent = message;
