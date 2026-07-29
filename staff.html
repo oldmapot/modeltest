@@ -645,7 +645,23 @@ function doCalc() {
     document.getElementById('new-pts').innerText = newPts;
     document.getElementById('after-pts').innerText = currentPoints - redeem + newPts;
 }
+// ============================================================
+//  🔥 產生固定交易 ID（放在 submitData 前面）
+// ============================================================
+function generateTransactionId(customerId) {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timeKey = day + '_' + hours + minutes + seconds;
+    const customerPrefix = customerId.substring(0, 5);
+    return customerPrefix + '_' + timeKey;
+}
 
+// ============================================================
+//  🔥 提交集點
+// ============================================================
 async function submitData() {
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
