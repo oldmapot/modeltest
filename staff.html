@@ -683,51 +683,89 @@ function toggleMode() {
 }
 
 function doCalc() {
-    // 🔥 確保使用最新的 config
+    // 🔥 1. 取得表單元素
+    const totalInput = document.getElementById('totalSpend');
+    const ticketInput = document.getElementById('ticketSpend');
+    const redeemInput = document.getElementById('redeemAmount');
+    const buyTicketInput = document.getElementById('buyTicket');
+    const ticketModeCheck = document.getElementById('ticketMode');
+    const tipEl = document.getElementById('redeemTip');
+    const maxHintEl = document.getElementById('max-hint');
+    const newPtsEl = document.getElementById('new-pts');
+    const afterPtsEl = document.getElementById('after-pts');
+    
+    // 🔥 2. 判斷是否為餐券模式
+    const isTicket = ticketModeCheck ? ticketModeCheck.checked : false;
+    
+    // 🔥 3. 取得 config 值（使用 let）
     const currentConfig = config || {};
     const earnRate = currentConfig.earnRate || 0.03;
     const levelRate = currentConfig.levelRate || 1;
     const eventMultiplier = currentConfig.eventMultiplier || 1;
     const maxRate = currentConfig.maxRate || 0;
     const minSpend = currentConfig.minSpend || 1500;
+    const shopCode = currentConfig.shopCode || "omp";
+    
+    // 🔥 4. 宣告變數（使用 let）
+    let newPts = 0;
+    let redeem = 0;
+    let maxRedeem = 0;
+    const currentLevelRate = levelRate || 1;
 
     if (isTicket) {
-        const buy = Number(document.getElementById('buyTicket').value) || 0;
-        newPts = Math.floor(buy * config.earnRate * currentLevelRate * eventMultiplier);
-        tipEl.innerText = "餐券模式：無法折抵點數";
-        tipEl.className = "redeem-tip tip-normal";
-    } else {
-        const total = Number(document.getElementById('totalSpend').value) || 0;
-        const ticket = Number(document.getElementById('ticketSpend').value) || 0;
-        const base = total - ticket;
-
-        let minSpend = config.shopCode === "swo" ? 500 : 1500;
-        
-        if (config.maxRate <= 0) {
-            maxRedeem = 0;
-            tipEl.innerText = "🚫 今日活動暫停折抵";
-            tipEl.className = "redeem-tip tip-no-redeem";
-        }
-        else if (base < minSpend) {
-            maxRedeem = 0;
-            tipEl.innerText = `⚠️ 未達低消門檻 ${minSpend} 元，無法折抵`;
-            tipEl.className = "redeem-tip tip-no-redeem";
-        }
-        else {
-            maxRedeem = Math.min(currentPoints, Math.floor(base * config.maxRate));
-            tipEl.innerText = `✅ 已達低消 ${minSpend} 元，可正常折抵`;
+        const buy = Number(buyTicketInput ? buyTicketInput.value : 0) || 0;
+        newPts = Math.floor(buy * earnRate * currentLevelRate * eventMultiplier);
+        if (tipEl) {
+            tipEl.innerText = "餐券模式：無法折抵點數";
             tipEl.className = "redeem-tip tip-normal";
         }
+    } else {
+        const total = Number(totalInput ? totalInput.value : 0) || 0;
+        const ticket = Number(ticketInput ? ticketInput.value : 0) || 0;
+        const base = total - ticket;
 
-        redeem = Math.min(Number(document.getElementById('redeemAmount').value) || 0, maxRedeem);
-        document.getElementById('redeemAmount').value = redeem;
-        document.getElementById('max-hint').innerText = maxRedeem;
+        let minSpendThreshold = shopCode === "swo" ? 500 : 1500;
+        
+        if (maxRate <= 0) {
+            maxRedeem = 0;
+            if (tipEl) {
+                tipEl.innerText = "🚫 今日活動暫停折抵";
+                tipEl.className = "redeem-tip tip-no-redeem";
+            }
+        }
+        else if (base < minSpendThreshold) {
+            maxRedeem = 0;
+            if (tipEl) {
+                tipEl.innerText = `⚠️ 未達低消門檻 ${minSpendThreshold} 元，無法折抵`;
+                tipEl.className = "redeem-tip tip-no-redeem";
+            }
+        }
+        else {
+            maxRedeem = Math.min(currentPoints, Math.floor(base * maxRate));
+            if (tipEl) {
+                tipEl.innerText = `✅ 已達低消 ${minSpendThreshold} 元，可正常折抵`;
+                tipEl.className = "redeem-tip tip-normal";
+            }
+        }
 
-        newPts = Math.floor((base - redeem) * config.earnRate * currentLevelRate * eventMultiplier);
+        redeem = Math.min(Number(redeemInput ? redeemInput.value : 0) || 0, maxRedeem);
+        if (redeemInput) {
+            redeemInput.value = redeem;
+        }
+        if (maxHintEl) {
+            maxHintEl.innerText = maxRedeem;
+        }
+
+        newPts = Math.floor((base - redeem) * earnRate * currentLevelRate * eventMultiplier);
     }
 
-    document.getElementById('new-pts').innerText = newPts;
-    document.getElementById('after-pts').innerText = currentPoints - redeem + newPts;
+    // 🔥 5. 更新 UI
+    if (newPtsEl) {
+        newPtsEl.innerText = newPts;
+    }
+    if (afterPtsEl) {
+        afterPtsEl.innerText = currentPoints - redeem + newPts;
+    }
 }
 // ============================================================
 //  🔥 產生固定交易 ID（放在 submitData 前面）
