@@ -659,6 +659,9 @@ async function submitData() {
 
     resetIdleTimer();
 
+    // 🔥 1️⃣ 產生唯一交易 ID（防重複）
+    const transactionId = Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+
     const params = new URLSearchParams({
         action: "addPoints",
         customerId: customerId,
@@ -671,13 +674,15 @@ async function submitData() {
         levelRate: levelRate,
         eventMultiplier: config.eventMultiplier,
         loginId: staff.loginId || "",
-        deviceId: staff.deviceId || ""
+        deviceId: staff.deviceId || "",
+        transactionId: transactionId  // 🔥 2️⃣ 傳送給後端
     });
 
     let maxRetries = 3;
     let attempt = 0;
     let success = false;
     let lastError = "";
+    let isDuplicate = false;
 
     while (attempt < maxRetries && !success) {
         attempt++;
@@ -696,13 +701,27 @@ async function submitData() {
             
             if (result.success) {
                 success = true;
-                alert("✅ 集點作業完成");
+                // 🔥 3️⃣ 如果後端回傳「已處理過」，顯示不同訊息
+                if (result.message === "已處理過") {
+                    alert("✅ 集點已完成（重複請求已忽略）");
+                } else {
+                    alert("✅ 集點作業完成");
+                }
                 resetMember();
                 btn.disabled = false;
                 return;
             } else {
                 lastError = result.message || result.error || "未知錯誤";
                 console.warn(`⚠️ 集點提交失敗 (嘗試${attempt}):`, lastError);
+                
+                // 🔥 4️⃣ 如果是「已處理過」，視為成功
+                if (result.message === "已處理過") {
+                    success = true;
+                    alert("✅ 集點已完成（重複請求已忽略）");
+                    resetMember();
+                    btn.disabled = false;
+                    return;
+                }
                 
                 if (attempt >= maxRetries) {
                     alert(`❌ 集點失敗（已重試 ${maxRetries} 次）\n\n錯誤訊息：${lastError}\n\n請稍後再試或聯絡管理員`);
