@@ -375,23 +375,34 @@ function parseScannedCode(scannedText) {
 }
     
 async function onScanSuccess(scannedText) {
+    const startTime = Date.now();
+    console.log("⏱️ ==== 掃描流程開始 ====");
+    console.log("⏱️ 0ms - 掃描開始");
+    
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
         setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
         return;
     }
+    
     if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
+    
+    console.log("⏱️", Date.now() - startTime, "ms - 關閉相機");
     await closeCamera();
     if (navigator.vibrate) navigator.vibrate(200);
     
     resetIdleTimer();
+    
+    console.log("⏱️", Date.now() - startTime, "ms - 取得優惠券前綴");
     await getCouponPrefixes();
     const parsed = parseScannedCode(scannedText);
     
     try {
         showLoading("連線中...");
+        console.log("⏱️", Date.now() - startTime, "ms - 顯示載入中");
         
         if (parsed.type === "coupon") {
+            // 優惠券處理...
             const realStaffName = staff.name;
             const realStaffBranch = staff.branch;
             const clientIp = await getUserIP();
@@ -400,7 +411,6 @@ async function onScanSuccess(scannedText) {
             
             showLoading("🔄 處理優惠券兌換中...");
             
-            // ✅ 重試次數從 3 次改為 2 次
             let maxRetries = 2;
             let attempt = 0;
             let success = false;
@@ -413,7 +423,10 @@ async function onScanSuccess(scannedText) {
                     
                     const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&t=${Date.now()}`;
                     
+                    const fetchStart = Date.now();
                     const res = await fetch(url);
+                    console.log("⏱️", Date.now() - fetchStart, "ms - verifyScan API 回應");
+                    
                     const result = await res.json();
                     console.log(`📊 優惠券兌換回應 (嘗試${attempt}):`, JSON.stringify(result));
                     
@@ -427,6 +440,7 @@ async function onScanSuccess(scannedText) {
                     if (result.success) {
                         success = true;
                         hideLoading();
+                        console.log("⏱️ ==== 掃描流程完成 ====", Date.now() - startTime, "ms");
                         showModal(`🎉 ${result.message || "優惠券兌換成功！"}`);
                         return;
                     } else {
@@ -473,13 +487,18 @@ async function onScanSuccess(scannedText) {
             const deviceId = staff.deviceId || "";
             
             const finalUrl = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(parsed.userId)}&branch=${encodeURIComponent(staff.branch)}&t=${new Date().getTime()}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
-            console.log("🔍 完整 URL:", finalUrl);
+            
+            console.log("⏱️", Date.now() - startTime, "ms - 呼叫 getMemberInfo");
             
             try {
+                const fetchStart = Date.now();
                 const res = await fetch(finalUrl, { method: "GET", mode: "cors" });
+                console.log("⏱️", Date.now() - fetchStart, "ms - getMemberInfo API 回應");
                 console.log("🔍 HTTP 狀態:", res.status);
+                
                 const data = await res.json();
                 console.log("📊 getMemberInfo 回傳:", JSON.stringify(data));
+                console.log("⏱️", Date.now() - startTime, "ms - 會員資料解析完成");
                 hideLoading();
                 
                 if (data.logout) {
@@ -510,6 +529,8 @@ async function onScanSuccess(scannedText) {
                     document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
                     document.getElementById('totalSpend').focus();
                     doCalc();
+                    
+                    console.log("⏱️ ==== 掃描流程完成 ====", Date.now() - startTime, "ms");
                 } else {
                     showModal(`⚠️ 查無此會員！<br><br>🔍 除錯資訊：<br>userId: ${parsed.userId}<br>回傳: ${JSON.stringify(data)}`);
                 }
@@ -663,6 +684,9 @@ function generateTransactionId(customerId) {
 //  🔥 提交集點
 // ============================================================
 async function submitData() {
+    const startTime = Date.now();
+    console.log("⏱️ ==== 集點流程開始 ====");
+    
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
         setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
@@ -700,8 +724,14 @@ async function submitData() {
 
     try {
         console.log("📤 提交集點請求，交易ID:", transactionId);
+        console.log("⏱️", Date.now() - startTime, "ms - 發送請求");
+        
+        const fetchStart = Date.now();
         const response = await fetch(GAS_URL + "?" + params.toString() + "&t=" + Date.now());
+        console.log("⏱️", Date.now() - fetchStart, "ms - API 回應");
+        
         const result = await response.json();
+        console.log("⏱️", Date.now() - startTime, "ms - 解析完成");
         hideLoading();
         
         if (result.logout) {
@@ -719,6 +749,7 @@ async function submitData() {
             } else {
                 alert("✅ 集點作業完成");
             }
+            console.log("⏱️ ==== 集點流程完成 ====", Date.now() - startTime, "ms");
             resetMember();
         } else {
             alert(`❌ 集點失敗：${result.message || "未知錯誤"}`);
