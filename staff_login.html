@@ -438,8 +438,8 @@ async function confirmBranch() {
 
     const userId = document.getElementById('userId').value.trim();
     const keyword = document.getElementById('keyword').value.trim();
-    const deviceId = getDeviceId();
-    const deviceName = getDeviceName();
+    //const deviceId = getDeviceId(); 不再檢查deviceId
+    //const deviceName = getDeviceName();
     const clientIp = currentStaff.clientIp || '';
     const lineUid = currentStaff.lineUid || '';  // 🔥🔥🔥 從 currentStaff 讀取 LINE UID
 
@@ -494,8 +494,8 @@ async function handleLogin(event) {
         const ipData = await ipRes.json();
         const clientIp = ipData.ip;
 
-        const deviceId = getDeviceId();
-        const deviceName = getDeviceName();
+        //const deviceId = getDeviceId();
+        //const deviceName = getDeviceName();
 
         // 🔥🔥🔥 取得 LINE UID（從 LIFF）
         let lineUid = '';
