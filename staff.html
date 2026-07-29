@@ -652,14 +652,18 @@ async function submitData() {
         setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
         return;
     }
-    if (!customerId) return alert("請先掃描會員！");
+    if (!customerId) {
+        alert("請先掃描會員！");
+        return;
+    }
+    
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     showLoading("處理中...保持微笑");
 
     resetIdleTimer();
 
-     // 🔥 產生固定交易 ID
+    // 🔥 產生固定交易 ID
     const transactionId = generateTransactionId(customerId);
 
     const params = new URLSearchParams({
@@ -675,77 +679,39 @@ async function submitData() {
         eventMultiplier: config.eventMultiplier,
         loginId: staff.loginId || "",
         deviceId: staff.deviceId || "",
-        transactionId: transactionId  // 🔥 傳送固定交易 ID
+        transactionId: transactionId
     });
 
-    let maxRetries = 3;
-    let attempt = 0;
-    let success = false;
-    let lastError = "";
-    let isDuplicate = false;
-
-    while (attempt < maxRetries && !success) {
-        attempt++;
-        try {
-            console.log(`🔄 提交集點嘗試 ${attempt}/${maxRetries}`);
-            const response = await fetch(GAS_URL + "?" + params.toString() + "&t=" + Date.now());
-            const result = await response.json();
-            hideLoading();
-            
-            if (result.logout) {
-                showToast("⏰ 登入已過期，請重新登入");
-                setTimeout(() => { logout(); }, 2000);
-                btn.disabled = false;
-                return;
-            }
-            
-            if (result.success) {
-                success = true;
-                // 🔥 3️⃣ 如果後端回傳「已處理過」，顯示不同訊息
-                if (result.message === "已處理過") {
-                    alert("✅ 集點已完成（重複請求已忽略）");
-                } else {
-                    alert("✅ 集點作業完成");
-                }
-                resetMember();
-                btn.disabled = false;
-                return;
-            } else {
-                lastError = result.message || result.error || "未知錯誤";
-                console.warn(`⚠️ 集點提交失敗 (嘗試${attempt}):`, lastError);
-                
-                // 🔥 4️⃣ 如果是「已處理過」，視為成功
-                if (result.message === "已處理過") {
-                    success = true;
-                    alert("✅ 集點已完成（重複請求已忽略）");
-                    resetMember();
-                    btn.disabled = false;
-                    return;
-                }
-                
-                if (attempt >= maxRetries) {
-                    alert(`❌ 集點失敗（已重試 ${maxRetries} 次）\n\n錯誤訊息：${lastError}\n\n請稍後再試或聯絡管理員`);
-                    btn.disabled = false;
-                    return;
-                }
-                
-                showLoading(`🔄 重試中 (${attempt}/${maxRetries})...`);
-                await new Promise(resolve => setTimeout(resolve, 1500));
-            }
-        } catch (error) {
-            hideLoading();
-            console.error("請求失敗:", error);
-            lastError = error.message;
-            
-            if (attempt >= maxRetries) {
-                alert(`❌ 網路錯誤（已重試 ${maxRetries} 次）\n\n錯誤訊息：${lastError}\n\n請檢查網路連線後再試`);
-                btn.disabled = false;
-                return;
-            }
-            
-            showLoading(`🔄 重試中 (${attempt}/${maxRetries})...`);
-            await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+        console.log("📤 提交集點請求，交易ID:", transactionId);
+        const response = await fetch(GAS_URL + "?" + params.toString() + "&t=" + Date.now());
+        const result = await response.json();
+        hideLoading();
+        
+        if (result.logout) {
+            showToast("⏰ 登入已過期，請重新登入");
+            setTimeout(() => { logout(); }, 2000);
+            btn.disabled = false;
+            return;
         }
+        
+        if (result.success) {
+            if (result.duplicate) {
+                alert("⚠️ 此交易已處理過，請勿重複提交！");
+            } else if (result.message === "已處理過") {
+                alert("✅ 集點已完成（重複請求已忽略）");
+            } else {
+                alert("✅ 集點作業完成");
+            }
+            resetMember();
+        } else {
+            alert(`❌ 集點失敗：${result.message || "未知錯誤"}`);
+        }
+        
+    } catch (error) {
+        hideLoading();
+        console.error("請求失敗:", error);
+        alert(`❌ 網路錯誤：${error.message}\n請檢查網路連線後再試`);
     }
     
     btn.disabled = false;
