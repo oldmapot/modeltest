@@ -384,19 +384,23 @@ async function confirmBranch() {
     // 抓取原本輸入的帳密與設備資訊
     const userId = document.getElementById('userId').value.trim();
     const keyword = document.getElementById('keyword').value.trim();
-    const deviceId = getDeviceId();
-    const deviceName = getDeviceName();
+    //const deviceId = getDeviceId();
+    //const deviceName = getDeviceName();
     const clientIp = currentStaff.clientIp || '';
+    const lineUid = currentStaff.lineUid || '';  // 🔥 確保有傳遞 lineUid
 
-    // 🔥 關鍵修正：將選好的 branch 一併帶給後端 GAS！
-   const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
-// 沒有 skipLog，預設 false，會寫入紀錄
+    // 🔥 加入 lineUid 參數
+    const finalUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&branch=${encodeURIComponent(branch)}`;
+    
+    console.log("📌 confirmBranch 請求 URL:", finalUrl);  // 🔥 加入除錯日誌
+
     try {
         const response = await fetch(finalUrl);
         const result = await response.json();
+        
+        console.log("📌 confirmBranch 後端回傳:", JSON.stringify(result));  // 🔥 加入除錯日誌
 
         if (result.success) {
-            // 後端更新/寫入成功後，帶著完整資訊跳轉頁面
             const targetUrl = `staff.html?name=${encodeURIComponent(currentStaff.name)}&branch=${encodeURIComponent(branch)}&loginId=${encodeURIComponent(currentStaff.loginId)}&role=${encodeURIComponent(currentStaff.role || '')}&clientIp=${encodeURIComponent(clientIp)}`;
             window.location.href = targetUrl;
         } else {
