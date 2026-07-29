@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>老娘領地 - 夥伴登入</title>
-
+    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
     <style>
         * {
             margin: 0;
@@ -435,6 +435,49 @@ async function confirmBranch() {
     errorMsgDiv.style.display = 'none';
     
     try {
+        // ============================================================
+        //  🔥 1. LIFF 初始化（複製自會員端）
+        // ============================================================
+        try {
+            await liff.init({ liffId: '2009625641-AYIKoXbw' });
+            
+            if (!liff.isInClient()) {
+                console.log('❌ 請在 LINE App 內開啟');
+                showError('📱 僅支援手機 LINE App 開啟使用');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '登入系統';
+                return;
+            }
+            
+            const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
+            if (!isMobile) {
+                console.log('❌ 請使用手機 LINE App');
+                showError('📱 僅支援手機 LINE App 開啟使用');
+                loginBtn.disabled = false;
+                loginBtn.innerHTML = '登入系統';
+                return;
+            }
+            
+            console.log('✅ 通過檢測：手機 LINE App');
+            
+        } catch(e) {
+            console.error('LIFF init error:', e);
+            showError('初始化失敗，請在 LINE App 中開啟');
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = '登入系統';
+            return;
+        }
+        
+        // ============================================================
+        //  🔥 2. 取得 LINE UID（複製自會員端）
+        // ============================================================
+        const profile = await liff.getProfile();
+        const lineUid = profile.userId;
+        console.log("✅ 取得 LINE UID:", lineUid);
+        
+        // ============================================================
+        //  🔥 3. 取得 IP
+        // ============================================================
         const ipRes = await fetch('https://api.ipify.org?format=json');
         const ipData = await ipRes.json();
         const clientIp = ipData.ip;
@@ -442,23 +485,9 @@ async function confirmBranch() {
         const deviceId = getDeviceId();
         const deviceName = getDeviceName();
 
-        // 🔥 嘗試初始化 LIFF 並取得 LINE UID
-        let lineUid = '';
-        try {
-            await liff.init({ liffId: '2009625641-AYIKoXbw' });
-            const profile = await liff.getProfile();
-            lineUid = profile.userId;
-            console.log("✅ 取得 LINE UID:", lineUid);
-        } catch (liffError) {
-            // 🔥 如果 LIFF 初始化失敗（例如在電腦瀏覽器），顯示錯誤並停止登入
-            console.error("❌ LIFF 初始化失敗:", liffError);
-            showError('⚠️ 請在 LINE 應用程式中開啟此頁面');
-            loginBtn.disabled = false;
-            loginBtn.innerHTML = '登入系統';
-            return; // 🔥 中斷登入
-        }
-
-        // ✅ 只有成功取得 LINE UID 才會繼續
+        // ============================================================
+        //  🔥 4. 發送登入請求（包含 lineUid）
+        // ============================================================
         const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true`;
         
         console.log("📌 登入請求 URL:", verifyUrl);
