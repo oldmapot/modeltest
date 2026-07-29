@@ -307,6 +307,55 @@
     </div>
 
     <script>
+        // ============================================================
+//  🧪 LIFF 診斷測試（暫時加入）
+// ============================================================
+async function testLiff() {
+    console.log("🔍 開始 LIFF 測試...");
+    try {
+        // 步驟 1：嘗試初始化
+        console.log("📌 步驟 1: 初始化 LIFF...");
+        await liff.init({ liffId: '2009625641-AYIKoXbw' });
+        console.log("✅ LIFF 初始化成功！");
+        
+        // 步驟 2：檢查是否在 LINE 客戶端
+        console.log("📌 步驟 2: 檢查環境...");
+        console.log("  isInClient:", liff.isInClient());
+        console.log("  isLoggedIn:", liff.isLoggedIn());
+        
+        if (!liff.isInClient()) {
+            console.log("❌ 不在 LINE 客戶端中");
+            alert("❌ 請在 LINE 應用程式中開啟此頁面！");
+            return;
+        }
+        
+        // 步驟 3：嘗試取得 Profile
+        console.log("📌 步驟 3: 取得使用者資料...");
+        const profile = await liff.getProfile();
+        console.log("✅ 取得 Profile 成功！");
+        console.log("  userId:", profile.userId);
+        console.log("  displayName:", profile.displayName);
+        console.log("  pictureUrl:", profile.pictureUrl);
+        console.log("  statusMessage:", profile.statusMessage);
+        
+        alert("✅ LIFF 測試成功！\n\nLINE UID: " + profile.userId + "\n姓名: " + profile.displayName);
+        
+    } catch (error) {
+        console.error("❌ LIFF 測試失敗:", error);
+        console.error("  錯誤名稱:", error.name);
+        console.error("  錯誤訊息:", error.message);
+        console.error("  錯誤代碼:", error.code);
+        alert("❌ LIFF 測試失敗！\n\n錯誤訊息：" + error.message + "\n\n請查看 Console 詳細資訊。");
+    }
+}
+
+// 🔥 頁面載入時自動執行測試
+window.onload = function() {
+    testLiff();
+};
+// ============================================================
+//  🧪 LIFF 診斷測試（暫時加入）結束
+// ============================================================
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxlvZ-DzBBuZlqudFQF2RWTbVBD5GJwXdV0OYWxemjPaeq7aJxFN19kguOeOeGXLYM4uw/exec";
         
         let currentStaff = null; // 儲存登入者資訊
