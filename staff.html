@@ -347,6 +347,9 @@ function resetMember() {
 
 function parseScannedCode(scannedText) {
     let clean = String(scannedText).trim();
+     // 🔥 加入調試
+    console.log("🔍 parseScannedCode 收到:", clean);
+    console.log("🔍 cachedPrefixes 內容:", JSON.stringify(cachedPrefixes));
     
     if (clean.indexOf("data=") > -1) {
         clean = clean.split("data=")[1].split("&")[0];
@@ -445,11 +448,21 @@ async function onScanSuccess(scannedText) {
     // 🔥 只有「掃描優惠券」模式才需要取得前綴
     let parsed;
     if (scanMode === 'coupon') {
-        console.log("⏱️", Date.now() - startTime, "ms - 取得優惠券前綴");
-        await getCouponPrefixes();
-        parsed = parseScannedCode(scannedText);
-        console.log("📌 解析結果（優惠券模式）:", parsed);
-    } else {
+    console.log("⏱️", Date.now() - startTime, "ms - 取得優惠券前綴");
+    await getCouponPrefixes();
+    
+    // 🔥 加入這行，查看 cachedPrefixes 內容
+    console.log("📌 cachedPrefixes 內容:", JSON.stringify(cachedPrefixes));
+    
+    parsed = parseScannedCode(scannedText);
+    console.log("📌 解析結果（優惠券模式）:", parsed);
+} else {
+    console.log("⏱️", Date.now() - startTime, "ms - 跳過優惠券前綴檢查（掃描消費模式）");
+    parsed = parseScannedCode(scannedText);
+    console.log("📌 解析結果（會員模式）:", parsed);
+}
+
+    else {
         // 掃描消費模式：直接視為會員 QR Code
         console.log("⏱️", Date.now() - startTime, "ms - 跳過優惠券前綴檢查（掃描消費模式）");
         parsed = parseScannedCode(scannedText);
