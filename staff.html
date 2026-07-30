@@ -177,16 +177,20 @@ async function getCouponPrefixes() {
         const response = await fetch(url);
         const data = await response.json();
         
-        if (data.success && data.prefixes) {
+        if (data.success && data.prefixes && data.prefixes.length > 0) {
             cachedPrefixes = data.prefixes;
             console.log("✅ 取得優惠券前綴:", cachedPrefixes);
             return cachedPrefixes;
         }
-        cachedPrefixes = ["GIFT_"];
+        // 🔥 如果 API 回傳空，使用所有已知前綴
+        cachedPrefixes = ["ANN_omp_A01", "GIFT_omp_01", "EMP_omp_1150701"];
+        console.warn("⚠️ API 回傳空，使用預設前綴:", cachedPrefixes);
         return cachedPrefixes;
     } catch (e) {
         console.error("取得優惠券前綴失敗:", e);
-        cachedPrefixes = ["GIFT_"];
+        // 🔥 失敗時使用所有已知前綴（不只是 GIFT_）
+        cachedPrefixes = ["ANN_omp_A01", "GIFT_omp_01", "EMP_omp_1150701"];
+        console.log("📌 使用預設前綴:", cachedPrefixes);
         return cachedPrefixes;
     }
 }
