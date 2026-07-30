@@ -493,8 +493,8 @@ if (scanMode === 'coupon') {
                 try {
                     console.log(`🔄 優惠券兌換嘗試 ${attempt}/${maxRetries}`);
                     
-                    const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&t=${Date.now()}`;
-                    
+                    // 🔥 加入 couponType 參數，告訴 GAS 這是優惠券
+const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
                     const fetchStart = Date.now();
                     const res = await fetch(url);
                     console.log("⏱️", Date.now() - fetchStart, "ms - verifyScan API 回應");
