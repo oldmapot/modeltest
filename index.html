@@ -8,68 +8,197 @@
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
         :root { --primary: #8b0000; --bg: #fdf5e6; --card-bg: #fff; --text: #333; --light-text: #666; --action-btn: #beb1a8; --brand-btn: #ab545a; --success: #06C755; }
-        .theme-so { --primary: #b57c82; --bg: #FFF9E6; }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); margin: 0; padding-bottom: 40px; color: var(--text); overflow-x: hidden; }
-        
-        #loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; gap: 20px; }
-        .loader-icon { width: 60px; height: 35px; background: #333; border-radius: 0 0 25px 25px; position: relative; border: 3px solid #222; }
-        .loader-icon.omp::after { content: '♨'; position: absolute; top: -30px; left: 12px; font-size: 28px; color: var(--primary); animation: steam 1.2s infinite; }
-        .loader-icon.so { width: 55px; height: 40px; background: #ffcc00; border-radius: 15px 15px 8px 8px; border-top: 10px solid #663300; animation: wobble 0.7s infinite; }
-        @keyframes steam { 0%{opacity:0;transform:translateY(0)}50%{opacity:1}100%{opacity:0;transform:translateY(-20px)} }
-        @keyframes wobble { 0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)} }
+.theme-so { --primary: #b57c82; --bg: #FFF9E6; }
 
-        .header { background: var(--primary); color: #fff; padding: 12vw 20px; text-align: center; border-radius: 0 0 30px 30px; position: relative; }
-        .menu-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 28px; cursor: pointer; background: none; border: none; color: #fff; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; z-index: 10; }
-        .welcome-quote { font-size: 4.5vw; opacity: 0.95; margin-bottom: 8px; min-height: 24px; }
-        .main-title { font-size: 8.5vw; font-weight: 900; }
-        
-        .side-menu { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg); box-shadow: 2px 0 12px rgba(0,0,0,0.15); z-index: 10000; transition: left 0.3s ease; overflow-y: auto; }
-        .side-menu.open { left: 0; }
-        .side-menu-header { background: var(--primary); color: #fff; padding: 30px 20px; text-align: center; }
-        .side-menu-header h3 { margin: 0; font-size: 24px; font-weight: bold; }
-        .side-menu-items { padding: 20px 0; display: flex; flex-direction: column; height: calc(100vh - 120px); padding-bottom: 20px; }
-        .side-menu-item { display: block; width: 100%; padding: 18px 24px; background: none; border: none; text-align: left; font-size: 18px; color: var(--text); cursor: pointer; border-bottom: 1px solid #f0f0f0; font-weight: bold; }
-        .side-menu-item:last-child { margin-top: auto !important; text-align: center !important; font-size: 14px !important; color: #999 !important; font-weight: normal !important; border: none !important; padding: 12px 0 !important; margin-left: auto !important; margin-right: auto !important; width: auto !important; display: inline-block !important; }
-        .side-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; }
-        .side-menu-overlay.show { display: block; }
+/* ============================================================
+   基礎重置
+   ============================================================ */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Helvetica Neue", sans-serif; background: var(--bg); margin: 0; padding: 0 0 40px 0; color: var(--text); overflow-x: hidden; min-height: 100vh; }
 
-        .asset-card { background: #fff; border-radius: 15px; padding: 4vw 5vw; margin: 20px 20px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; gap: 5vw; flex-wrap: nowrap; }
-        .code-section { background: var(--card-bg); margin:0 20px 20px; padding:28px 20px; border-radius:20px; text-align:center; }
-        .code-container { display: flex; justify-content: center; align-items: center; min-height: 200px; margin-bottom: 12px; }
-        #qrcode { width: 55vw; height: 55vw; max-width: 220px; max-height: 220px; }
-        .code-hint { font-size: 12px; color: #999; margin-top: 12px; }
-        .countdown-timer { font-size: 14px; color: #d00; font-weight: bold; margin-top: 8px; }
-        .brand-actions { display: flex; gap: 10px; margin: 0 20px 20px; }
-        .event-brand-btn { flex: 1; padding: 15px; border-radius: 16px; background: var(--brand-btn); color: #fff; font-weight: bold; font-size: 4.2vw; border: none; cursor: pointer; }
-        .share-btn { display: block; width: calc(100% - 40px); margin: 0 auto; padding: 18px; border-radius: 20px; background: var(--success); color: #fff; font-weight: bold; font-size: 4.8vw; border: none; cursor: pointer; }
-        @media screen and (min-width: 450px) {
-            .welcome-quote { font-size: 18px; }
-            .main-title { font-size: 32px; }
-            .event-brand-btn { font-size: 16px; }
-            .share-btn { font-size: 18px; }
-        }
+/* ============================================================
+   Loading
+   ============================================================ */
+#loading { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 9999; flex-direction: column; gap: 20px; padding: 0 20px; }
+.loader-icon { width: 60px; height: 35px; background: #333; border-radius: 0 0 25px 25px; position: relative; border: 3px solid #222; flex-shrink: 0; }
+.loader-icon.omp::after { content: '♨'; position: absolute; top: -30px; left: 12px; font-size: 28px; color: var(--primary); animation: steam 1.2s infinite; }
+.loader-icon.so { width: 55px; height: 40px; background: #ffcc00; border-radius: 15px 15px 8px 8px; border-top: 10px solid #663300; animation: wobble 0.7s infinite; }
+@keyframes steam { 0%{opacity:0;transform:translateY(0)}50%{opacity:1}100%{opacity:0;transform:translateY(-20px)} }
+@keyframes wobble { 0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)} }
 
-        #regUI { display: none; padding: 40px 24px; }
-        .reg-input { width: 100%; padding: 16px; border-radius: 14px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; margin-top: 10px; height: 55px; }
-        .reg-btn { width: 100%; padding: 18px; background: var(--primary); color: #fff; border: none; border-radius: 16px; font-weight: bold; margin-top: 30px; cursor: pointer; }
-        .terms-section { background: #fef9f0; border-radius: 16px; padding: 16px; margin-top: 20px; border: 1px solid #ffe0b5; }
-        .terms-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #ffe0b5; }
-        .terms-item:last-child { border-bottom: none; }
-        .terms-item label .red-text { color: #d00; font-weight: bold; cursor: pointer; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 30000; }
-        .modal-card { background: var(--card-bg); width: 92%; max-width: 420px; border-radius: 24px; overflow: hidden; }
-        .modal-body { padding: 24px; max-height: 65vh; overflow-y: auto; }
-        .welcome-card { background: linear-gradient(135deg, #8b0000, #ff69b4); color: #fff; padding: 30px 24px; border-radius: 24px; text-align: center; }
-        .share-modal-content { text-align: center; padding: 10px; }
-        .share-title { font-size: 22px; color: var(--primary); font-weight: 900; margin-bottom: 15px; }
-        .toast { position: fixed; left: 50%; bottom: 60px; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: #fff; padding: 12px 20px; border-radius: 12px; z-index: 9999; display: none; }
-        .reg-gift-code-container { display: flex; justify-content: center; align-items: center; margin-bottom: 8px; }
-        .shop-info-container { max-height: 60vh; overflow-y: auto; }
-        .shop-info-item { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-        #welcomeUI { display: none; padding: 60px 24px; text-align: center; min-height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .welcome-title { font-size: 24px; font-weight: bold; color: var(--primary); margin-bottom: 16px; }
-        .welcome-desc { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 40px; padding: 0 10px; }
-        .welcome-gift-btn { width: 100%; padding: 18px; background: var(--primary); color: #fff; border: none; border-radius: 16px; font-size: 18px; font-weight: bold; cursor: pointer; }
+/* ============================================================
+   側邊選單
+   ============================================================ */
+.side-menu { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--card-bg); box-shadow: 2px 0 12px rgba(0,0,0,0.15); z-index: 10000; transition: left 0.3s ease; overflow-y: auto; display: flex; flex-direction: column; }
+.side-menu.open { left: 0; }
+.side-menu-header { background: var(--primary); color: #fff; padding: 30px 20px; text-align: center; flex-shrink: 0; }
+.side-menu-header h3 { margin: 0; font-size: 24px; font-weight: bold; }
+.side-menu-items { padding: 20px 0; display: flex; flex-direction: column; flex: 1; overflow-y: auto; }
+.side-menu-item { display: block; width: 100%; padding: 18px 24px; background: none; border: none; text-align: left; font-size: 18px; color: var(--text); cursor: pointer; border-bottom: 1px solid #f0f0f0; font-weight: bold; flex-shrink: 0; }
+.side-menu-item:last-child { margin-top: auto !important; text-align: center !important; font-size: 14px !important; color: #999 !important; font-weight: normal !important; border: none !important; padding: 12px 0 !important; width: 100% !important; display: block !important; }
+.side-menu-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: none; }
+.side-menu-overlay.show { display: block; }
+
+/* ============================================================
+   頁首
+   ============================================================ */
+.header { background: var(--primary); color: #fff; padding: 12vw 20px; text-align: center; border-radius: 0 0 30px 30px; position: relative; }
+.menu-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 28px; cursor: pointer; background: none; border: none; color: #fff; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; z-index: 10; }
+.welcome-quote { font-size: 4.5vw; opacity: 0.95; margin-bottom: 8px; min-height: 24px; }
+.main-title { font-size: 8.5vw; font-weight: 900; }
+
+/* ============================================================
+   資產卡片
+   ============================================================ */
+.asset-card { background: #fff; border-radius: 15px; padding: 4vw 5vw; margin: 20px 20px 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; gap: 5vw; flex-wrap: nowrap; }
+.asset-card > div:first-child { display: flex; flex-direction: column; align-items: center; border-right: 1px solid #eee; padding-right: 5vw; flex: 1; }
+.asset-card > div:first-child > div:first-child { font-size: clamp(14px, 4vw, 20px); font-weight: bold; color: #666; letter-spacing: 1px; }
+.asset-card > div:first-child > div:last-child { font-size: clamp(14px, 4vw, 20px); font-weight: bold; color: #666; letter-spacing: 6px; margin-top: 2px; }
+.asset-card > div:last-child { text-align: center; display: flex; flex-direction: column; align-items: center; flex: 1.2; }
+#pointsDisplay { font-size: clamp(36px, 10vw, 60px); font-weight: bold; color: var(--primary); line-height: 1.2; }
+.asset-card button { margin-top: 8px; background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 2px 10px; color: #888; font-size: clamp(11px, 3vw, 14px); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+
+/* ============================================================
+   QR Code 區塊
+   ============================================================ */
+.code-section { background: var(--card-bg); margin: 0 20px 20px; padding: 28px 20px; border-radius: 20px; text-align: center; }
+.code-container { display: flex; justify-content: center; align-items: center; min-height: 200px; margin-bottom: 12px; }
+#qrcode { width: clamp(180px, 55vw, 280px); height: clamp(180px, 55vw, 280px); max-width: 280px; max-height: 280px; }
+.code-hint { font-size: clamp(11px, 3vw, 14px); color: #999; margin-top: 12px; }
+.countdown-timer { font-size: clamp(12px, 3.5vw, 16px); color: #d00; font-weight: bold; margin-top: 8px; }
+
+/* ============================================================
+   按鈕
+   ============================================================ */
+.brand-actions { display: flex; gap: 10px; margin: 0 20px 20px; }
+.event-brand-btn { flex: 1; padding: 15px; border-radius: 16px; background: var(--brand-btn); color: #fff; font-weight: bold; font-size: clamp(14px, 4.2vw, 20px); border: none; cursor: pointer; }
+.share-btn { display: block; width: calc(100% - 40px); margin: 0 auto; padding: 18px; border-radius: 20px; background: var(--success); color: #fff; font-weight: bold; font-size: clamp(16px, 4.8vw, 24px); border: none; cursor: pointer; }
+
+/* ============================================================
+   註冊頁
+   ============================================================ */
+#regUI { display: none; padding: 40px 24px; }
+.reg-input { width: 100%; padding: 16px; border-radius: 14px; border: 1px solid #ddd; font-size: clamp(15px, 4vw, 18px); box-sizing: border-box; margin-top: 10px; height: auto; min-height: 55px; }
+.reg-btn { width: 100%; padding: 18px; background: var(--primary); color: #fff; border: none; border-radius: 16px; font-weight: bold; font-size: clamp(16px, 4.5vw, 20px); margin-top: 30px; cursor: pointer; }
+
+/* ============================================================
+   歡迎頁
+   ============================================================ */
+#welcomeUI { display: none; padding: 60px 24px; text-align: center; min-height: 80vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.welcome-title { font-size: clamp(20px, 5.5vw, 28px); font-weight: bold; color: var(--primary); margin-bottom: 16px; }
+.welcome-desc { font-size: clamp(14px, 4vw, 18px); color: #666; line-height: 1.6; margin-bottom: 40px; padding: 0 10px; }
+.welcome-gift-btn { width: 100%; padding: 18px; background: var(--primary); color: #fff; border: none; border-radius: 16px; font-size: clamp(16px, 4.5vw, 20px); font-weight: bold; cursor: pointer; }
+
+/* ============================================================
+   Modal
+   ============================================================ */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 30000; padding: 20px; }
+.modal-card { background: var(--card-bg); width: 100%; max-width: 420px; border-radius: 24px; overflow: hidden; max-height: 90vh; }
+.modal-body { padding: 24px; max-height: 65vh; overflow-y: auto; }
+
+/* ============================================================
+   Toast
+   ============================================================ */
+.toast { position: fixed; left: 50%; bottom: 60px; transform: translateX(-50%); background: rgba(0,0,0,0.75); color: #fff; padding: 12px 20px; border-radius: 12px; z-index: 9999; display: none; font-size: clamp(13px, 3.5vw, 16px); max-width: 90%; text-align: center; }
+
+/* ============================================================
+   優惠券列表（心意寶盒）
+   ============================================================ */
+.gift-item { background: #f8f9fa; border-radius: 14px; border: 1px solid #eee; overflow: hidden; transition: all 0.2s; }
+.gift-item:active { background: #f0f0f0; }
+.gift-title { display: flex; justify-content: space-between; align-items: center; padding: clamp(12px, 3.5vw, 16px) clamp(12px, 4vw, 20px); cursor: pointer; user-select: none; gap: 10px; }
+.gift-title .left { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.gift-title .left .name { font-size: clamp(15px, 4.2vw, 20px); font-weight: bold; color: var(--primary); word-break: break-word; }
+.gift-title .left .desc { font-size: clamp(12px, 3.2vw, 15px); color: #888; word-break: break-word; }
+.gift-title .left .expire { font-size: clamp(11px, 2.8vw, 13px); color: #999; }
+.gift-title .right { display: flex; align-items: center; gap: 6px; color: #999; font-size: clamp(12px, 3.2vw, 15px); flex-shrink: 0; padding-left: 10px; }
+.gift-title .right .arrow { font-size: clamp(16px, 4.5vw, 22px); }
+
+/* ============================================================
+   響應式斷點（Media Queries）
+   ============================================================ */
+
+/* 超小螢幕（iPhone SE / 摺疊機，寬度 < 375px） */
+@media screen and (max-width: 374px) {
+    .header { padding: 14vw 16px; }
+    .asset-card { margin: 12px 12px 8px; padding: 3vw 4vw; gap: 3vw; }
+    .brand-actions { gap: 6px; margin: 0 12px 12px; }
+    .event-brand-btn { padding: 12px; font-size: 12px; }
+    .share-btn { width: calc(100% - 24px); padding: 14px; font-size: 14px; }
+    .code-section { margin: 0 12px 12px; padding: 16px 12px; }
+    .code-container { min-height: 140px; }
+    #qrcode { width: 150px; height: 150px; }
+    .side-menu { width: 260px; left: -260px; }
+    .side-menu-item { font-size: 15px; padding: 14px 18px; }
+    .side-menu-header h3 { font-size: 20px; }
+    #regUI { padding: 24px 16px; }
+    .reg-input { padding: 12px; font-size: 14px; min-height: 44px; }
+    .welcome-title { font-size: 18px; }
+    .welcome-desc { font-size: 13px; }
+}
+
+/* 標準手機（375px ~ 414px） */
+@media screen and (min-width: 375px) and (max-width: 414px) {
+    .header { padding: 12vw 16px; }
+    .asset-card { margin: 14px 14px 8px; }
+    .brand-actions { gap: 8px; margin: 0 14px 14px; }
+    .share-btn { width: calc(100% - 28px); }
+    .code-section { margin: 0 14px 14px; }
+    #qrcode { width: clamp(160px, 50vw, 200px); height: clamp(160px, 50vw, 200px); }
+}
+
+/* 大手機 / 小平板（415px ~ 768px） */
+@media screen and (min-width: 415px) and (max-width: 768px) {
+    .header { padding: 10vw 24px; }
+    .asset-card { padding: 3vw 4vw; margin: 20px 24px 12px; gap: 4vw; }
+    .welcome-quote { font-size: clamp(14px, 3vw, 20px); }
+    .main-title { font-size: clamp(24px, 6vw, 40px); }
+    .brand-actions { margin: 0 24px 16px; }
+    .share-btn { width: calc(100% - 48px); }
+    .code-section { margin: 0 24px 16px; padding: 32px 24px; }
+    #qrcode { width: clamp(200px, 40vw, 280px); height: clamp(200px, 40vw, 280px); }
+    .side-menu { width: 300px; left: -300px; }
+}
+
+/* 平板 / 小筆電（769px ~ 1024px） */
+@media screen and (min-width: 769px) {
+    body { max-width: 480px; margin: 0 auto; }
+    .header { padding: 60px 24px; border-radius: 0 0 30px 30px; }
+    .main-title { font-size: 36px; }
+    .welcome-quote { font-size: 18px; }
+    .asset-card { padding: 16px 24px; }
+    #pointsDisplay { font-size: 48px; }
+    .brand-actions { gap: 12px; }
+    .event-brand-btn { font-size: 18px; padding: 18px; }
+    .share-btn { font-size: 20px; padding: 20px; }
+    .code-section { padding: 32px 28px; }
+    #qrcode { width: 260px; height: 260px; }
+    .code-container { min-height: 260px; }
+    .gift-title .left .name { font-size: 18px; }
+    .gift-title .left .desc { font-size: 14px; }
+    .side-menu { width: 320px; left: -320px; }
+    .side-menu-item { font-size: 18px; padding: 20px 24px; }
+}
+
+/* 螢幕方向鎖定（強制直向） */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .header { padding: 8vw 16px; border-radius: 0 0 16px 16px; }
+    .asset-card { padding: 2vw 3vw; margin: 10px 12px 6px; }
+    .code-container { min-height: 100px; }
+    #qrcode { width: 120px; height: 120px; }
+    .code-section { padding: 12px 12px; margin: 0 12px 8px; }
+    .brand-actions { margin: 0 12px 8px; }
+    .event-brand-btn { padding: 8px; font-size: 12px; }
+    .share-btn { padding: 10px; font-size: 14px; width: calc(100% - 24px); }
+    .side-menu { width: 240px; left: -240px; }
+    .side-menu-item { padding: 10px 16px; font-size: 14px; }
+    .side-menu-header { padding: 16px 16px; }
+    .side-menu-header h3 { font-size: 18px; }
+    #pointsDisplay { font-size: 28px; }
+    .welcome-quote { font-size: 14px; }
+    .main-title { font-size: 22px; }
+    .asset-card > div:first-child > div { font-size: 12px; }
+}
     </style>
 </head>
 <body>
