@@ -311,148 +311,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Helvetica
     </div>
 </div>
 <div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>//以下上線刪除
-<script>
-    var vConsole = new VConsole();
-    console.log('✅ vConsole 已啟動');
-    
-    // ============================================================
-    //  🔥 讀取計數器（監控 Firestore + Sheets 讀取次數）
-    // ============================================================
-    (function() {
-        // 計數器
-        var readCount = 0;
-        var originalFetch = window.fetch;
-        var originalXHROpen = XMLHttpRequest.prototype.open;
-        var activeRequests = {};
-        var requestId = 0;
-        
-        // 顯示計數器 UI
-        var counterDiv = document.createElement('div');
-        counterDiv.id = 'readCounter';
-        counterDiv.style.cssText = [
-            'position: fixed',
-            'top: 10px',
-            'right: 10px',
-            'background: rgba(0,0,0,0.85)',
-            'color: #0f0',
-            'font-family: monospace',
-            'font-size: 13px',
-            'padding: 6px 12px',
-            'border-radius: 8px',
-            'z-index: 9999',
-            'border: 1px solid #0f0',
-            'max-width: 200px',
-            'word-break: break-all',
-            'font-weight: bold',
-            'box-shadow: 0 2px 10px rgba(0,0,0,0.5)',
-            'pointer-events: none',
-            'user-select: none'
-        ].join(';');
-        counterDiv.textContent = '📊 讀取: 0';
-        document.body.appendChild(counterDiv);
-        
-        // 更新計數器顯示
-        function updateCounter() {
-            counterDiv.textContent = '📊 讀取: ' + readCount;
-            // 如果超過 30 次變紅色
-            if (readCount > 30) {
-                counterDiv.style.color = '#ff4444';
-                counterDiv.style.borderColor = '#ff4444';
-            } else {
-                counterDiv.style.color = '#0f0';
-                counterDiv.style.borderColor = '#0f0';
-            }
-        }
-        
-        // 監聽 fetch
-        window.fetch = function() {
-            var args = arguments;
-            var url = args[0] || '';
-            
-            // 🔥 過濾掉 vConsole、QR 圖片、靜態資源
-            if (typeof url === 'string') {
-                var skipPatterns = [
-                    'vconsole',
-                    'qrserver',
-                    'jsbarcode',
-                    'static.line-scdn',
-                    'cdn.jsdelivr',
-                    'i.ibb.co'
-                ];
-                var shouldSkip = skipPatterns.some(function(pattern) {
-                    return url.indexOf(pattern) !== -1;
-                });
-                if (!shouldSkip) {
-                    readCount++;
-                    console.log('📊 [fetch] 讀取 #' + readCount + ':', url.substring(0, 80) + '...');
-                    updateCounter();
-                }
-            }
-            return originalFetch.apply(this, args);
-        };
-        
-        // 監聽 XMLHttpRequest
-        XMLHttpRequest.prototype.open = function() {
-            var args = arguments;
-            var method = args[0] || 'GET';
-            var url = args[1] || '';
-            var requestId = ++window._xhrId || 1;
-            window._xhrId = requestId;
-            
-            // 過濾
-            if (typeof url === 'string') {
-                var skipPatterns = [
-                    'vconsole',
-                    'qrserver',
-                    'jsbarcode',
-                    'static.line-scdn',
-                    'cdn.jsdelivr',
-                    'i.ibb.co',
-                    'api.qrserver'
-                ];
-                var shouldSkip = skipPatterns.some(function(pattern) {
-                    return url.indexOf(pattern) !== -1;
-                });
-                
-                if (!shouldSkip && method.toUpperCase() !== 'POST') {
-                    // 記錄請求發起時間
-                    activeRequests[requestId] = { url: url, time: Date.now() };
-                    console.log('📊 [XHR] 請求 #' + requestId + ':', url.substring(0, 80) + '...');
-                }
-            }
-            return originalXHROpen.apply(this, args);
-        };
-        
-        // 監聽 XHR 完成
-        var originalXHRSend = XMLHttpRequest.prototype.send;
-        XMLHttpRequest.prototype.send = function() {
-            var self = this;
-            var requestId = window._xhrId || 0;
-            
-            // 監聽完成事件
-            self.addEventListener('loadend', function() {
-                var url = activeRequests[requestId]?.url || '';
-                if (url) {
-                    var isSuccess = self.status >= 200 && self.status < 300;
-                    var statusText = isSuccess ? '✅' : '❌';
-                    // 只記錄非 GET 或特定狀態碼
-                    console.log('📊 [XHR] ' + statusText + ' 完成 #' + requestId + ' 狀態:', self.status);
-                    delete activeRequests[requestId];
-                }
-            });
-            
-            return originalXHRSend.apply(this, arguments);
-        };
-        
-        // 🔥 額外監視：攔截 ContentService 回傳（GAS 回應）
-        // 沒有額外讀取，不增加計數
-        
-        console.log('✅ 讀取計數器已啟動！');
-        console.log('📌 注意：計數器會顯示所有 GET 請求（排除靜態資源）');
-        console.log('📌 右上角黑底綠字即為即時讀取次數');
-    })();
-</script>//以上上線刪除
+<script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>//上線刪除
+<script>//上線刪除
+    // 在 initLiff 之前加入//上線刪除
+    var vConsole = new VConsole();//上線刪除
+    console.log('✅ vConsole 已啟動');//上線刪除
+</script>//上線刪除
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec";
 const LIFF_ID = "2009761099-xXvMY51i";
@@ -907,6 +771,7 @@ async function refreshAll() {
 async function fetchData(isReload) {
     if (isReload === undefined) isReload = false;
     
+    // 🔥 1️⃣ 檢查快取（如果有，直接跳過 loading）
     var cachedData = getCachedMember(userId);
     if (cachedData && !isReload) {
         console.log('✅ 從快取載入會員資料');
@@ -917,8 +782,10 @@ async function fetchData(isReload) {
         return;
     }
     
+    // 🔥 2️⃣ 確保 loading 畫面顯示（不要關閉！）
     document.getElementById('loading').style.display = 'flex';
     
+    // 🔥 3️⃣ 設定等待詞（從 GAS 讀取或使用預設）
     var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
     var defaultTexts = currentFrom === 'so' ? 
         ["正在為你的生活，加入一點甜...", "攪拌心意中，請稍候片刻..."] :
@@ -936,12 +803,7 @@ async function fetchData(isReload) {
         var data;
         try { data = JSON.parse(responseText); } catch(e) { throw new Error('伺服器回應格式錯誤'); }
         
-        // 🔥 如果 GAS 有回傳文句池，覆蓋 loading 文字
-        if (data && data.loadingTexts && data.loadingTexts.length > 0) {
-            document.getElementById('loading-text').innerText = data.loadingTexts[Math.floor(Math.random() * data.loadingTexts.length)];
-            console.log('✅ 使用 GAS 文句池');
-        }
-        
+        // 🔥 4️⃣ 資料載入完成後，關閉 loading，顯示會員畫面
         document.getElementById('loading').style.display = 'none';
         
         if (data && data.isMember) {
@@ -1037,11 +899,7 @@ async function doRegister() {
         if (result.success) {
             document.getElementById('loading').style.display = 'none';
             openModal('<div class="welcome-card"><h2>🎉 註冊成功！</h2><p>歡迎加入老娘的一點心意🍲🍰<br><br>這是老娘留給你的偏心。<br>日子不一定天天完美<br>但一定要有一點甜 💕</p><div style="margin-top:20px;">3秒後自動進入會員頁面...</div></div>');
-            setTimeout(function() { 
-                closeModal(); 
-                // ✅ 改用 fetchData 重新載入會員資料，而不是 reload 整個頁面
-                fetchData(true);
-            }, 3000);
+            setTimeout(function() { closeModal(); location.reload(); }, 3000);
         } else {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('regUI').style.display = 'block';
@@ -1067,16 +925,7 @@ function openGame() {
                     '&api=' + encodeURIComponent(GAS_URL) +
                     '&t=' + Date.now();
 
-    // ✅ 改用 liff.openWindow
-    if (typeof liff !== 'undefined' && liff.isInClient()) {
-        liff.openWindow({
-            url: fullUrl,
-            external: true  // 🔥 在外部瀏覽器開啟，遊戲更流暢
-        });
-    } else {
-        // 備用方案（非 LINE 環境）
-        window.open(fullUrl, '_blank');
-    }
+    window.location.href = fullUrl;
 }
 // ============================================================
 // ✅ 活動、推薦、點數明細、個人資料
@@ -1141,110 +990,103 @@ function openProfile() {
 // ✅ 分享推薦碼
 // ============================================================
 function shareWithTargetPicker() {
-  if (!userId) {
-    showToast('⚠️ 請先登入會員');
-    return;
-  }
-  
-  console.log("🔍 開始分享流程");
-  console.log("📌 userId:", userId);
-  
-  // 🔥🔥🔥 取得推薦人姓名
-  var referrerName = userData?.profile?.name || userData?.name || "好友";
-  console.log("📌 推薦人姓名:", referrerName);
-  
-  const referrer = userId + '|' + Date.now();
-  const shareUrl = 'https://liff.line.me/' + LIFF_ID + '?from=' + currentFrom + '&referrer=' + encodeURIComponent(referrer);
-  
-  console.log("📌 shareUrl:", shareUrl);
-  
-  if (typeof liff === 'undefined') {
-    console.error("❌ liff 未定義");
-    showToast('⚠️ LIFF 尚未初始化，請重新開啟頁面');
-    return;
-  }
-  
-  if (!liff.isInClient()) {
-    console.warn("⚠️ 不在 LINE 客戶端中");
-    showToast('⚠️ 請在 LINE 中開啟此頁面');
-    return;
-  }
-  
-  console.log("✅ 準備呼叫 shareTargetPicker");
-  
-  liff.shareTargetPicker([
-    {
-      type: 'flex',
-      altText: referrerName + '給您送來一點心意.....',
-      contents: {
-        type: 'bubble',
-        hero: {
-          type: 'image',
-          url: 'https://i.ibb.co/d0fcN62N/11-288x.png',  // ← 可更換圖片//需改為老娘一點心意專屬圖片
-          size: 'full',
-          aspectRatio: '20:13',
-          aspectMode: 'cover'
-        },
-        body: {
-          type: 'box',
-          layout: 'vertical',
-          spacing: 'sm',
-          contents: [
-            {
-              type: 'text',
-              text: referrerName + '給您送來一點心意.....',  // 🔥 動態顯示推薦人姓名
-              weight: 'bold',
-              size: 'lg',
-              color: '#8b0000',
-              wrap: true
-            },
-            {
-              type: 'text',
-              text: '請先加入官方帳號好友，再註冊會員就能領取新客招待禮，享會員專屬消費集點折抵金',  // 🔥 提醒文字
-              size: 'md',
-              color: '#666666',
-              wrap: true
-            }
-          ]
-        },
-        footer: {
-          type: 'box',
-          layout: 'vertical',
-          spacing: 'sm',
-          contents: [
-            {
-              type: 'button',
-              style: 'primary',
-              color: '#06C755',
-              action: {
-                type: 'uri',
-                label: '📱 加入官方帳號好友',
-                uri: 'https://lin.ee/N6hH8Zy'  // 🔥 加入好友按鈕
-              }
-            },
-            {
-              type: 'button',
-              style: 'primary',
-              color: '#8b0000',
-              action: {
-                type: 'uri',
-                label: '🎁 領取新客禮',
-                uri: shareUrl
-              }
-            }
-          ]
-        }
-      }
+    if (!userId) {
+        showToast('⚠️ 請先登入會員');
+        return;
     }
-  ])
-  .then(function(result) {
-    console.log("✅ shareTargetPicker 成功:", result);
-    showToast('✅ 分享成功！');
-  })
-  .catch(function(error) {
-    console.error("❌ shareTargetPicker 失敗:", error);
-    showToast('⚠️ 分享取消或失敗：' + (error.message || '未知錯誤'));
-  });
+    
+    console.log("🔍 開始分享流程");
+    console.log("📌 userId:", userId);
+    
+    const referrer = userId + '|' + Date.now();
+    const shareUrl = 'https://liff.line.me/' + LIFF_ID + '?from=' + currentFrom + '&referrer=' + encodeURIComponent(referrer);
+    
+    console.log("📌 shareUrl:", shareUrl);
+    
+    // 🔥 檢查 liff 是否可用
+    if (typeof liff === 'undefined') {
+        console.error("❌ liff 未定義");
+        showToast('⚠️ LIFF 尚未初始化，請重新開啟頁面');
+        return;
+    }
+    
+    if (!liff.isInClient()) {
+        console.warn("⚠️ 不在 LINE 客戶端中");
+        showToast('⚠️ 請在 LINE 中開啟此頁面');
+        return;
+    }
+    
+    console.log("✅ 準備呼叫 shareTargetPicker");
+    
+    liff.shareTargetPicker([
+        {
+            type: 'flex',
+            altText: '老娘的一點心意 - 邀請你一起享受美味！',
+            contents: {
+                type: 'bubble',
+                hero: {
+                    type: 'image',
+                    url: 'https://i.ibb.co/d0fcN62N/11-288x.png',
+                    size: 'full',
+                    aspectRatio: '20:13',
+                    aspectMode: 'cover'
+                },
+                body: {
+                    type: 'box',
+                    layout: 'vertical',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'text',
+                            text: '🍲 老娘的一點心意',
+                            weight: 'bold',
+                            size: 'lg',
+                            color: '#8b0000'
+                        },
+                        {
+                            type: 'text',
+                            text: '邀請你一起享受美味！🎉',
+                            size: 'md'
+                        },
+                        {
+                            type: 'text',
+                            text: '成功加入可獲得新客好禮 🎁',
+                            size: 'sm',
+                            color: '#888888'
+                        }
+                    ]
+                },
+                footer: {
+                    type: 'box',
+                    layout: 'vertical',
+                    spacing: 'sm',
+                    contents: [
+                        {
+                            type: 'button',
+                            style: 'primary',
+                            color: '#8b0000',
+                            action: {
+                                type: 'uri',
+                                label: '🎁 領取新客禮',
+                                uri: shareUrl
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ])
+    .then(function(result) {
+        console.log("✅ shareTargetPicker 成功:", result);
+        showToast('✅ 分享成功！');
+    })
+    .catch(function(error) {
+        console.error("❌ shareTargetPicker 失敗:", error);
+        console.error("  錯誤名稱:", error.name);
+        console.error("  錯誤訊息:", error.message);
+        console.error("  錯誤代碼:", error.code);
+        showToast('⚠️ 分享取消或失敗：' + (error.message || '未知錯誤'));
+    });
 }
 // ============================================================
 // ✅ 阻擋畫面（只能在 LINE App 內使用）
@@ -1476,145 +1318,6 @@ function showBlockPage(message) {
         </style>
     `;
 }
-// ============================================================
-// ✅ 檢查好友狀態（呼叫 GAS API）
-// ============================================================
-async function checkFriendshipStatus(userId) {
-  try {
-    var brand = currentFrom === 'so' ? 'swo' : 'omp';  // 🔥 根據 currentFrom 決定品牌
-    var url = GAS_URL + '?action=checkFriendship&userId=' + encodeURIComponent(userId) + '&brand=' + brand + '&t=' + Date.now();
-    var res = await fetch(url);
-    var result = await res.json();
-    console.log("📱 好友檢查結果:", result);
-    return result.isFriend === true;
-  } catch(e) {
-    console.error("❌ 檢查好友狀態失敗:", e);
-    return false;
-  }
-}
-// ============================================================
-// ✅ 顯示引導加入好友畫面
-// ============================================================
-function showAddFriendGuide() {
-  // 隱藏所有畫面
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('memberUI').style.display = 'none';
-  document.getElementById('welcomeUI').style.display = 'none';
-  document.getElementById('regUI').style.display = 'none';
-  
-  // 建立引導畫面
-  var guideHTML = `
-    <div id="friendGuide" style="
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: var(--bg);
-      padding: 40px 24px;
-      text-align: center;
-    ">
-      <div style="font-size: 64px; margin-bottom: 24px;">🎁</div>
-      <h2 style="color: var(--primary); font-size: 24px; margin-bottom: 16px;">領取新客招待禮</h2>
-      <p style="color: #666; font-size: 16px; line-height: 1.8; margin-bottom: 12px; max-width: 360px;">
-        請先加入 <b>老娘鍋官方帳號</b> 好友，<br>
-        才能完成註冊領取優惠券 🎉
-      </p>
-      <p style="color: #999; font-size: 14px; margin-bottom: 30px;">
-        加入後可收到最新優惠與點數通知
-      </p>
-      
-      <!-- 加入好友按鈕 -->
-      <a href="https://lin.ee/N6hH8Zy" target="_blank" style="
-        display: block;
-        width: 100%;
-        max-width: 320px;
-        padding: 18px;
-        background: #06C755;
-        color: #fff;
-        border: none;
-        border-radius: 16px;
-        font-size: 18px;
-        font-weight: bold;
-        text-decoration: none;
-        margin-bottom: 16px;
-        box-shadow: 0 4px 12px rgba(6, 199, 85, 0.3);
-      ">
-        📱 加入官方帳號好友
-      </a>
-      
-      <!-- 我已加入按鈕 -->
-      <button onclick="recheckFriendship()" style="
-        display: block;
-        width: 100%;
-        max-width: 320px;
-        padding: 18px;
-        background: var(--primary);
-        color: #fff;
-        border: none;
-        border-radius: 16px;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-      ">
-        ✅ 我已經加入了
-      </button>
-      
-      <div style="margin-top: 40px; font-size: 14px; color: #ccc;">
-        老娘的一點心意 v1.0
-      </div>
-    </div>
-  `;
-  
-  // 移除舊的引導畫面（如果存在）
-  var oldGuide = document.getElementById('friendGuide');
-  if (oldGuide) oldGuide.remove();
-  
-  // 插入到 body 中
-  var div = document.createElement('div');
-  div.innerHTML = guideHTML;
-  document.body.appendChild(div.firstElementChild);
-}
-// ============================================================
-// ✅ 重新檢查好友狀態（用戶點擊「我已經加入了」後）
-// ============================================================
-async function recheckFriendship() {
-  var guide = document.getElementById('friendGuide');
-  if (guide) {
-    // 顯示載入中
-    guide.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);padding:40px 24px;text-align:center;">
-        <div style="font-size:48px;margin-bottom:24px;">⏳</div>
-        <h2 style="color:var(--primary);font-size:20px;">正在確認好友狀態...</h2>
-      </div>
-    `;
-  }
-  
-  try {
-    var isFriend = await checkFriendshipStatus(userId);
-    if (isFriend) {
-      // 已加入好友 → 移除引導畫面，重新載入會員資料
-      var guide = document.getElementById('friendGuide');
-      if (guide) guide.remove();
-      
-      showToast('✅ 已加入官方帳號！');
-      document.getElementById('loading').style.display = 'flex';
-      await fetchData();
-    } else {
-      // 仍未加入 → 重新顯示引導畫面
-      var guide = document.getElementById('friendGuide');
-      if (guide) guide.remove();
-      showToast('⚠️ 請先加入官方帳號好友再繼續');
-      showAddFriendGuide();
-    }
-  } catch(e) {
-    console.error('重新檢查好友狀態失敗:', e);
-    showToast('檢查失敗，請稍後再試');
-    var guide = document.getElementById('friendGuide');
-    if (guide) guide.remove();
-    showAddFriendGuide();
-  }
-}
 async function initLiff() {
     // ============================================================
     // ✅ 第一道防線：只能在 LINE App 內使用
@@ -1729,21 +1432,6 @@ loadingText.innerText = defaultTexts[randomIndex];
             console.log('✅ 設定 userId:', userId);
         }
         
-        // ============================================================
-        // 🔥 加入好友檢查（在載入會員資料之前）
-        // ============================================================
-        console.log('🔍 檢查好友狀態，userId:', userId);
-        var friendCheckResult = await checkFriendshipStatus(userId);
-        console.log('📱 好友檢查結果:', friendCheckResult);
-
-        if (!friendCheckResult) {
-            // 未加入好友 → 顯示引導畫面，不繼續載入會員資料
-            document.getElementById('loading').style.display = 'none';
-            showAddFriendGuide();
-            return;  // 停止繼續執行
-        }
-
-        // ✅ 已加入好友 → 繼續載入會員資料
         await fetchData();
         
     } catch(e) { 
