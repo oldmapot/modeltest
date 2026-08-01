@@ -301,7 +301,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Helvetica
         <button class="event-brand-btn" onclick="openEvents('omp')">老娘精選</button>
         <button class="event-brand-btn" onclick="openGame()">🎮 火鍋達人</button>
     </div>
-    <button class="share-btn" onclick="()">🚀 分享推薦碼，享好友消費回饋</button>
+    <button class="share-btn" onclick="shareWithTargetPicker()">🚀 分享推薦碼，享好友消費回饋</button>
 </div>
 
 <!-- 註冊頁 -->
@@ -1145,6 +1145,10 @@ function shareWithTargetPicker() {
     
     console.log("🔍 開始分享流程");
     console.log("📌 userId:", userId);
+    
+    // 🔥🔥🔥 加入這行：取得推薦人姓名
+    var referrerName = userData?.profile?.name || userData?.name || "好友";
+    console.log("📌 推薦人姓名:", referrerName);
     
     const referrer = userId + '|' + Date.now();
     const shareUrl = 'https://liff.line.me/' + LIFF_ID + '?from=' + currentFrom + '&referrer=' + encodeURIComponent(referrer);
