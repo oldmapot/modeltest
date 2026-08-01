@@ -1061,7 +1061,16 @@ function openGame() {
                     '&api=' + encodeURIComponent(GAS_URL) +
                     '&t=' + Date.now();
 
-    window.location.href = fullUrl;
+    // ✅ 改用 liff.openWindow
+    if (typeof liff !== 'undefined' && liff.isInClient()) {
+        liff.openWindow({
+            url: fullUrl,
+            external: true  // 🔥 在外部瀏覽器開啟，遊戲更流暢
+        });
+    } else {
+        // 備用方案（非 LINE 環境）
+        window.open(fullUrl, '_blank');
+    }
 }
 // ============================================================
 // ✅ 活動、推薦、點數明細、個人資料
