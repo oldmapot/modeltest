@@ -907,7 +907,6 @@ async function refreshAll() {
 async function fetchData(isReload) {
     if (isReload === undefined) isReload = false;
     
-    // 🔥 1️⃣ 檢查快取（如果有，直接跳過 loading）
     var cachedData = getCachedMember(userId);
     if (cachedData && !isReload) {
         console.log('✅ 從快取載入會員資料');
@@ -918,10 +917,8 @@ async function fetchData(isReload) {
         return;
     }
     
-    // 🔥 2️⃣ 確保 loading 畫面顯示（不要關閉！）
     document.getElementById('loading').style.display = 'flex';
     
-    // 🔥 3️⃣ 設定等待詞（從 GAS 讀取或使用預設）
     var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
     var defaultTexts = currentFrom === 'so' ? 
         ["正在為你的生活，加入一點甜...", "攪拌心意中，請稍候片刻..."] :
@@ -939,7 +936,12 @@ async function fetchData(isReload) {
         var data;
         try { data = JSON.parse(responseText); } catch(e) { throw new Error('伺服器回應格式錯誤'); }
         
-        // 🔥 4️⃣ 資料載入完成後，關閉 loading，顯示會員畫面
+        // 🔥 如果 GAS 有回傳文句池，覆蓋 loading 文字
+        if (data && data.loadingTexts && data.loadingTexts.length > 0) {
+            document.getElementById('loading-text').innerText = data.loadingTexts[Math.floor(Math.random() * data.loadingTexts.length)];
+            console.log('✅ 使用 GAS 文句池');
+        }
+        
         document.getElementById('loading').style.display = 'none';
         
         if (data && data.isMember) {
