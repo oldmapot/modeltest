@@ -990,103 +990,110 @@ function openProfile() {
 // ✅ 分享推薦碼
 // ============================================================
 function shareWithTargetPicker() {
-    if (!userId) {
-        showToast('⚠️ 請先登入會員');
-        return;
-    }
-    
-    console.log("🔍 開始分享流程");
-    console.log("📌 userId:", userId);
-    
-    const referrer = userId + '|' + Date.now();
-    const shareUrl = 'https://liff.line.me/' + LIFF_ID + '?from=' + currentFrom + '&referrer=' + encodeURIComponent(referrer);
-    
-    console.log("📌 shareUrl:", shareUrl);
-    
-    // 🔥 檢查 liff 是否可用
-    if (typeof liff === 'undefined') {
-        console.error("❌ liff 未定義");
-        showToast('⚠️ LIFF 尚未初始化，請重新開啟頁面');
-        return;
-    }
-    
-    if (!liff.isInClient()) {
-        console.warn("⚠️ 不在 LINE 客戶端中");
-        showToast('⚠️ 請在 LINE 中開啟此頁面');
-        return;
-    }
-    
-    console.log("✅ 準備呼叫 shareTargetPicker");
-    
-    liff.shareTargetPicker([
-        {
-            type: 'flex',
-            altText: '老娘的一點心意 - 邀請你一起享受美味！',
-            contents: {
-                type: 'bubble',
-                hero: {
-                    type: 'image',
-                    url: 'https://i.ibb.co/d0fcN62N/11-288x.png',
-                    size: 'full',
-                    aspectRatio: '20:13',
-                    aspectMode: 'cover'
-                },
-                body: {
-                    type: 'box',
-                    layout: 'vertical',
-                    spacing: 'sm',
-                    contents: [
-                        {
-                            type: 'text',
-                            text: '🍲 老娘的一點心意',
-                            weight: 'bold',
-                            size: 'lg',
-                            color: '#8b0000'
-                        },
-                        {
-                            type: 'text',
-                            text: '邀請你一起享受美味！🎉',
-                            size: 'md'
-                        },
-                        {
-                            type: 'text',
-                            text: '成功加入可獲得新客好禮 🎁',
-                            size: 'sm',
-                            color: '#888888'
-                        }
-                    ]
-                },
-                footer: {
-                    type: 'box',
-                    layout: 'vertical',
-                    spacing: 'sm',
-                    contents: [
-                        {
-                            type: 'button',
-                            style: 'primary',
-                            color: '#8b0000',
-                            action: {
-                                type: 'uri',
-                                label: '🎁 領取新客禮',
-                                uri: shareUrl
-                            }
-                        }
-                    ]
-                }
+  if (!userId) {
+    showToast('⚠️ 請先登入會員');
+    return;
+  }
+  
+  console.log("🔍 開始分享流程");
+  console.log("📌 userId:", userId);
+  
+  // 🔥🔥🔥 取得推薦人姓名
+  var referrerName = userData?.profile?.name || userData?.name || "好友";
+  console.log("📌 推薦人姓名:", referrerName);
+  
+  const referrer = userId + '|' + Date.now();
+  const shareUrl = 'https://liff.line.me/' + LIFF_ID + '?from=' + currentFrom + '&referrer=' + encodeURIComponent(referrer);
+  
+  console.log("📌 shareUrl:", shareUrl);
+  
+  if (typeof liff === 'undefined') {
+    console.error("❌ liff 未定義");
+    showToast('⚠️ LIFF 尚未初始化，請重新開啟頁面');
+    return;
+  }
+  
+  if (!liff.isInClient()) {
+    console.warn("⚠️ 不在 LINE 客戶端中");
+    showToast('⚠️ 請在 LINE 中開啟此頁面');
+    return;
+  }
+  
+  console.log("✅ 準備呼叫 shareTargetPicker");
+  
+  liff.shareTargetPicker([
+    {
+      type: 'flex',
+      altText: referrerName + '給您送來一點心意.....',
+      contents: {
+        type: 'bubble',
+        hero: {
+          type: 'image',
+          url: 'https://i.ibb.co/d0fcN62N/11-288x.png',  // ← 可更換圖片//需改為老娘一點心意專屬圖片
+          size: 'full',
+          aspectRatio: '20:13',
+          aspectMode: 'cover'
+        },
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'sm',
+          contents: [
+            {
+              type: 'text',
+              text: referrerName + '給您送來一點心意.....',  // 🔥 動態顯示推薦人姓名
+              weight: 'bold',
+              size: 'lg',
+              color: '#8b0000',
+              wrap: true
+            },
+            {
+              type: 'text',
+              text: '請先加入官方帳號好友，再註冊會員就能領取新客招待禮，享會員專屬消費集點折抵金',  // 🔥 提醒文字
+              size: 'md',
+              color: '#666666',
+              wrap: true
             }
+          ]
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'sm',
+          contents: [
+            {
+              type: 'button',
+              style: 'primary',
+              color: '#06C755',
+              action: {
+                type: 'uri',
+                label: '📱 加入官方帳號好友',
+                uri: 'https://lin.ee/N6hH8Zy'  // 🔥 加入好友按鈕
+              }
+            },
+            {
+              type: 'button',
+              style: 'primary',
+              color: '#8b0000',
+              action: {
+                type: 'uri',
+                label: '🎁 領取新客禮',
+                uri: shareUrl
+              }
+            }
+          ]
         }
-    ])
-    .then(function(result) {
-        console.log("✅ shareTargetPicker 成功:", result);
-        showToast('✅ 分享成功！');
-    })
-    .catch(function(error) {
-        console.error("❌ shareTargetPicker 失敗:", error);
-        console.error("  錯誤名稱:", error.name);
-        console.error("  錯誤訊息:", error.message);
-        console.error("  錯誤代碼:", error.code);
-        showToast('⚠️ 分享取消或失敗：' + (error.message || '未知錯誤'));
-    });
+      }
+    }
+  ])
+  .then(function(result) {
+    console.log("✅ shareTargetPicker 成功:", result);
+    showToast('✅ 分享成功！');
+  })
+  .catch(function(error) {
+    console.error("❌ shareTargetPicker 失敗:", error);
+    showToast('⚠️ 分享取消或失敗：' + (error.message || '未知錯誤'));
+  });
 }
 // ============================================================
 // ✅ 阻擋畫面（只能在 LINE App 內使用）
@@ -1318,6 +1325,145 @@ function showBlockPage(message) {
         </style>
     `;
 }
+// ============================================================
+// ✅ 檢查好友狀態（呼叫 GAS API）
+// ============================================================
+async function checkFriendshipStatus(userId) {
+  try {
+    console.log("🔍 檢查好友狀態，userId:", userId);
+    var url = GAS_URL + '?action=checkFriendship&userId=' + encodeURIComponent(userId) + '&t=' + Date.now();
+    var res = await fetch(url);
+    var result = await res.json();
+    console.log("📱 好友檢查結果:", result);
+    return result.isFriend === true;
+  } catch(e) {
+    console.error("❌ 檢查好友狀態失敗:", e);
+    return false;
+  }
+}
+// ============================================================
+// ✅ 顯示引導加入好友畫面
+// ============================================================
+function showAddFriendGuide() {
+  // 隱藏所有畫面
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('memberUI').style.display = 'none';
+  document.getElementById('welcomeUI').style.display = 'none';
+  document.getElementById('regUI').style.display = 'none';
+  
+  // 建立引導畫面
+  var guideHTML = `
+    <div id="friendGuide" style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--bg);
+      padding: 40px 24px;
+      text-align: center;
+    ">
+      <div style="font-size: 64px; margin-bottom: 24px;">🎁</div>
+      <h2 style="color: var(--primary); font-size: 24px; margin-bottom: 16px;">領取新客招待禮</h2>
+      <p style="color: #666; font-size: 16px; line-height: 1.8; margin-bottom: 12px; max-width: 360px;">
+        請先加入 <b>老娘鍋官方帳號</b> 好友，<br>
+        才能完成註冊領取優惠券 🎉
+      </p>
+      <p style="color: #999; font-size: 14px; margin-bottom: 30px;">
+        加入後可收到最新優惠與點數通知
+      </p>
+      
+      <!-- 加入好友按鈕 -->
+      <a href="https://lin.ee/N6hH8Zy" target="_blank" style="
+        display: block;
+        width: 100%;
+        max-width: 320px;
+        padding: 18px;
+        background: #06C755;
+        color: #fff;
+        border: none;
+        border-radius: 16px;
+        font-size: 18px;
+        font-weight: bold;
+        text-decoration: none;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(6, 199, 85, 0.3);
+      ">
+        📱 加入官方帳號好友
+      </a>
+      
+      <!-- 我已加入按鈕 -->
+      <button onclick="recheckFriendship()" style="
+        display: block;
+        width: 100%;
+        max-width: 320px;
+        padding: 18px;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: 16px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+      ">
+        ✅ 我已經加入了
+      </button>
+      
+      <div style="margin-top: 40px; font-size: 14px; color: #ccc;">
+        老娘的一點心意 v1.0
+      </div>
+    </div>
+  `;
+  
+  // 移除舊的引導畫面（如果存在）
+  var oldGuide = document.getElementById('friendGuide');
+  if (oldGuide) oldGuide.remove();
+  
+  // 插入到 body 中
+  var div = document.createElement('div');
+  div.innerHTML = guideHTML;
+  document.body.appendChild(div.firstElementChild);
+}
+// ============================================================
+// ✅ 重新檢查好友狀態（用戶點擊「我已經加入了」後）
+// ============================================================
+async function recheckFriendship() {
+  var guide = document.getElementById('friendGuide');
+  if (guide) {
+    // 顯示載入中
+    guide.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);padding:40px 24px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:24px;">⏳</div>
+        <h2 style="color:var(--primary);font-size:20px;">正在確認好友狀態...</h2>
+      </div>
+    `;
+  }
+  
+  try {
+    var isFriend = await checkFriendshipStatus(userId);
+    if (isFriend) {
+      // 已加入好友 → 移除引導畫面，重新載入會員資料
+      var guide = document.getElementById('friendGuide');
+      if (guide) guide.remove();
+      
+      showToast('✅ 已加入官方帳號！');
+      document.getElementById('loading').style.display = 'flex';
+      await fetchData();
+    } else {
+      // 仍未加入 → 重新顯示引導畫面
+      var guide = document.getElementById('friendGuide');
+      if (guide) guide.remove();
+      showToast('⚠️ 請先加入官方帳號好友再繼續');
+      showAddFriendGuide();
+    }
+  } catch(e) {
+    console.error('重新檢查好友狀態失敗:', e);
+    showToast('檢查失敗，請稍後再試');
+    var guide = document.getElementById('friendGuide');
+    if (guide) guide.remove();
+    showAddFriendGuide();
+  }
+}
 async function initLiff() {
     // ============================================================
     // ✅ 第一道防線：只能在 LINE App 內使用
@@ -1432,6 +1578,21 @@ loadingText.innerText = defaultTexts[randomIndex];
             console.log('✅ 設定 userId:', userId);
         }
         
+        // ============================================================
+        // 🔥 加入好友檢查（在載入會員資料之前）
+        // ============================================================
+        console.log('🔍 檢查好友狀態，userId:', userId);
+        var friendCheckResult = await checkFriendshipStatus(userId);
+        console.log('📱 好友檢查結果:', friendCheckResult);
+
+        if (!friendCheckResult) {
+            // 未加入好友 → 顯示引導畫面，不繼續載入會員資料
+            document.getElementById('loading').style.display = 'none';
+            showAddFriendGuide();
+            return;  // 停止繼續執行
+        }
+
+        // ✅ 已加入好友 → 繼續載入會員資料
         await fetchData();
         
     } catch(e) { 
