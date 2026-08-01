@@ -1330,8 +1330,8 @@ function showBlockPage(message) {
 // ============================================================
 async function checkFriendshipStatus(userId) {
   try {
-    console.log("🔍 檢查好友狀態，userId:", userId);
-    var url = GAS_URL + '?action=checkFriendship&userId=' + encodeURIComponent(userId) + '&t=' + Date.now();
+    var brand = currentFrom === 'so' ? 'swo' : 'omp';  // 🔥 根據 currentFrom 決定品牌
+    var url = GAS_URL + '?action=checkFriendship&userId=' + encodeURIComponent(userId) + '&brand=' + brand + '&t=' + Date.now();
     var res = await fetch(url);
     var result = await res.json();
     console.log("📱 好友檢查結果:", result);
