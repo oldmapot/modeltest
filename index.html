@@ -311,12 +311,148 @@ body { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Helvetica
     </div>
 </div>
 <div class="toast" id="toast"></div>
-<script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>//上線刪除
-<script>//上線刪除
-    // 在 initLiff 之前加入//上線刪除
-    var vConsole = new VConsole();//上線刪除
-    console.log('✅ vConsole 已啟動');//上線刪除
-</script>//上線刪除
+<script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>//以下上線刪除
+<script>
+    var vConsole = new VConsole();
+    console.log('✅ vConsole 已啟動');
+    
+    // ============================================================
+    //  🔥 讀取計數器（監控 Firestore + Sheets 讀取次數）
+    // ============================================================
+    (function() {
+        // 計數器
+        var readCount = 0;
+        var originalFetch = window.fetch;
+        var originalXHROpen = XMLHttpRequest.prototype.open;
+        var activeRequests = {};
+        var requestId = 0;
+        
+        // 顯示計數器 UI
+        var counterDiv = document.createElement('div');
+        counterDiv.id = 'readCounter';
+        counterDiv.style.cssText = [
+            'position: fixed',
+            'top: 10px',
+            'right: 10px',
+            'background: rgba(0,0,0,0.85)',
+            'color: #0f0',
+            'font-family: monospace',
+            'font-size: 13px',
+            'padding: 6px 12px',
+            'border-radius: 8px',
+            'z-index: 9999',
+            'border: 1px solid #0f0',
+            'max-width: 200px',
+            'word-break: break-all',
+            'font-weight: bold',
+            'box-shadow: 0 2px 10px rgba(0,0,0,0.5)',
+            'pointer-events: none',
+            'user-select: none'
+        ].join(';');
+        counterDiv.textContent = '📊 讀取: 0';
+        document.body.appendChild(counterDiv);
+        
+        // 更新計數器顯示
+        function updateCounter() {
+            counterDiv.textContent = '📊 讀取: ' + readCount;
+            // 如果超過 30 次變紅色
+            if (readCount > 30) {
+                counterDiv.style.color = '#ff4444';
+                counterDiv.style.borderColor = '#ff4444';
+            } else {
+                counterDiv.style.color = '#0f0';
+                counterDiv.style.borderColor = '#0f0';
+            }
+        }
+        
+        // 監聽 fetch
+        window.fetch = function() {
+            var args = arguments;
+            var url = args[0] || '';
+            
+            // 🔥 過濾掉 vConsole、QR 圖片、靜態資源
+            if (typeof url === 'string') {
+                var skipPatterns = [
+                    'vconsole',
+                    'qrserver',
+                    'jsbarcode',
+                    'static.line-scdn',
+                    'cdn.jsdelivr',
+                    'i.ibb.co'
+                ];
+                var shouldSkip = skipPatterns.some(function(pattern) {
+                    return url.indexOf(pattern) !== -1;
+                });
+                if (!shouldSkip) {
+                    readCount++;
+                    console.log('📊 [fetch] 讀取 #' + readCount + ':', url.substring(0, 80) + '...');
+                    updateCounter();
+                }
+            }
+            return originalFetch.apply(this, args);
+        };
+        
+        // 監聽 XMLHttpRequest
+        XMLHttpRequest.prototype.open = function() {
+            var args = arguments;
+            var method = args[0] || 'GET';
+            var url = args[1] || '';
+            var requestId = ++window._xhrId || 1;
+            window._xhrId = requestId;
+            
+            // 過濾
+            if (typeof url === 'string') {
+                var skipPatterns = [
+                    'vconsole',
+                    'qrserver',
+                    'jsbarcode',
+                    'static.line-scdn',
+                    'cdn.jsdelivr',
+                    'i.ibb.co',
+                    'api.qrserver'
+                ];
+                var shouldSkip = skipPatterns.some(function(pattern) {
+                    return url.indexOf(pattern) !== -1;
+                });
+                
+                if (!shouldSkip && method.toUpperCase() !== 'POST') {
+                    // 記錄請求發起時間
+                    activeRequests[requestId] = { url: url, time: Date.now() };
+                    console.log('📊 [XHR] 請求 #' + requestId + ':', url.substring(0, 80) + '...');
+                }
+            }
+            return originalXHROpen.apply(this, args);
+        };
+        
+        // 監聽 XHR 完成
+        var originalXHRSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.send = function() {
+            var self = this;
+            var requestId = window._xhrId || 0;
+            
+            // 監聽完成事件
+            self.addEventListener('loadend', function() {
+                var url = activeRequests[requestId]?.url || '';
+                if (url) {
+                    var isSuccess = self.status >= 200 && self.status < 300;
+                    var statusText = isSuccess ? '✅' : '❌';
+                    // 只記錄非 GET 或特定狀態碼
+                    console.log('📊 [XHR] ' + statusText + ' 完成 #' + requestId + ' 狀態:', self.status);
+                    delete activeRequests[requestId];
+                }
+            });
+            
+            return originalXHRSend.apply(this, arguments);
+        };
+        
+        // 🔥 額外監視：攔截 ContentService 回傳（GAS 回應）
+        // 沒有額外讀取，不增加計數
+        
+        console.log('✅ 讀取計數器已啟動！');
+        console.log('📌 注意：計數器會顯示所有 GET 請求（排除靜態資源）');
+        console.log('📌 右上角黑底綠字即為即時讀取次數');
+    })();
+</script>//以上上線刪除
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec";
 const LIFF_ID = "2009761099-xXvMY51i";
