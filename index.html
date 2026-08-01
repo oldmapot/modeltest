@@ -876,6 +876,136 @@ function displayMemberUI(data) {
     console.log('✅ 會員畫面已顯示，點數:', displayPoints);
 }
 // ============================================================
+// ✅ 檢查好友狀態（呼叫 GAS API）
+// ============================================================
+async function checkFriendshipStatus(userId) {
+  try {
+    var brand = currentFrom === 'so' ? 'swo' : 'omp';
+    var url = GAS_URL + '?action=checkFriendship&userId=' + encodeURIComponent(userId) + '&brand=' + brand + '&t=' + Date.now();
+    var res = await fetch(url);
+    var result = await res.json();
+    console.log("📱 好友檢查結果:", result);
+    return result.isFriend === true;
+  } catch(e) {
+    console.error("❌ 檢查好友狀態失敗:", e);
+    return false;
+  }
+}
+// ============================================================
+// ✅ 顯示引導加入好友畫面
+// ============================================================
+function showAddFriendGuide() {
+  // 隱藏所有畫面
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('memberUI').style.display = 'none';
+  document.getElementById('welcomeUI').style.display = 'none';
+  document.getElementById('regUI').style.display = 'none';
+  
+  var guideHTML = `
+    <div id="friendGuide" style="
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #fdf5e6;
+      padding: 40px 24px;
+      text-align: center;
+    ">
+      <div style="font-size: 64px; margin-bottom: 24px;">🎁</div>
+      <h2 style="color: #8b0000; font-size: 24px; margin-bottom: 16px;">領取新客招待禮</h2>
+      <p style="color: #666; font-size: 16px; line-height: 1.8; margin-bottom: 12px; max-width: 360px;">
+        請先加入 <b>老娘鍋官方帳號</b> 好友，<br>
+        才能完成註冊領取優惠券 🎉
+      </p>
+      <p style="color: #999; font-size: 14px; margin-bottom: 30px;">
+        加入後可收到最新優惠與點數通知
+      </p>
+      
+      <a href="https://lin.ee/N6hH8Zy" target="_blank" style="
+        display: block;
+        width: 100%;
+        max-width: 320px;
+        padding: 18px;
+        background: #06C755;
+        color: #fff;
+        border: none;
+        border-radius: 16px;
+        font-size: 18px;
+        font-weight: bold;
+        text-decoration: none;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 12px rgba(6, 199, 85, 0.3);
+      ">
+        📱 加入官方帳號好友
+      </a>
+      
+      <button onclick="recheckFriendship()" style="
+        display: block;
+        width: 100%;
+        max-width: 320px;
+        padding: 18px;
+        background: #8b0000;
+        color: #fff;
+        border: none;
+        border-radius: 16px;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+      ">
+        ✅ 我已經加入了
+      </button>
+      
+      <div style="margin-top: 40px; font-size: 14px; color: #ccc;">
+        老娘的一點心意 v1.0
+      </div>
+    </div>
+  `;
+  
+  var oldGuide = document.getElementById('friendGuide');
+  if (oldGuide) oldGuide.remove();
+  
+  var div = document.createElement('div');
+  div.innerHTML = guideHTML;
+  document.body.appendChild(div.firstElementChild);
+}
+// ============================================================
+// ✅ 重新檢查好友狀態（用戶點擊「我已經加入了」後）
+// ============================================================
+async function recheckFriendship() {
+  var guide = document.getElementById('friendGuide');
+  if (guide) {
+    guide.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#fdf5e6;padding:40px 24px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:24px;">⏳</div>
+        <h2 style="color:#8b0000;font-size:20px;">正在確認好友狀態...</h2>
+      </div>
+    `;
+  }
+  
+  try {
+    var isFriend = await checkFriendshipStatus(userId);
+    if (isFriend) {
+      var guide = document.getElementById('friendGuide');
+      if (guide) guide.remove();
+      showToast('✅ 已加入官方帳號！');
+      document.getElementById('loading').style.display = 'flex';
+      await fetchData();
+    } else {
+      var guide = document.getElementById('friendGuide');
+      if (guide) guide.remove();
+      showToast('⚠️ 請先加入官方帳號好友再繼續');
+      showAddFriendGuide();
+    }
+  } catch(e) {
+    console.error('重新檢查好友狀態失敗:', e);
+    showToast('檢查失敗，請稍後再試');
+    var guide = document.getElementById('friendGuide');
+    if (guide) guide.remove();
+    showAddFriendGuide();
+  }
+}
+// ============================================================
 // ✅ 註冊
 // ============================================================
 async function doRegister() {
@@ -1346,7 +1476,7 @@ async function initLiff() {
         return;
     }
     
-    // ============================================================
+// ============================================================
 // ✅ 定義 urlParams（從這裡開始使用）
 // ============================================================
 const urlParams = new URLSearchParams(window.location.search);
@@ -1431,6 +1561,19 @@ loadingText.innerText = defaultTexts[randomIndex];
             userId = currentUserId;
             console.log('✅ 設定 userId:', userId);
         }
+// ============================================================
+// 🔥 加入好友檢查（在載入會員資料之前）
+// ============================================================
+console.log('🔍 檢查好友狀態，userId:', userId);
+var friendCheckResult = await checkFriendshipStatus(userId);
+console.log('📱 好友檢查結果:', friendCheckResult);
+
+if (!friendCheckResult) {
+    // 未加入好友 → 顯示引導畫面，不繼續載入會員資料
+    document.getElementById('loading').style.display = 'none';
+    showAddFriendGuide();
+    return;  // 停止繼續執行
+}
         
         await fetchData();
         
