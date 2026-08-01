@@ -255,7 +255,18 @@
         </div>
     </div>
 
-    <script>
+    <script src="https://cdn.jsdelivr.net/npm/vconsole@3.15.1/dist/vconsole.min.js"></script>//上線刪除
+<script>//上線刪除
+    // 實例化 vConsole//上線刪除
+    var vConsole = new VConsole();//上線刪除
+    console.log("✅ vConsole 已啟動");//上線刪除
+    
+    // 🔥 額外加入：將錯誤自動輸出到畫面（方便查看）//上線刪除
+    window.onerror = function(message, source, lineno, colno, error) {//上線刪除
+        console.error('🚨 捕獲到錯誤:', message, source, lineno, colno, error);//上線刪除
+        // 如果有 vConsole，錯誤會自動顯示在它的 Console 面板中//上線刪除
+    };//上線刪除
+</script>
         // ============================================================
         //  🔥 設定區
         // ============================================================
