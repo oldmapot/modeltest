@@ -276,30 +276,54 @@ async function logout() {
                   ? staff.loginId 
                   : (localStorage.getItem('staffLoginId') || '');
     
-    // ❌ 刪除 deviceId 相關
-    // var deviceId = (typeof staff !== 'undefined' && staff && staff.deviceId) 
-    //                ? staff.deviceId 
-    //                : (localStorage.getItem('staffDeviceId') || '');
-    
-    // ❌ 刪除備份
-    // if (deviceId) {
-    //     sessionStorage.setItem('device_id_backup', deviceId);
-    // }
-    
     isLoggedIn = false;
     if (typeof idleTimer !== 'undefined') clearTimeout(idleTimer);
     
+    // ============================================================
+    //  🔥🔥🔥 加入清除本地儲存
+    // ============================================================
+    // 清除 sessionStorage
+    sessionStorage.removeItem('staffLoginId');
+    sessionStorage.removeItem('staffName');
+    sessionStorage.removeItem('staffRole');
+    sessionStorage.removeItem('staffBranch');
+    sessionStorage.removeItem('staffDeviceId');
+    sessionStorage.removeItem('staffLastActivity');
+    
+    // 清除 localStorage
+    localStorage.removeItem('staffLoginId');
+    localStorage.removeItem('staffName');
+    localStorage.removeItem('staffRole');
+    localStorage.removeItem('staffData');
+    localStorage.removeItem('staffBranch');
+    localStorage.removeItem('staffDeviceId');
+    
+    // 清除全域變數
+    if (typeof staff !== 'undefined') {
+        staff = null;
+    }
+    if (typeof staffLoginId !== 'undefined') {
+        staffLoginId = null;
+    }
+    if (typeof staffName !== 'undefined') {
+        staffName = null;
+    }
+    if (typeof staffRole !== 'undefined') {
+        staffRole = null;
+    }
+    
+    console.log("✅ 已清除所有本地店員資料");
+    
     if (loginId) {
         try {
-            // ✅ 只傳 loginId
             var url = `${GAS_URL}?action=staffLogout&loginId=${encodeURIComponent(loginId)}`;
             await fetch(url);
-            console.log("登出記錄已成功發送並寫入表格");
+            console.log("✅ 登出記錄已成功發送並寫入表格");
         } catch (e) { 
-            console.log("登出記錄發送失敗:", e); 
+            console.log("⚠️ 登出記錄發送失敗:", e); 
         }
     } else {
-        console.log("未找到 loginId，無法寫入登出紀錄");
+        console.log("⚠️ 未找到 loginId，無法寫入登出紀錄");
     }
     
     window.location.href = 'staff_login.html';
