@@ -95,6 +95,24 @@ body { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Helvetica
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 30000; padding: 20px; }
 .modal-card { background: var(--card-bg); width: 100%; max-width: 420px; border-radius: 24px; overflow: hidden; max-height: 90vh; }
 .modal-body { padding: 24px; max-height: 65vh; overflow-y: auto; }
+        /* ✅ 在這裡加入 welcome-card 樣式 */
+.welcome-card {
+    text-align: center;
+    padding: 20px 10px;
+}
+
+.welcome-card h2 {
+    font-size: 28px;
+    color: var(--primary, #8b0000);
+    margin-bottom: 16px;
+}
+
+.welcome-card p {
+    font-size: 16px;
+    color: #333;
+    line-height: 1.8;
+    margin-bottom: 10px;
+}
 
 /* ============================================================
    Toast
@@ -283,7 +301,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Helvetica
         <button class="event-brand-btn" onclick="openEvents('omp')">老娘精選</button>
         <button class="event-brand-btn" onclick="openGame()">🎮 火鍋達人</button>
     </div>
-    <button class="share-btn" onclick="shareWithTargetPicker()">🚀 分享推薦碼，享好友消費回饋</button>
+    <button class="share-btn" onclick="()">🚀 分享推薦碼，享好友消費回饋</button>
 </div>
 
 <!-- 註冊頁 -->
@@ -1151,61 +1169,68 @@ function shareWithTargetPicker() {
     liff.shareTargetPicker([
         {
             type: 'flex',
-            altText: '老娘的一點心意 - 邀請你一起享受美味！',
-            contents: {
-                type: 'bubble',
-                hero: {
-                    type: 'image',
-                    url: 'https://i.ibb.co/d0fcN62N/11-288x.png',
-                    size: 'full',
-                    aspectRatio: '20:13',
-                    aspectMode: 'cover'
-                },
-                body: {
-                    type: 'box',
-                    layout: 'vertical',
-                    spacing: 'sm',
-                    contents: [
-                        {
-                            type: 'text',
-                            text: '🍲 老娘的一點心意',
-                            weight: 'bold',
-                            size: 'lg',
-                            color: '#8b0000'
-                        },
-                        {
-                            type: 'text',
-                            text: '邀請你一起享受美味！🎉',
-                            size: 'md'
-                        },
-                        {
-                            type: 'text',
-                            text: '成功加入可獲得新客好禮 🎁',
-                            size: 'sm',
-                            color: '#888888'
-                        }
-                    ]
-                },
-                footer: {
-                    type: 'box',
-                    layout: 'vertical',
-                    spacing: 'sm',
-                    contents: [
-                        {
-                            type: 'button',
-                            style: 'primary',
-                            color: '#8b0000',
-                            action: {
-                                type: 'uri',
-                                label: '🎁 領取新客禮',
-                                uri: shareUrl
-                            }
-                        }
-                    ]
-                }
+      altText: referrerName + '給您送來一點心意.....',
+      contents: {
+        type: 'bubble',
+        hero: {
+          type: 'image',
+          url: 'https://i.ibb.co/d0fcN62N/11-288x.png',  // ← 可更換圖片//待設計圖片
+          size: 'full',
+          aspectRatio: '20:13',
+          aspectMode: 'cover'
+        },
+        body: {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'sm',
+          contents: [
+            {
+              type: 'text',
+              text: referrerName + '給您送來一點心意.....',  // 🔥 動態顯示推薦人姓名
+              weight: 'bold',
+              size: 'lg',
+              color: '#8b0000',
+              wrap: true
+            },
+            {
+              type: 'text',
+              text: '請先加入官方帳號好友，再註冊會員領取新客招待禮，再享專屬消費集點折抵金',  // 🔥 提醒文字
+              size: 'md',
+              color: '#666666',
+              wrap: true
             }
+          ]
+        },
+        footer: {
+          type: 'box',
+          layout: 'vertical',
+          spacing: 'sm',
+          contents: [
+            {
+              type: 'button',
+              style: 'primary',
+              color: '#06C755',
+              action: {
+                type: 'uri',
+                label: '📱 加入官方帳號好友',
+                uri: 'https://lin.ee/N6hH8Zy'  // 🔥 加入好友按鈕
+              }
+            },
+            {
+              type: 'button',
+              style: 'primary',
+              color: '#8b0000',
+              action: {
+                type: 'uri',
+                label: '🎁 領取新客禮',
+                uri: shareUrl
+              }
+            }
+          ]
         }
-    ])
+      }
+    }
+  ])
     .then(function(result) {
         console.log("✅ shareTargetPicker 成功:", result);
         showToast('✅ 分享成功！');
