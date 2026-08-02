@@ -115,9 +115,6 @@
     <div style="font-weight:bold; color:#e65100; font-size:16px;">
         🎫 使用優惠券：<span id="coupon-name-display">-</span>
     </div>
-    <div style="font-size:14px; color:#555; margin-top:2px;">
-        <span id="coupon-content-display"></span>
-    </div>
     <div style="font-size:14px; color:#666; margin-top:4px;">
         滿 <span id="coupon-min-spend-display">0</span> 元 <span id="coupon-action-display">-</span>
     </div>
@@ -333,28 +330,31 @@ function init() {
 var couponInfoDiv = document.getElementById('coupon-info');
 if (couponInfoDiv) {
     couponInfoDiv.style.display = 'block';
-    
-    // C 欄：優惠券名稱
     document.getElementById('coupon-name-display').innerText = couponName || '優惠券';
-    
-    // E 欄：優惠內容
-    document.getElementById('coupon-content-display').innerText = couponContent || '';
-    
-    // R 欄：滿額金額
     document.getElementById('coupon-min-spend-display').innerText = minSpend || 0;
     
     if (couponType === '贈點') {
+        document.getElementById('coupon-bonus-display').innerText = bonusPoints || 0;
         document.getElementById('coupon-action-display').innerText = '贈 ' + (bonusPoints || 0) + ' 點';
+        
+        // 🔥 自動帶入活動折抵金額（T 欄 = 0，因為是贈點）
         document.getElementById('couponDiscount').value = 0;
         document.getElementById('coupon-discount-label').innerText = '(贈點券，無折抵)';
+        
+        // 🔥 儲存活動贈點到全域變數（供 doCalc 使用）
         if (window.activeCoupon) {
             window.activeCoupon.bonusPoints = Number(bonusPoints) || 0;
             window.activeCoupon.discountAmount = 0;
         }
     } else if (couponType === '消費折抵') {
+        document.getElementById('coupon-bonus-display').innerText = discountAmount || 0;
         document.getElementById('coupon-action-display').innerText = '折 ' + (discountAmount || 0) + ' 元';
+        
+        // 🔥 自動帶入活動折抵金額（T 欄）
         document.getElementById('couponDiscount').value = discountAmount || 0;
         document.getElementById('coupon-discount-label').innerText = '(自動帶入，不可編輯)';
+        
+        // 🔥 儲存活動折抵到全域變數（供 doCalc 使用）
         if (window.activeCoupon) {
             window.activeCoupon.discountAmount = Number(discountAmount) || 0;
             window.activeCoupon.bonusPoints = 0;
@@ -404,7 +404,7 @@ async function loadMemberData(userId) {
             
             // 🔥 如果有優惠券，顯示優惠券區塊
             if (window.activeCoupon) {
-                document.getElementById('').style.display = 'block';
+                document.getElementById('coupon-info').style.display = 'block';
             }
             
             document.getElementById('totalSpend').focus();
