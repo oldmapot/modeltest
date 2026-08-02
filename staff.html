@@ -241,6 +241,7 @@ console.log("📌 所有 URL 參數:", window.location.search);
 console.log("📌 name:", getUrlParam('name'));
 console.log("📌 branch:", getUrlParam('branch'));
 console.log("📌 loginId:", getUrlParam('loginId'));
+console.log("📌 loginId from URL:", getUrlParam('loginId'));
     
     // 🔥🔥🔥 先檢查是否從優惠券跳轉
     var fromCoupon = getUrlParam('fromCoupon') === 'true';
@@ -776,6 +777,7 @@ if (scanMode === 'coupon') {
                   '&branch=' + encodeURIComponent(staff.branch) +
                   '&loginId=' + encodeURIComponent(staff.loginId);
                   '&couponContent=' + encodeURIComponent(result.couponContent || '');
+                  '&loginId=' + encodeURIComponent(staff.loginId);  // ← 確認有這行
             
             window.location.href = redirectUrl;
             return;
