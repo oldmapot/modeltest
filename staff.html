@@ -250,6 +250,8 @@ function init() {
     var couponDocId = getUrlParam('couponDocId') || '';
     var minSpend = getUrlParam('minSpend') || 0;
     var bonusPoints = getUrlParam('bonusPoints') || 0;
+    var discountAmount = getUrlParam('discountAmount') || 0;
+    var couponType = getUrlParam('couponType') || '';
     var couponName = getUrlParam('couponName') || '';
     var userId = getUrlParam('userId') || '';
     
@@ -258,21 +260,35 @@ function init() {
         console.log("   couponDocId:", couponDocId);
         console.log("   minSpend:", minSpend);
         console.log("   bonusPoints:", bonusPoints);
+        console.log("   discountAmount:", discountAmount);
+        console.log("   couponType:", couponType);
         console.log("   couponName:", couponName);
-        
-        // 🔥 顯示優惠券資訊
-        document.getElementById('coupon-info').style.display = 'block';
-        document.getElementById('coupon-name-display').innerText = couponName || '優惠券';
-        document.getElementById('coupon-min-spend-display').innerText = minSpend || 0;
-        document.getElementById('coupon-bonus-display').innerText = bonusPoints || 0;
         
         // 🔥 儲存優惠券資訊到全域變數（提交時使用）
         window.activeCoupon = {
             couponDocId: couponDocId,
             minSpend: Number(minSpend),
             bonusPoints: Number(bonusPoints),
+            discountAmount: Number(discountAmount),
+            type: couponType,
             couponName: couponName
         };
+        
+        // 🔥 顯示優惠券資訊
+        var couponInfoDiv = document.getElementById('coupon-info');
+        if (couponInfoDiv) {
+            couponInfoDiv.style.display = 'block';
+            document.getElementById('coupon-name-display').innerText = couponName || '優惠券';
+            document.getElementById('coupon-min-spend-display').innerText = minSpend || 0;
+            
+            if (couponType === '贈點') {
+                document.getElementById('coupon-bonus-display').innerText = bonusPoints || 0;
+                document.getElementById('coupon-action-display').innerText = '贈 ' + (bonusPoints || 0) + ' 點';
+            } else if (couponType === '消費折抵') {
+                document.getElementById('coupon-bonus-display').innerText = discountAmount || 0;
+                document.getElementById('coupon-action-display').innerText = '折 ' + (discountAmount || 0) + ' 元';
+            }
+        }
         
         // 🔥 自動載入會員資料
         if (userId) {
