@@ -115,6 +115,10 @@
     <div style="font-weight:bold; color:#e65100; font-size:16px;">
         🎫 使用優惠券：<span id="coupon-name-display">-</span>
     </div>
+    <!-- 🔥🔥🔥 加入這行：顯示 E 欄優惠內容 -->
+    <div style="font-size:14px; color:#555; margin-top:2px;">
+        <span id="coupon-content-display"></span>
+    </div>
     <div style="font-size:14px; color:#666; margin-top:4px;">
         滿 <span id="coupon-min-spend-display">0</span> 元 <span id="coupon-action-display">-</span>
     </div>
@@ -331,6 +335,7 @@ var couponInfoDiv = document.getElementById('coupon-info');
 if (couponInfoDiv) {
     couponInfoDiv.style.display = 'block';
     document.getElementById('coupon-name-display').innerText = couponName || '優惠券';
+    document.getElementById('coupon-content-display').innerText = couponContent || '';
     document.getElementById('coupon-min-spend-display').innerText = minSpend || 0;
     
     if (couponType === '贈點') {
