@@ -484,40 +484,23 @@ function parseScannedCode(scannedText) {
     }
     if (clean.indexOf("##") === 0) clean = clean.substring(2);
 
-    // 拆解 QR Code 內容
+    // ============================================================
+    //  1️⃣ 先拆解 QR Code 內容
+    // ============================================================
     var parts = clean.split("_");
-    
-    // ============================================================
-    //  1️⃣ 檢查是否為優惠券（比對 cachedPrefixes）
-    // ============================================================
-    if (cachedPrefixes && cachedPrefixes.length > 0) {
-        for (var p = 0; p < cachedPrefixes.length; p++) {
-            var prefixCheck = cachedPrefixes[p] + "_";
-            if (clean.indexOf(prefixCheck) === 0) {
-                console.log("✅ 識別為優惠券，前綴:", cachedPrefixes[p]);
-                // 🔥 userId 是最後一段（memberId）
-                var userId = parts[parts.length - 1] || "";
-                var couponId = parts.length >= 3 ? parts[2] : "";
-                console.log("   userId (memberId):", userId);
-                console.log("   couponId:", couponId);
-                return { 
-                    type: "coupon", 
-                    userId: userId,      // ← 這裡就是 memberId
-                    couponId: couponId,
-                    fullData: clean
-                };
-            }
-        }
-    }
+    console.log("📌 拆解結果:", parts);
+    console.log("📌 parts 長度:", parts.length);
     
     // ============================================================
     //  2️⃣ 檢查是否為會員 QR（格式：{shopCode}_{key}_{userId}）
+    //    先檢查，因為會員 QR 長度固定為 3
     // ============================================================
     if (parts.length === 3) {
         var shopCode = parts[0];
         var shopKey = parts[1];
         var userId = parts[2];
         if (shopCode === "omp" || shopCode === "swo") {
+            console.log("✅ 識別為會員 QR，userId:", userId);
             return { 
                 type: "member", 
                 userId: userId, 
@@ -528,9 +511,35 @@ function parseScannedCode(scannedText) {
     }
     
     // ============================================================
-    //  3️⃣ 無法識別
+    //  3️⃣ 檢查是否為優惠券（比對 cachedPrefixes）
+    //    優惠券 QR 長度為 4（prefix_brandCode_couponId_userId）
+    // ============================================================
+    if (cachedPrefixes && cachedPrefixes.length > 0) {
+        for (var p = 0; p < cachedPrefixes.length; p++) {
+            var prefixCheck = cachedPrefixes[p] + "_";
+            if (clean.indexOf(prefixCheck) === 0) {
+                console.log("✅ 識別為優惠券，前綴:", cachedPrefixes[p]);
+                // userId 是最後一段（memberId）
+                var userId = parts[parts.length - 1] || "";
+                var couponId = parts.length >= 3 ? parts[2] : "";
+                console.log("   userId (memberId):", userId);
+                console.log("   couponId:", couponId);
+                return { 
+                    type: "coupon", 
+                    userId: userId,
+                    couponId: couponId,
+                    fullData: clean
+                };
+            }
+        }
+    }
+    
+    // ============================================================
+    //  4️⃣ 無法識別
     // ============================================================
     console.warn("⚠️ 無法識別的 QR Code:", clean);
+    console.warn("   parts:", parts);
+    console.warn("   parts.length:", parts.length);
     return { type: "unknown", userId: clean };
 }
     
