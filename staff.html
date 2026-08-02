@@ -174,11 +174,12 @@
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxlvZ-DzBBuZlqudFQF2RWTbVBD5GJwXdV0OYWxemjPaeq7aJxFN19kguOeOeGXLYM4uw/exec";
 
 let staff = { name: "", branch: "", role: "夥伴", loginId: "", deviceId: "" };
+let isLoggedIn = false;
+let isStaffVerified = false;  // 🔥 新增：驗證狀態
 let config = { minSpend: 0, maxRate: 0, earnRate: 0, ticketRate: 0, shopCode: "", eventMultiplier: 1 };
 let customerId = "", currentPoints = 0, memberLevel = "", levelRate = 1;
 let cameraStream = null;
 let scanInterval = null;
-let isLoggedIn = false;
 let cachedPrefixes = null;
 let idleTimer = null;
 const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 分鐘
@@ -235,6 +236,78 @@ function setupIdleDetection() {
     });
     resetIdleTimer();
 }
+// ============================================================
+        //  🔥 核心：無感靜默驗證
+        // ============================================================
+        async function verifyStaffSession(loginId) {
+            if (!loginId) {
+                console.log("❌ 無 loginId，跳過驗證");
+                return false;
+            }
+
+            try {
+                console.log("🔍 開始靜默驗證，loginId:", loginId);
+                const url = `${GAS_URL}?action=verifyStaff&loginId=${encodeURIComponent(loginId)}&t=${Date.now()}`;
+                const response = await fetch(url);
+                const result = await response.json();
+
+                console.log("📌 驗證結果:", result);
+
+                if (result.valid) {
+                    // ✅ 驗證成功，更新店員資料
+                    staff.name = result.staffName || "";
+                    staff.branch = result.branch || "";
+                    staff.role = result.role || "夥伴";
+                    staff.loginId = loginId;
+                    isLoggedIn = true;
+                    isStaffVerified = true;
+
+                    // 更新 UI
+                    document.getElementById('staff-name').innerText = staff.name;
+                    document.getElementById('role-text').innerText = staff.role;
+                    document.getElementById('shop-name').innerText = staff.branch || "老娘領地";
+                    
+                    // 🔥 啟用結帳按鈕
+                    document.getElementById('submitBtn').disabled = false;
+                    document.getElementById('submitBtn').innerHTML = '確認過卡';
+                    
+                    // 🔥 清除 URL 憑證參數（防洩漏）
+                    if (window.history && window.history.replaceState) {
+                        const url = new URL(window.location.href);
+                        url.searchParams.delete('loginId');
+                        url.searchParams.delete('name');
+                        url.searchParams.delete('branch');
+                        url.searchParams.delete('role');
+                        window.history.replaceState({}, document.title, url.toString());
+                        console.log("✅ URL 憑證參數已清除");
+                    }
+                    
+                    console.log("✅ 店員驗證成功:", staff.name);
+                    return true;
+                } else {
+                    // ❌ 驗證失敗
+                    console.log("❌ 驗證失敗:", result.message);
+                    isStaffVerified = false;
+                    document.getElementById('submitBtn').disabled = true;
+                    document.getElementById('submitBtn').innerHTML = '未登入，請重新登入';
+                    
+                    // 清除本地儲存
+                    localStorage.removeItem('staffData');
+                    
+                    // 1.5 秒後導回登入頁
+                    setTimeout(() => {
+                        window.location.href = 'staff_login.html';
+                    }, 1500);
+                    return false;
+                }
+            } catch (e) {
+                console.error("❌ 驗證請求失敗:", e);
+                isStaffVerified = false;
+                document.getElementById('submitBtn').disabled = true;
+                document.getElementById('submitBtn').innerHTML = '驗證失敗，請重新整理';
+                return false;
+            }
+        }
 
 function init() {
 console.log("📌 所有 URL 參數:", window.location.search);
@@ -254,12 +327,13 @@ console.log("📌 loginId from URL:", getUrlParam('loginId'));
         loadMemberData(userId);
         
         // 載入優惠券資訊
-        var couponDocId = getUrlParam('couponDocId') || '';
-        var minSpend = getUrlParam('minSpend') || 0;
-        var bonusPoints = getUrlParam('bonusPoints') || 0;
-        var discountAmount = getUrlParam('discountAmount') || 0;
-        var couponType = getUrlParam('couponType') || '';
-        var couponName = getUrlParam('couponName') || '';
+var couponDocId = getUrlParam('couponDocId') || '';
+var minSpend = getUrlParam('minSpend') || 0;
+var bonusPoints = getUrlParam('bonusPoints') || 0;
+var discountAmount = getUrlParam('discountAmount') || 0;
+var couponType = getUrlParam('couponType') || '';
+var couponName = getUrlParam('couponName') || '';
+var couponContent = getUrlParam('couponContent') || '';  // 🔥🔥🔥 加入這行
         
         if (couponDocId) {
             window.activeCoupon = {
@@ -765,19 +839,17 @@ if (scanMode === 'coupon') {
             console.log("🎯 優惠券需要進入結帳畫面");
             
             var redirectUrl = 'staff.html?userId=' + encodeURIComponent(result.userId) +
-                  '&fromCoupon=true' +
-                  '&couponDocId=' + encodeURIComponent(result.couponDocId) +
-                  '&minSpend=' + encodeURIComponent(result.minSpend) +
-                  '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
-                  '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
-                  '&couponType=' + encodeURIComponent(result.type || '') +
-                  '&couponName=' + encodeURIComponent(result.couponName || '優惠券');
-                   // 🔥🔥🔥 加入登入參數
-                  '&name=' + encodeURIComponent(staff.name) +
-                  '&branch=' + encodeURIComponent(staff.branch) +
-                  '&loginId=' + encodeURIComponent(staff.loginId);
-                  '&couponContent=' + encodeURIComponent(result.couponContent || '');
-                  '&loginId=' + encodeURIComponent(staff.loginId);  // ← 確認有這行
+      '&fromCoupon=true' +
+      '&couponDocId=' + encodeURIComponent(result.couponDocId) +
+      '&minSpend=' + encodeURIComponent(result.minSpend) +
+      '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
+      '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
+      '&couponType=' + encodeURIComponent(result.type || '') +
+      '&couponName=' + encodeURIComponent(result.couponName || '優惠券') +
+      '&couponContent=' + encodeURIComponent(result.couponContent || '') +  // 🔥🔥🔥 加入這行
+      '&name=' + encodeURIComponent(staff.name) +
+      '&branch=' + encodeURIComponent(staff.branch) +
+      '&loginId=' + encodeURIComponent(staff.loginId);
             
             window.location.href = redirectUrl;
             return;
