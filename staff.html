@@ -129,32 +129,25 @@
         </label>
 
         <div id="normal-fields">
-            <div class="input-group">
-                <label>1. 本日消費總額</label>
-                <input type="number" id="totalSpend" oninput="doCalc()" placeholder="輸入消費金額">
-            </div>
-            <div class="input-group">
-                <label>2. 使用餐券金額</label>
-                <input type="number" id="ticketSpend" oninput="doCalc()" placeholder="輸入餐券支付額">
-            </div>
-            <div class="input-group">
-                <label>3. 折抵點數 (上限：<span id="max-hint" style="color:blue;">0</span> 點)</label>
-                <input type="number" id="redeemAmount" oninput="doCalc()" placeholder="欲折抵點數">
-                <div id="redeemTip" class="redeem-tip tip-normal"></div>
-            </div>
-        </div>
-
-        <div id="ticket-fields" style="display:none; border:2px solid #1a73e8; padding:10px; border-radius:8px; margin-bottom:15px;">
-            <label>購買餐券金額</label>
-            <input type="number" id="buyTicket" oninput="doCalc()" placeholder="輸入購買金額">
-        </div>
-
-        <div class="info-box">
-            本次預計發放點數：<b id="new-pts" style="color:#1a73e8;">0</b> 點<br>
-            結帳後總資產：<b id="after-pts">0</b> 點
-        </div>
-
-       <button class="btn btn-submit" id="submitBtn" onclick="submitData()">確認過卡</button>
+    <div class="input-group">
+        <label>1. 本日消費總額</label>
+        <input type="number" id="totalSpend" oninput="doCalc()" placeholder="輸入消費金額">
+    </div>
+    <div class="input-group">
+        <label>2. 活動折抵消費 <span id="coupon-discount-label" style="color:#ff9800;font-size:12px;"></span></label>
+        <input type="number" id="couponDiscount" oninput="doCalc()" placeholder="自動帶入" readonly style="background:#f5f5f5;cursor:not-allowed;">
+        <div style="font-size:12px;color:#999;margin-top:4px;">💡 此欄位由優惠券自動帶入，不可編輯</div>
+    </div>
+    <div class="input-group">
+        <label>3. 使用餐券金額</label>
+        <input type="number" id="ticketSpend" oninput="doCalc()" placeholder="輸入餐券支付額">
+    </div>
+    <div class="input-group">
+        <label>4. 折抵點數 (上限：<span id="max-hint" style="color:blue;">0</span> 點)</label>
+        <input type="number" id="redeemAmount" oninput="doCalc()" placeholder="欲折抵點數">
+        <div id="redeemTip" class="redeem-tip tip-normal">
+     </div>
+        <button class="btn btn-submit" id="submitBtn" onclick="submitData()">確認過卡</button>
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/vconsole@3.15.1/dist/vconsole.min.js"></script>
@@ -322,21 +315,40 @@ function init() {
         };
         
         // 🔥 顯示優惠券資訊
-        var couponInfoDiv = document.getElementById('coupon-info');
-        if (couponInfoDiv) {
-            couponInfoDiv.style.display = 'block';
-            document.getElementById('coupon-name-display').innerText = couponName || '優惠券';
-            document.getElementById('coupon-min-spend-display').innerText = minSpend || 0;
-            
-            if (couponType === '贈點') {
-                document.getElementById('coupon-bonus-display').innerText = bonusPoints || 0;
-                document.getElementById('coupon-action-display').innerText = '贈 ' + (bonusPoints || 0) + ' 點';
-            } else if (couponType === '消費折抵') {
-                document.getElementById('coupon-bonus-display').innerText = discountAmount || 0;
-                document.getElementById('coupon-action-display').innerText = '折 ' + (discountAmount || 0) + ' 元';
-            }
-        }
+var couponInfoDiv = document.getElementById('coupon-info');
+if (couponInfoDiv) {
+    couponInfoDiv.style.display = 'block';
+    document.getElementById('coupon-name-display').innerText = couponName || '優惠券';
+    document.getElementById('coupon-min-spend-display').innerText = minSpend || 0;
+    
+    if (couponType === '贈點') {
+        document.getElementById('coupon-bonus-display').innerText = bonusPoints || 0;
+        document.getElementById('coupon-action-display').innerText = '贈 ' + (bonusPoints || 0) + ' 點';
         
+        // 🔥 自動帶入活動折抵金額（T 欄 = 0，因為是贈點）
+        document.getElementById('couponDiscount').value = 0;
+        document.getElementById('coupon-discount-label').innerText = '(贈點券，無折抵)';
+        
+        // 🔥 儲存活動贈點到全域變數（供 doCalc 使用）
+        if (window.activeCoupon) {
+            window.activeCoupon.bonusPoints = Number(bonusPoints) || 0;
+            window.activeCoupon.discountAmount = 0;
+        }
+    } else if (couponType === '消費折抵') {
+        document.getElementById('coupon-bonus-display').innerText = discountAmount || 0;
+        document.getElementById('coupon-action-display').innerText = '折 ' + (discountAmount || 0) + ' 元';
+        
+        // 🔥 自動帶入活動折抵金額（T 欄）
+        document.getElementById('couponDiscount').value = discountAmount || 0;
+        document.getElementById('coupon-discount-label').innerText = '(自動帶入，不可編輯)';
+        
+        // 🔥 儲存活動折抵到全域變數（供 doCalc 使用）
+        if (window.activeCoupon) {
+            window.activeCoupon.discountAmount = Number(discountAmount) || 0;
+            window.activeCoupon.bonusPoints = 0;
+        }
+    }
+}
         // 🔥 自動載入會員資料
         if (userId) {
             loadMemberData(userId);
@@ -888,6 +900,7 @@ function toggleMode() {
 function doCalc() {
     // 🔥 1. 取得表單元素
     const totalInput = document.getElementById('totalSpend');
+    const couponDiscountInput = document.getElementById('couponDiscount');
     const ticketInput = document.getElementById('ticketSpend');
     const redeemInput = document.getElementById('redeemAmount');
     const buyTicketInput = document.getElementById('buyTicket');
@@ -896,6 +909,7 @@ function doCalc() {
     const maxHintEl = document.getElementById('max-hint');
     const newPtsEl = document.getElementById('new-pts');
     const afterPtsEl = document.getElementById('after-pts');
+    const couponBonusEl = document.getElementById('coupon-bonus-display');
     
     // 🔥 2. 判斷是否為餐券模式
     const isTicket = ticketModeCheck ? ticketModeCheck.checked : false;
@@ -914,8 +928,12 @@ function doCalc() {
     let redeem = 0;
     let maxRedeem = 0;
     const currentLevelRate = levelRate || 1;
+    // 🔥 取得活動折抵金額（從優惠券 T 欄自動帶入）
+    const couponDiscount = Number(couponDiscountInput ? couponDiscountInput.value : 0) || 0;
+    // 🔥 取得活動贈點（從優惠券 S 欄）
+    const couponBonus = window.activeCoupon ? (window.activeCoupon.bonusPoints || 0) : 0;
 
-    if (isTicket) {
+       if (isTicket) {
         const buy = Number(buyTicketInput ? buyTicketInput.value : 0) || 0;
         newPts = Math.floor(buy * earnRate * currentLevelRate * eventMultiplier);
         if (tipEl) {
@@ -925,7 +943,8 @@ function doCalc() {
     } else {
         const total = Number(totalInput ? totalInput.value : 0) || 0;
         const ticket = Number(ticketInput ? ticketInput.value : 0) || 0;
-        const base = total - ticket;
+        // 🔥 實際消費金額 = 總額 - 餐券 - 活動折抵 - 折抵點數
+        const base = total - ticket - couponDiscount;
 
         let minSpendThreshold = shopCode === "swo" ? 500 : 1500;
         
@@ -959,15 +978,26 @@ function doCalc() {
             maxHintEl.innerText = maxRedeem;
         }
 
+        // 🔥 一般點數 = 實際消費金額 × 3%
         newPts = Math.floor((base - redeem) * earnRate * currentLevelRate * eventMultiplier);
     }
 
-    // 🔥 5. 更新 UI
+    // 🔥 本次預計發放點數 = 一般點數 + 活動贈點
+    const totalNewPts = newPts + couponBonus;
+    
+    // 🔥 更新 UI
     if (newPtsEl) {
-        newPtsEl.innerText = newPts;
+        // 🔥 顯示一般點數 + 活動贈點
+        if (couponBonus > 0) {
+            newPtsEl.innerHTML = `${newPts} 點 + 活動贈點 ${couponBonus} 點 = <b style="color:#ff6b00;">${totalNewPts}</b> 點`;
+        } else {
+            newPtsEl.innerText = totalNewPts + ' 點';
+        }
     }
     if (afterPtsEl) {
-        afterPtsEl.innerText = currentPoints - redeem + newPts;
+        // 🔥 結帳後總資產 = 原有點數 - 折抵點數 + 本次預計發放點數
+        const afterPoints = currentPoints - redeem + totalNewPts;
+        afterPtsEl.innerText = afterPoints + ' 點';
     }
 }
 // ============================================================
@@ -1019,26 +1049,26 @@ async function submitData() {
     
    // 🔥 修改：改用 addPointsWithInfo
     const params = new URLSearchParams({
-        action: "addPointsWithInfo",
-        customerId: customerId,
-        branch: staff.branch,
-        staffName: staff.name,
-        totalSpend: document.getElementById('totalSpend').value || 0,
-        ticketSpend: document.getElementById('ticketSpend').value || 0,
-        redeemAmount: document.getElementById('redeemAmount').value || 0,
-        earnRate: config.earnRate,
-        levelRate: levelRate,
-        eventMultiplier: config.eventMultiplier,
-        loginId: staff.loginId || "",
-        deviceId: staff.deviceId || "",
-        transactionId: transactionId,
-        // 🔥🔥🔥 加入優惠券資訊
-        couponDocId: couponDocId,
-        couponMinSpend: couponMinSpend,
-        couponBonus: couponBonus,
-        couponDiscount: couponDiscount,
-        couponType: couponType
-    });
+    action: "addPointsWithInfo",
+    customerId: customerId,
+    branch: staff.branch,
+    staffName: staff.name,
+    totalSpend: document.getElementById('totalSpend').value || 0,
+    ticketSpend: document.getElementById('ticketSpend').value || 0,
+    redeemAmount: document.getElementById('redeemAmount').value || 0,
+    couponDiscount: document.getElementById('couponDiscount').value || 0, // 🔥 新增
+    earnRate: config.earnRate,
+    levelRate: levelRate,
+    eventMultiplier: config.eventMultiplier,
+    loginId: staff.loginId || "",
+    deviceId: staff.deviceId || "",
+    transactionId: transactionId,
+    couponDocId: couponDocId,
+    couponMinSpend: couponMinSpend,
+    couponBonus: couponBonus,
+    couponDiscount: couponDiscount,
+    couponType: couponType
+});
     try {
         console.log("📤 提交集點請求，交易ID:", transactionId);
         console.log("⏱️", Date.now() - startTime, "ms - 發送請求");
