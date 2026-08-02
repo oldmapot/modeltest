@@ -329,22 +329,21 @@
                 console.log("📌 後端回傳:", JSON.stringify(result));
                 
                 if (result.success) {
-                    // 🔥 存入 localStorage 備份
-                    const staffData = {
-                        name: result.name,
-                        role: result.role || "夥伴",
-                        loginId: result.loginId || userId,
-                        branch: result.branch || '老娘鍋河堤店',
-                        clientIp: clientIp,
-                        lineUid: lineUid
-                    };
-                    localStorage.setItem('staffData', JSON.stringify(staffData));
-                    console.log("✅ 登入資料已存入 localStorage");
-                    
-                    // 跳轉到 staff.html
-                    const targetUrl = `staff.html?name=${encodeURIComponent(result.name)}&branch=${encodeURIComponent('老娘鍋河堤店')}&loginId=${encodeURIComponent(result.loginId || userId)}&role=${encodeURIComponent(result.role || '')}`;
-                    window.location.href = targetUrl;
-                } else {
+  // 🔥 寫入 localStorage（備份）
+  localStorage.setItem('staffData', JSON.stringify({
+    name: result.name,
+    role: result.role || "夥伴",
+    loginId: result.loginId || userId,
+    branch: '老娘鍋河堤店'
+  }));
+  
+  // 🔥 跳轉到 staff.html（帶 URL 參數）
+  var targetUrl = 'staff.html?name=' + encodeURIComponent(result.name) +
+                  '&branch=' + encodeURIComponent('老娘鍋河堤店') +
+                  '&loginId=' + encodeURIComponent(result.loginId || userId) +
+                  '&role=' + encodeURIComponent(result.role || '');
+  window.location.href = targetUrl;
+} else {
                     showError(result.message || '帳號或密碼錯誤，請重新輸入');
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = '登入系統';
