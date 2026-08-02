@@ -243,18 +243,7 @@
         <div class="footer-note">© 老娘領地 夥伴端</div>
     </div>
 
-    <!-- 分店選擇彈窗 -->
-    <div id="branchModal" class="branch-modal">
-        <div class="branch-modal-content">
-            <div class="branch-title">🏪 選擇分店</div>
-            <div id="staffInfo" class="staff-info"></div>
-            <select id="branchSelect" class="branch-select">
-                <option value="">-- 請選擇分店 --</option>
-            </select>
-            <button class="confirm-btn" onclick="confirmBranch()">確認進入系統</button>
-        </div>
-    </div>
- <!-- ✅ vConsole 引入（位置正確） -->
+    <!-- ✅ vConsole 引入 -->
     <script src="https://cdn.jsdelivr.net/npm/vconsole@3.15.1/dist/vconsole.min.js"></script>
     <script>
         var vConsole = new VConsole();
@@ -270,7 +259,7 @@
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxlvZ-DzBBuZlqudFQF2RWTbVBD5GJwXdV0OYWxemjPaeq7aJxFN19kguOeOeGXLYM4uw/exec";
         const LIFF_ID = "2009625641-AYIKoXbw";
         let currentStaff = null;
-        let _lineUid = '';  // 🔥 儲存 LINE UID
+        let _lineUid = '';
 
         // ============================================================
         //  🔥 輔助函數
@@ -321,75 +310,28 @@
         }
 
         // ============================================================
-        //  🔥 顯示分店選擇視窗
-        // ============================================================
-        async function showBranchModal(staff) {
-    currentStaff = staff;
-    const select = document.getElementById('branchSelect');
-    
-    // 🔥 顯示載入中
-    select.innerHTML = '<option value="">⏳ 載入分店中...</option>';
-    select.disabled = true;
-    
-    document.getElementById('staffInfo').textContent = `👤 歡迎回來，${staff.name}`;
-    document.getElementById('branchModal').style.display = 'flex';
-    
-    try {
-        const branches = await getBranchList();
-        select.innerHTML = '<option value="">-- 請選擇分店 --</option>';
-        if (branches.length > 0) {
-            branches.forEach(b => {
-                select.innerHTML += `<option value="${b}">${b}</option>`;
-            });
-        } else {
-            // 🔥 備用：如果 API 失敗，使用預設值
-            ['老娘鍋河堤店', '一點甜河堤店'].forEach(b => {
-                select.innerHTML += `<option value="${b}">${b}</option>`;
-            });
-        }
-        select.disabled = false;
-    } catch (e) {
-        console.error('載入分店失敗:', e);
-        // 🔥 錯誤時使用預設值
-        select.innerHTML = '<option value="">-- 請選擇分店 --</option>';
-        ['老娘鍋河堤店', '一點甜河堤店'].forEach(b => {
-            select.innerHTML += `<option value="${b}">${b}</option>`;
-        });
-        select.disabled = false;
-    }
-}
-        // ============================================================
-        //  🔥 確認分店
+        //  🔥 確認分店（改為固定分店，不顯示選擇視窗）
         // ============================================================
         async function confirmBranch() {
-            const branch = document.getElementById('branchSelect').value;
-            if (!branch) {
-                showError('⚠️ 請一定要選擇分店才能進入系統！');
-                return;
-            }
-
+            const branch = '老娘鍋河堤店';
             const confirmBtn = document.querySelector('.confirm-btn');
             if (confirmBtn) {
                 confirmBtn.disabled = true;
                 confirmBtn.textContent = '進入系統中...';
             }
 
-            // 🔥 防呆處理：確保所有變數都有值
             const userId = encodeURIComponent((document.getElementById('userId').value || '').trim());
             const keyword = encodeURIComponent((document.getElementById('keyword').value || '').trim());
             const clientIp = encodeURIComponent(currentStaff.clientIp || '');
             const lineUid = encodeURIComponent(currentStaff.lineUid || '');
-            const branchEncoded = encodeURIComponent(branch || '');
+            const branchEncoded = encodeURIComponent(branch);
 
             const finalUrl = `${GAS_URL}?action=staffLogin&userId=${userId}&keyword=${keyword}&lineUid=${lineUid}&clientIp=${clientIp}&branch=${branchEncoded}`;
             
             console.log("📌 confirmBranch 請求 URL:", finalUrl);
 
             try {
-                const response = await fetch(finalUrl, {
-                    method: 'GET',
-                    redirect: 'follow'
-                });
+                const response = await fetch(finalUrl, { method: 'GET', redirect: 'follow' });
                 const result = await response.json();
                 
                 console.log("📌 confirmBranch 後端回傳:", JSON.stringify(result));
@@ -415,7 +357,15 @@
         }
 
         // ============================================================
-        //  🔥 核心登入函數（簡化版，只負責發送登入請求）
+        //  🔥 顯示分店選擇視窗（改為直接跳轉）
+        // ============================================================
+        async function showBranchModal(staff) {
+            currentStaff = staff;
+            await confirmBranch();
+        }
+
+        // ============================================================
+        //  🔥 核心登入函數
         // ============================================================
         async function handleLogin(event) {
             event.preventDefault();
@@ -434,26 +384,19 @@
             document.getElementById('errorMsg').style.display = 'none';
             
             try {
-                // 🔥 取得 IP
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
                 const clientIp = ipData.ip;
 
                 const deviceId = getDeviceId();
                 const deviceName = getDeviceName();
-
-                // 🔥 使用 initLiff 中取得的 LINE UID
                 const lineUid = _lineUid || '';
 
-                // 🔥 拼裝 URL
                 const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true`;
                 
                 console.log("📌 登入請求 URL:", verifyUrl);
                 
-                const response = await fetch(verifyUrl, {
-                    method: 'GET',
-                    redirect: 'follow'
-                });
+                const response = await fetch(verifyUrl, { method: 'GET', redirect: 'follow' });
                 const result = await response.json();
                 
                 console.log("📌 後端回傳:", JSON.stringify(result));
@@ -486,45 +429,38 @@
         }
 
         // ============================================================
-        //  🔥 initLiff（複製會員端邏輯）
+        //  🔥 initLiff
         // ============================================================
         async function initLiff() {
             try {
                 await liff.init({ liffId: LIFF_ID });
                 
                 if (!liff.isInClient()) {
-                    
                     showError('📱 僅支援手機 LINE App 開啟使用');
                     return;
                 }
                 
                 const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
                 if (!isMobile) {
-                   
                     showError('📱 僅支援手機 LINE App 開啟使用');
                     return;
                 }
                 
-              
-                // 🔥 關鍵：強制檢查 LINE 登入狀態（複製會員端）
                 if (!liff.isLoggedIn()) {
-                  
                     liff.login();
                     return;
                 }
                 
                 const profile = await liff.getProfile();
                 _lineUid = profile.userId;
-               
                 
             } catch(e) {
-                
                 showError('初始化失敗，請在 LINE App 中開啟');
             }
         }
 
         // ============================================================
-        //  ✅ 啟動（跟會員端一樣）
+        //  ✅ 啟動
         // ============================================================
         initLiff();
     </script>
