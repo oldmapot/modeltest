@@ -237,10 +237,92 @@ function init() {
     document.getElementById('staff-name').innerText = staff.name;
     document.getElementById('shop-name').innerText = staff.branch;
     
+    // ============================================================
+    //  🔥🔥🔥 檢查是否從優惠券跳轉過來的
+    // ============================================================
+    var fromCoupon = getUrlParam('fromCoupon') === 'true';
+    var couponDocId = getUrlParam('couponDocId') || '';
+    var minSpend = getUrlParam('minSpend') || 0;
+    var bonusPoints = getUrlParam('bonusPoints') || 0;
+    var couponName = getUrlParam('couponName') || '';
+    var userId = getUrlParam('userId') || '';
+    
+    if (fromCoupon && couponDocId && userId) {
+        console.log("🎯 從優惠券跳轉到結帳畫面");
+        console.log("   couponDocId:", couponDocId);
+        console.log("   minSpend:", minSpend);
+        console.log("   bonusPoints:", bonusPoints);
+        console.log("   couponName:", couponName);
+        
+        // 🔥 顯示優惠券資訊
+        document.getElementById('coupon-info').style.display = 'block';
+        document.getElementById('coupon-name-display').innerText = couponName || '優惠券';
+        document.getElementById('coupon-min-spend-display').innerText = minSpend || 0;
+        document.getElementById('coupon-bonus-display').innerText = bonusPoints || 0;
+        
+        // 🔥 儲存優惠券資訊到全域變數（提交時使用）
+        window.activeCoupon = {
+            couponDocId: couponDocId,
+            minSpend: Number(minSpend),
+            bonusPoints: Number(bonusPoints),
+            couponName: couponName
+        };
+        
+        // 🔥 自動載入會員資料
+        if (userId) {
+            loadMemberData(userId);
+        }
+    } else {
+        // 非優惠券模式，隱藏優惠券區塊
+        document.getElementById('coupon-info').style.display = 'none';
+        window.activeCoupon = null;
+    }
+    
     getCouponPrefixes();
     hideLoading();
     setupScannerListener();
     setupIdleDetection();
+}
+
+// ============================================================
+//  🔥 載入會員資料（從優惠券跳轉時使用）
+// ============================================================
+async function loadMemberData(userId) {
+    showLoading("載入會員資料...");
+    try {
+        var url = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(userId)}&branch=${encodeURIComponent(staff.branch)}&t=${Date.now()}`;
+        var res = await fetch(url);
+        var data = await res.json();
+        hideLoading();
+        
+        if (data.success && data.member) {
+            config = data.config || {};
+            customerId = data.member.userId;
+            currentPoints = data.member.points || 0;
+            memberLevel = data.member.level || "一般會員";
+            levelRate = data.member.levelRate || 1;
+            
+            document.getElementById('member-ui').style.display = 'block';
+            document.getElementById('form-ui').classList.remove('locked');
+            document.getElementById('cus-name').innerText = data.member.name;
+            document.getElementById('member-level').innerText = memberLevel;
+            document.getElementById('cus-pts').innerText = currentPoints;
+            document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
+            
+            // 🔥 如果有優惠券，顯示優惠券區塊
+            if (window.activeCoupon) {
+                document.getElementById('coupon-info').style.display = 'block';
+            }
+            
+            document.getElementById('totalSpend').focus();
+            doCalc();
+        } else {
+            showModal(`⚠️ 查無此會員！`);
+        }
+    } catch (err) {
+        hideLoading();
+        showModal(`❌ 載入會員失敗：${err.message}`);
+    }
 }
 
 function getDeviceId() {
@@ -842,9 +924,14 @@ async function submitData() {
     // 🔥 產生固定交易 ID
     const transactionId = generateTransactionId(customerId);
 
+    // 🔥 取得優惠券資訊（如果有）
+    var couponDocId = window.activeCoupon ? window.activeCoupon.couponDocId : '';
+    var couponMinSpend = window.activeCoupon ? window.activeCoupon.minSpend : 0;
+    var couponBonus = window.activeCoupon ? window.activeCoupon.bonusPoints : 0;
+    
     // 🔥 修改：改用 addPointsWithInfo
     const params = new URLSearchParams({
-        action: "addPointsWithInfo",  // ← 改這裡
+        action: "addPointsWithInfo",
         customerId: customerId,
         branch: staff.branch,
         staffName: staff.name,
@@ -856,9 +943,12 @@ async function submitData() {
         eventMultiplier: config.eventMultiplier,
         loginId: staff.loginId || "",
         deviceId: staff.deviceId || "",
-        transactionId: transactionId
+        transactionId: transactionId,
+        // 🔥🔥🔥 加入優惠券資訊
+        couponDocId: couponDocId,
+        couponMinSpend: couponMinSpend,
+        couponBonus: couponBonus
     });
-
     try {
         console.log("📤 提交集點請求，交易ID:", transactionId);
         console.log("⏱️", Date.now() - startTime, "ms - 發送請求");
