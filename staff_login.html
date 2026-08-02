@@ -324,17 +324,40 @@
         //  🔥 顯示分店選擇視窗
         // ============================================================
         async function showBranchModal(staff) {
-            currentStaff = staff;
-            const branches = await getBranchList();
-            document.getElementById('staffInfo').textContent = `👤 歡迎回來，${staff.name}`;
-            const select = document.getElementById('branchSelect');
-            select.innerHTML = '<option value="">-- 請選擇分店 --</option>';
+    currentStaff = staff;
+    const select = document.getElementById('branchSelect');
+    
+    // 🔥 顯示載入中
+    select.innerHTML = '<option value="">⏳ 載入分店中...</option>';
+    select.disabled = true;
+    
+    document.getElementById('staffInfo').textContent = `👤 歡迎回來，${staff.name}`;
+    document.getElementById('branchModal').style.display = 'flex';
+    
+    try {
+        const branches = await getBranchList();
+        select.innerHTML = '<option value="">-- 請選擇分店 --</option>';
+        if (branches.length > 0) {
             branches.forEach(b => {
                 select.innerHTML += `<option value="${b}">${b}</option>`;
             });
-            document.getElementById('branchModal').style.display = 'flex';
+        } else {
+            // 🔥 備用：如果 API 失敗，使用預設值
+            ['老娘鍋河堤店', '一點甜河堤店'].forEach(b => {
+                select.innerHTML += `<option value="${b}">${b}</option>`;
+            });
         }
-
+        select.disabled = false;
+    } catch (e) {
+        console.error('載入分店失敗:', e);
+        // 🔥 錯誤時使用預設值
+        select.innerHTML = '<option value="">-- 請選擇分店 --</option>';
+        ['老娘鍋河堤店', '一點甜河堤店'].forEach(b => {
+            select.innerHTML += `<option value="${b}">${b}</option>`;
+        });
+        select.disabled = false;
+    }
+}
         // ============================================================
         //  🔥 確認分店
         // ============================================================
