@@ -652,14 +652,14 @@ if (scanMode === 'coupon') {
             hideLoading();
             console.log("🎯 優惠券需要進入結帳畫面");
             
-            var redirectUrl = 'staff_index.html?userId=' + encodeURIComponent(result.userId) +
-                              '&fromCoupon=true' +
-                              '&couponDocId=' + encodeURIComponent(result.couponDocId) +
-                              '&minSpend=' + encodeURIComponent(result.minSpend) +
-                              '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
-                              '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
-                              '&couponType=' + encodeURIComponent(result.type || '') +
-                              '&couponName=' + encodeURIComponent(result.couponName || '優惠券');
+            var redirectUrl = 'staff_login.html?userId=' + encodeURIComponent(result.userId) +
+                  '&fromCoupon=true' +
+                  '&couponDocId=' + encodeURIComponent(result.couponDocId) +
+                  '&minSpend=' + encodeURIComponent(result.minSpend) +
+                  '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
+                  '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
+                  '&couponType=' + encodeURIComponent(result.type || '') +
+                  '&couponName=' + encodeURIComponent(result.couponName || '優惠券');
             
             window.location.href = redirectUrl;
             return;
