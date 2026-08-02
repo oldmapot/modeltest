@@ -237,8 +237,10 @@ function setupIdleDetection() {
 }
 
 function init() {
-    console.log("🔍 staff.html init 開始");
-    console.log("📌 完整 URL:", window.location.href);
+console.log("📌 所有 URL 參數:", window.location.search);
+console.log("📌 name:", getUrlParam('name'));
+console.log("📌 branch:", getUrlParam('branch'));
+console.log("📌 loginId:", getUrlParam('loginId'));
     
     // 🔥🔥🔥 先檢查是否從優惠券跳轉
     var fromCoupon = getUrlParam('fromCoupon') === 'true';
@@ -330,7 +332,13 @@ function init() {
             couponName: couponName
         };
         
-        // 🔥 顯示優惠券資訊
+// 🔥 顯示優惠券資訊
+console.log("📌 couponDocId:", getUrlParam('couponDocId'));
+console.log("📌 couponName:", getUrlParam('couponName'));
+console.log("📌 couponContent:", getUrlParam('couponContent'));
+console.log("📌 minSpend:", getUrlParam('minSpend'));
+console.log("📌 bonusPoints:", getUrlParam('bonusPoints'));
+        
 var couponInfoDiv = document.getElementById('coupon-info');
 if (couponInfoDiv) {
     couponInfoDiv.style.display = 'block';
