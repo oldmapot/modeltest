@@ -1067,49 +1067,38 @@ function showToast(msg) {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2000);
 }
-
+// ============================================================
+//  🔥 重置會員資料（修正版）
+// ============================================================
 function resetMember() {
-    customerId = ""; 
-    currentPoints = 0; 
-    memberLevel = ""; 
-    levelRate = 1;
-    
-    // 🔥 清除優惠券相關資料
-    window.activeCoupon = null;
-    var couponInfoDiv = document.getElementById('coupon-info');
-    if (couponInfoDiv) {
-        couponInfoDiv.style.display = 'none';
+    try {
+        // 只重置掃描相關的狀態，保留點數顯示
+        customerId = null;
+        currentMemberData = null;
+        
+        // 🔥 修正點：檢查元素是否存在
+        const memberInfo = document.getElementById('member-info');
+        if (memberInfo) {
+            memberInfo.style.display = 'none';
+        }
+        
+        // 清空會員顯示欄位（如果有）
+        const nameEl = document.getElementById('customer-name');
+        const phoneEl = document.getElementById('customer-phone');
+        if (nameEl) nameEl.textContent = '';
+        if (phoneEl) phoneEl.textContent = '';
+        
+        // 重置掃描按鈕狀態
+        const scanBtn = document.getElementById('scanBtn');
+        if (scanBtn) {
+            scanBtn.textContent = '📷 掃描會員';
+        }
+        
+        console.log('🔄 會員資料已重置');
+    } catch (error) {
+        console.warn('⚠️ 重置會員資料時發生錯誤:', error);
     }
-    document.getElementById('couponDiscount').value = 0;
-    document.getElementById('coupon-discount-label').innerText = '';
-    document.getElementById('new-pts').innerText = '0';
-    document.getElementById('after-pts').innerText = '0';
-    document.getElementById('bonus-points-display').style.display = 'none';
-    
-    // 清除會員 UI
-    document.getElementById("member-ui").style.display = "none";
-    document.getElementById("form-ui").classList.add("locked");
-    document.getElementById("cus-name").innerText = "-";
-    document.getElementById("cus-pts").innerText = "0";
-    document.getElementById("cus-total").innerText = "0";
-    
-    // 清除輸入欄位
-    document.getElementById("totalSpend").value = "";
-    document.getElementById("ticketSpend").value = "";
-    document.getElementById("redeemAmount").value = "";
-    document.getElementById("buyTicket").value = "";
-    document.getElementById("max-hint").innerText = "0";
-    document.getElementById("redeemTip").innerText = "";
-    document.getElementById("ticketMode").checked = false;
-    
-    config.eventMultiplier = 1;
-    toggleMode();
-    showToast("✅ 已清除會員資料");
-    
-    // 🔥 確認沒有呼叫 logout()
-    console.log("✅ 會員資料已清除，未登出");
 }
-
 function parseScannedCode(scannedText) {
     let clean = String(scannedText).trim();
     console.log("🔍 parseScannedCode 收到:", clean);
@@ -1734,128 +1723,223 @@ function generateTransactionId(customerId) {
 // ============================================================
 //  🔥 提交集點（改用 addPointsWithInfo）
 // ============================================================
+// ============================================================
+//  🔥 提交集點（修正版）
+// ============================================================
 async function submitData() {
     const startTime = Date.now();
-    console.log("⏱️ ==== 集點流程開始 ====");
+    console.log('⏱️ ==== 集點流程開始 ====');
     
-    if (!isLoggedIn || !staff.loginId) {
-        showToast("⚠️ 請先登入");
+    // ---------- 1. 前置檢查 ----------
+    if (!isLoggedIn || !staff?.loginId) {
+        showToast('⚠️ 請先登入');
         setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
         return;
     }
+    
     if (!customerId) {
-        alert("請先掃描會員！");
+        alert('請先掃描會員！');
         return;
     }
     
+    // ---------- 2. 取得計算結果 ----------
+    const calcResult = doCalc();
+    if (!calcResult) {
+        alert('❌ 計算失敗，請檢查輸入');
+        return;
+    }
+    
+    const {
+        isTicketMode,
+        totalSpend,
+        ticketSpend,
+        couponDiscount,
+        redeem,
+        basePoints,
+        couponBonus,
+        totalNewPoints,
+        baseAmount
+    } = calcResult;
+    
+    // ---------- 3. 檢查優惠券門檻 ----------
+    const couponMinSpend = window.activeCoupon?.minSpend || 0;
+    const couponDocId = window.activeCoupon?.couponDocId || '';
+    const couponType = window.activeCoupon?.type || '';
+    
+    if (couponType && couponMinSpend > 0 && baseAmount < couponMinSpend) {
+        alert(`⚠️ 此優惠券需消費滿 ${couponMinSpend} 元才可使用\n目前實際消費金額：${baseAmount} 元`);
+        return;
+    }
+    
+    // ---------- 4. UI 鎖定 ----------
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
-    showLoading("處理中...保持微笑");
-
+    showLoading('處理中...保持微笑');
     resetIdleTimer();
-
-    // 🔥 產生固定交易 ID
-    const transactionId = generateTransactionId(customerId);
-
-     // 🔥 取得優惠券資訊（如果有）
-    var couponDocId = window.activeCoupon ? window.activeCoupon.couponDocId : '';
-    var couponMinSpend = window.activeCoupon ? window.activeCoupon.minSpend : 0;
-    var couponBonus = window.activeCoupon ? window.activeCoupon.bonusPoints : 0;
-    var couponDiscount = window.activeCoupon ? window.activeCoupon.discountAmount : 0;
-    var couponType = window.activeCoupon ? window.activeCoupon.type : '';
     
-   // 🔥 修改：改用 addPointsWithInfo
+    // ---------- 5. 產生交易 ID ----------
+    const transactionId = generateTransactionId(customerId);
+    
+    // ---------- 6. 建立請求參數 ----------
     const params = new URLSearchParams({
-    action: "addPointsWithInfo",
-    customerId: customerId,
-    branch: staff.branch,
-    staffName: staff.name,
-    totalSpend: document.getElementById('totalSpend').value || 0,
-    ticketSpend: document.getElementById('ticketSpend').value || 0,
-    redeemAmount: document.getElementById('redeemAmount').value || 0,
-    couponDiscount: document.getElementById('couponDiscount').value || 0, // 🔥 新增
-    earnRate: config.earnRate,
-    levelRate: levelRate,
-    eventMultiplier: config.eventMultiplier,
-    loginId: staff.loginId || "",
-    deviceId: staff.deviceId || "",
-    transactionId: transactionId,
-    couponDocId: couponDocId,
-    couponMinSpend: couponMinSpend,
-    couponBonus: couponBonus,
-    couponDiscount: couponDiscount,
-    couponType: couponType
-});
+        action: 'addPointsWithInfo',
+        customerId: customerId,
+        branch: staff.branch || '',
+        staffName: staff.name || '',
+        totalSpend: totalSpend,
+        ticketSpend: ticketSpend,
+        redeemAmount: redeem,
+        couponDiscount: couponDiscount,
+        earnRate: config?.earnRate || 0.03,
+        levelRate: config?.levelRate || 1,
+        eventMultiplier: config?.eventMultiplier || 1,
+        loginId: staff.loginId || '',
+        deviceId: staff.deviceId || '',
+        transactionId: transactionId,
+        couponDocId: couponDocId,
+        couponMinSpend: couponMinSpend,
+        couponBonus: couponBonus,
+        couponDiscount: couponDiscount,
+        couponType: couponType,
+        calculatedPoints: totalNewPoints,
+        basePoints: basePoints,
+        isTicketMode: isTicketMode
+    });
+    
+    // ---------- 7. 發送請求 ----------
     try {
-        console.log("📤 提交集點請求，交易ID:", transactionId);
-        console.log("⏱️", Date.now() - startTime, "ms - 發送請求");
+        console.log(`📤 提交集點請求，交易ID: ${transactionId}`);
+        console.log(`📊 消費: ${totalSpend} 元 | 折抵: ${redeem} 點 | 獲得: ${totalNewPoints} 點`);
         
         const fetchStart = Date.now();
-        const response = await fetch(GAS_URL + "?" + params.toString() + "&t=" + Date.now());
-        console.log("⏱️", Date.now() - fetchStart, "ms - API 回應");
+        const response = await fetch(`${GAS_URL}?${params.toString()}&t=${Date.now()}`);
+        console.log(`⏱️ API 回應: ${Date.now() - fetchStart} ms`);
         
         const result = await response.json();
-        console.log("⏱️", Date.now() - startTime, "ms - 解析完成");
-        console.log("📊 完整回傳:", JSON.stringify(result));
+        console.log(`⏱️ 總耗時: ${Date.now() - startTime} ms`);
+        console.log('📊 完整回傳:', JSON.stringify(result));
+        
         hideLoading();
         
+        // ---------- 8. 處理回應 ----------
+        // 8a. 檢查登入狀態
         if (result.logout) {
-            showToast("⏰ 登入已過期，請重新登入");
+            showToast('⏰ 登入已過期，請重新登入');
             setTimeout(() => { logout(); }, 2000);
             btn.disabled = false;
             return;
         }
         
+        // 8b. 檢查成功
         if (result.success) {
-            // 🔥 新功能：直接用 result.member 更新會員資訊
+            // 🔥 修正點：安全地更新會員資訊
             if (result.member) {
-                // 更新會員資料（不用再查一次）
-                currentPoints = result.member.points || 0;
-                memberLevel = result.member.level || "一般會員";
-                levelRate = result.member.levelRate || 1;
-                
-                document.getElementById('cus-pts').innerText = currentPoints;
-                document.getElementById('cus-total').innerText = result.member.totalSpend || 0;
-                document.getElementById('member-level').innerText = memberLevel;
-                
-                // 如果有 config 也更新
-                if (result.config) {
-                    config = result.config;
-                    config.eventMultiplier = Number(config.eventMultiplier) || 1;
-                    config.levelRate = Number(config.levelRate) || 1;
-                    config.earnRate = Number(config.earnRate) || 0.03;
+                try {
+                    currentPoints = result.member.points || 0;
+                    memberLevel = result.member.level || '一般會員';
+                    levelRate = result.member.levelRate || 1;
+                    
+                    // 🔥 修正點：檢查 DOM 元素是否存在再更新
+                    const ptsEl = document.getElementById('cus-pts');
+                    const totalEl = document.getElementById('cus-total');
+                    const levelEl = document.getElementById('member-level');
+                    
+                    if (ptsEl) ptsEl.innerText = currentPoints;
+                    if (totalEl) totalEl.innerText = result.member.totalSpend || 0;
+                    if (levelEl) levelEl.innerText = memberLevel;
+                    
+                    if (result.config) {
+                        config = result.config;
+                        config.eventMultiplier = Number(config.eventMultiplier) || 1;
+                        config.levelRate = Number(config.levelRate) || 1;
+                        config.earnRate = Number(config.earnRate) || 0.03;
+                    }
+                    
+                    console.log(`✅ 會員資料已更新，目前點數: ${currentPoints}`);
+                } catch (err) {
+                    console.warn('⚠️ 更新會員資料時發生錯誤:', err);
+                    // 不中斷流程，繼續執行
                 }
-                
-                console.log("✅ 會員資料已更新，目前點數:", currentPoints);
             }
+            
+            // ---------- 9. 顯示完成訊息 ----------
+            let message = '✅ 集點作業完成！';
+            let isDuplicate = false;
             
             if (result.duplicate) {
-                alert("⚠️ 此交易已處理過，請勿重複提交！");
-            } else if (result.message === "已處理過") {
-                alert("✅ 集點已完成（重複請求已忽略）");
+                message = '⚠️ 此交易已處理過，請勿重複提交！';
+                isDuplicate = true;
+            } else if (result.message === '已處理過') {
+                message = '✅ 集點已完成（重複請求已忽略）';
+                isDuplicate = true;
             } else {
-                // 🔥 顯示更詳細的完成訊息（含耗時）
-                const elapsed = result.elapsed ? ` (${Math.round(result.elapsed/1000)}秒)` : '';
-                alert(`✅ 集點作業完成！${elapsed}`);
+                const elapsed = result.elapsed ? ` (${Math.round(result.elapsed / 1000)}秒)` : '';
+                message = `✅ 集點完成！獲得 ${totalNewPoints} 點${elapsed}`;
             }
-            console.log("⏱️ ==== 集點流程完成 ====", Date.now() - startTime, "ms");
             
-            // 🔥 自動清除會員資料（掃描下一筆時重新查詢）
-            resetMember();
-            showToast("✅ 集點完成，已清除會員資料");
+            // 🔥 修正點：使用 alert 或自訂 Modal，避免 alert 阻斷後續流程
+            showToast(message);
+            
+            // 🔥 修正點：即使 alert 被關閉，也要確保後續流程執行
+            console.log(`⏱️ ==== 集點流程完成 ==== ${Date.now() - startTime} ms`);
+            
+            // ---------- 10. 重置狀態（放入 setTimeout 確保 UI 更新） ----------
+            setTimeout(() => {
+                try {
+                    // 清除優惠券狀態
+                    if (window.activeCoupon) {
+                        window.activeCoupon = null;
+                        const couponInfoEl = document.getElementById('coupon-info');
+                        if (couponInfoEl) couponInfoEl.remove();
+                    }
+                    
+                    // 重置會員資料（但保留點數顯示）
+                    resetMember();
+                    showToast('✅ 集點完成，已清除會員資料');
+                    
+                    // 🔥 修正點：如果有優惠券且不是重複提交，顯示優惠券已使用
+                    if (couponType && !isDuplicate) {
+                        const statusEl = document.getElementById('coupon-status-display');
+                        if (statusEl) {
+                            statusEl.innerHTML = '🎉 優惠券已成功使用！';
+                            statusEl.style.color = '#2e7d32';
+                            statusEl.className = 'coupon-status eligible';
+                        }
+                    }
+                    
+                } catch (err) {
+                    console.warn('⚠️ 重置狀態時發生錯誤:', err);
+                }
+            }, 500);
+            
         } else {
-            alert(`❌ 集點失敗：${result.message || "未知錯誤"}`);
+            // 失敗
+            alert(`❌ 集點失敗：${result.message || '未知錯誤'}`);
         }
         
     } catch (error) {
+        // ---------- 11. 錯誤處理 ----------
         hideLoading();
-        console.error("請求失敗:", error);
-        alert(`❌ 網路錯誤：${error.message}\n請檢查網路連線後再試`);
+        console.error('❌ 請求失敗:', error);
+        console.error('錯誤堆疊:', error.stack);
+        
+        // 🔥 修正點：顯示更詳細的錯誤訊息
+        let errorMsg = '網路錯誤，請檢查連線後再試';
+        if (error.message) {
+            errorMsg = error.message;
+        }
+        alert(`❌ 錯誤：${errorMsg}`);
+        
+    } finally {
+        // ---------- 12. 解鎖按鈕（確保一定會執行） ----------
+        const btn = document.getElementById('submitBtn');
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '確認過卡';
+        }
+        hideLoading();
     }
-    
-    btn.disabled = false;
 }
-
 init();
 </script>
 </body>
