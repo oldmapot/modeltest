@@ -367,7 +367,7 @@ if (couponInfoDiv) {
         }
     } else {
         // 非優惠券模式，隱藏優惠券區塊
-        document.getElementById('').style.display = 'none';
+        document.getElementById('coupon-info').style.display = 'none';
         window.activeCoupon = null;
     }
     
@@ -528,24 +528,45 @@ function showToast(msg) {
 }
 
 function resetMember() {
-    customerId = ""; currentPoints=0; memberLevel=""; levelRate=1;
+    customerId = ""; 
+    currentPoints = 0; 
+    memberLevel = ""; 
+    levelRate = 1;
+    
+    // 🔥 清除優惠券相關資料
+    window.activeCoupon = null;
+    var couponInfoDiv = document.getElementById('coupon-info');
+    if (couponInfoDiv) {
+        couponInfoDiv.style.display = 'none';
+    }
+    document.getElementById('couponDiscount').value = 0;
+    document.getElementById('coupon-discount-label').innerText = '';
+    document.getElementById('new-pts').innerText = '0';
+    document.getElementById('after-pts').innerText = '0';
+    document.getElementById('bonus-points-display').style.display = 'none';
+    
+    // 清除會員 UI
     document.getElementById("member-ui").style.display = "none";
     document.getElementById("form-ui").classList.add("locked");
-    document.getElementById("cus-name").innerText="-";
-    document.getElementById("cus-pts").innerText="0";
-    document.getElementById("cus-total").innerText="0";
-    document.getElementById("totalSpend").value="";
-    document.getElementById("ticketSpend").value="";
-    document.getElementById("redeemAmount").value="";
-    document.getElementById("buyTicket").value="";
-    document.getElementById("new-pts").innerText="0";
-    document.getElementById("after-pts").innerText="0";
-    document.getElementById("max-hint").innerText="0";
+    document.getElementById("cus-name").innerText = "-";
+    document.getElementById("cus-pts").innerText = "0";
+    document.getElementById("cus-total").innerText = "0";
+    
+    // 清除輸入欄位
+    document.getElementById("totalSpend").value = "";
+    document.getElementById("ticketSpend").value = "";
+    document.getElementById("redeemAmount").value = "";
+    document.getElementById("buyTicket").value = "";
+    document.getElementById("max-hint").innerText = "0";
     document.getElementById("redeemTip").innerText = "";
-    document.getElementById("ticketMode").checked=false;
+    document.getElementById("ticketMode").checked = false;
+    
     config.eventMultiplier = 1;
     toggleMode();
     showToast("✅ 已清除會員資料");
+    
+    // 🔥 確認沒有呼叫 logout()
+    console.log("✅ 會員資料已清除，未登出");
 }
 
 function parseScannedCode(scannedText) {
