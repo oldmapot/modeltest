@@ -693,7 +693,7 @@ if (scanMode === 'coupon') {
             hideLoading();
             console.log("🎯 優惠券需要進入結帳畫面");
             
-            var redirectUrl = 'staff_login.html?userId=' + encodeURIComponent(result.userId) +
+            var redirectUrl = 'staff.html?userId=' + encodeURIComponent(result.userId) +
                   '&fromCoupon=true' +
                   '&couponDocId=' + encodeURIComponent(result.couponDocId) +
                   '&minSpend=' + encodeURIComponent(result.minSpend) +
