@@ -236,7 +236,13 @@ function init() {
     
     document.getElementById('staff-name').innerText = staff.name;
     document.getElementById('shop-name').innerText = staff.branch;
-    
+    // ============================================================
+    //  🔥🔥🔥 強制設定預設前綴（避免 getCouponPrefixes 失敗）
+    // ============================================================
+    if (!cachedPrefixes) {
+        cachedPrefixes = ["ANN_omp_A01", "GIFT_omp_01", "EMP_omp_1150701"];
+        console.log("📌 強制設定預設前綴:", cachedPrefixes);
+    }
     // ============================================================
     //  🔥🔥🔥 檢查是否從優惠券跳轉過來的
     // ============================================================
