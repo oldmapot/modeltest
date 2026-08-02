@@ -930,12 +930,14 @@ async function submitData() {
     // 🔥 產生固定交易 ID
     const transactionId = generateTransactionId(customerId);
 
-    // 🔥 取得優惠券資訊（如果有）
+     // 🔥 取得優惠券資訊（如果有）
     var couponDocId = window.activeCoupon ? window.activeCoupon.couponDocId : '';
     var couponMinSpend = window.activeCoupon ? window.activeCoupon.minSpend : 0;
     var couponBonus = window.activeCoupon ? window.activeCoupon.bonusPoints : 0;
+    var couponDiscount = window.activeCoupon ? window.activeCoupon.discountAmount : 0;
+    var couponType = window.activeCoupon ? window.activeCoupon.type : '';
     
-    // 🔥 修改：改用 addPointsWithInfo
+   // 🔥 修改：改用 addPointsWithInfo
     const params = new URLSearchParams({
         action: "addPointsWithInfo",
         customerId: customerId,
@@ -953,7 +955,9 @@ async function submitData() {
         // 🔥🔥🔥 加入優惠券資訊
         couponDocId: couponDocId,
         couponMinSpend: couponMinSpend,
-        couponBonus: couponBonus
+        couponBonus: couponBonus,
+        couponDiscount: couponDiscount,
+        couponType: couponType
     });
     try {
         console.log("📤 提交集點請求，交易ID:", transactionId);
