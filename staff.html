@@ -168,6 +168,7 @@ function getUrlParam(name) {
 }
 
 async function getCouponPrefixes() {
+    // 🔥 如果已經有快取，直接回傳
     if (cachedPrefixes) {
         return cachedPrefixes;
     }
@@ -176,21 +177,21 @@ async function getCouponPrefixes() {
         const url = `${GAS_URL}?action=getCouponPrefixes&t=${Date.now()}`;
         const response = await fetch(url);
         const data = await response.json();
+        console.log("📌 getCouponPrefixes API 回傳:", data);
         
         if (data.success && data.prefixes && data.prefixes.length > 0) {
             cachedPrefixes = data.prefixes;
             console.log("✅ 取得優惠券前綴:", cachedPrefixes);
             return cachedPrefixes;
         }
-        // 🔥 如果 API 回傳空，使用所有已知前綴
-        cachedPrefixes = ["ANN_omp_A01", "GIFT_omp_01", "EMP_omp_1150701"];
-        console.warn("⚠️ API 回傳空，使用預設前綴:", cachedPrefixes);
+        
+        // 🔥 如果 API 失敗，才用預設值（但這個情況應該很少發生）
+        console.error("❌ API 回傳空或失敗，使用硬編碼預設值（請檢查 GAS）");
+        cachedPrefixes = ["ANN_omp_pt01", "GIFT_omp_gf01", "BIR_omp_gf02", "SPC_omp_fe01", "MEM_omp_pt02"];
         return cachedPrefixes;
     } catch (e) {
-        console.error("取得優惠券前綴失敗:", e);
-        // 🔥 失敗時使用所有已知前綴（不只是 GIFT_）
-        cachedPrefixes = ["ANN_omp_A01", "GIFT_omp_01", "EMP_omp_1150701"];
-        console.log("📌 使用預設前綴:", cachedPrefixes);
+        console.error("❌ 取得優惠券前綴失敗:", e);
+        cachedPrefixes = ["ANN_omp_pt01", "GIFT_omp_gf01", "BIR_omp_gf02", "SPC_omp_fe01", "MEM_omp_pt02"];
         return cachedPrefixes;
     }
 }
@@ -236,13 +237,7 @@ function init() {
     
     document.getElementById('staff-name').innerText = staff.name;
     document.getElementById('shop-name').innerText = staff.branch;
-    // ============================================================
-    //  🔥🔥🔥 強制設定預設前綴（避免 getCouponPrefixes 失敗）
-    // ============================================================
-    if (!cachedPrefixes) {
-        cachedPrefixes = ["ANN_omp_A01", "GIFT_omp_01", "EMP_omp_1150701"];
-        console.log("📌 強制設定預設前綴:", cachedPrefixes);
-    }
+    
     // ============================================================
     //  🔥🔥🔥 檢查是否從優惠券跳轉過來的
     // ============================================================
