@@ -112,58 +112,6 @@
             cursor: pointer;
             color: #999;
         }
-        .branch-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 99999;
-            display: none;
-            justify-content: center;
-            align-items: center;
-        }
-        .branch-modal-content {
-            background: white;
-            width: 90%;
-            max-width: 400px;
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-        }
-        .branch-title {
-            font-size: 22px;
-            color: #8b0000;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-        .staff-info {
-            background: #f5f5f5;
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-size: 16px;
-        }
-        .branch-select {
-            width: 100%;
-            padding: 14px;
-            border: 1px solid #ddd;
-            border-radius: 16px;
-            font-size: 16px;
-            margin-bottom: 20px;
-        }
-        .confirm-btn {
-            width: 100%;
-            padding: 14px;
-            background: #8b0000;
-            color: white;
-            border: none;
-            border-radius: 16px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
         .spinner {
             display: inline-block;
             width: 18px;
@@ -194,19 +142,6 @@
             color: #999;
             text-align: center;
         }
-        #debugInfo {
-            background: #f0f0f0;
-            padding: 10px;
-            margin: 10px 0;
-            font-size: 12px;
-            text-align: left;
-            max-height: 150px;
-            overflow: auto;
-            border: 1px solid #ccc;
-            white-space: pre-wrap;
-            word-break: break-all;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -233,7 +168,6 @@
         </form>
         
         <div id="errorMsg" class="error-message"></div>
-        <div id="debugInfo"></div>
         
         <div class="demo-hint">
             <strong>💡 登入說明：</strong><br>
@@ -243,22 +177,16 @@
         <div class="footer-note">© 老娘領地 夥伴端</div>
     </div>
 
-    <!-- ✅ vConsole 引入 -->
     <script src="https://cdn.jsdelivr.net/npm/vconsole@3.15.1/dist/vconsole.min.js"></script>
     <script>
         var vConsole = new VConsole();
         console.log("✅ vConsole 已啟動");
-        window.onerror = function(message, source, lineno, colno, error) {
-            console.error('🚨 捕獲到錯誤:', message, source, lineno, colno, error);
-        };
-    </script>
-    <script>
+
         // ============================================================
         //  🔥 設定區
         // ============================================================
         const GAS_URL = "https://script.google.com/macros/s/AKfycbxlvZ-DzBBuZlqudFQF2RWTbVBD5GJwXdV0OYWxemjPaeq7aJxFN19kguOeOeGXLYM4uw/exec";
         const LIFF_ID = "2009625641-AYIKoXbw";
-        let currentStaff = null;
         let _lineUid = '';
 
         // ============================================================
@@ -274,6 +202,10 @@
             el.textContent = msg;
             el.style.display = 'block';
             setTimeout(() => { el.style.display = 'none'; }, 5000);
+        }
+
+        function hideError() {
+            document.getElementById('errorMsg').style.display = 'none';
         }
 
         function getDeviceId() {
@@ -297,71 +229,62 @@
         }
 
         // ============================================================
-        //  🔥 取得分店清單
+        //  🔥 預熱機制（Ping GAS）
         // ============================================================
-        async function getBranchList() {
-            try {
-                const res = await fetch(`${GAS_URL}?action=getShopList`);
-                const data = await res.json();
-                return data.success ? data.shops : [];
-            } catch (e) {
-                return [];
-            }
+        function warmUpGAS() {
+            console.log("🔥 背景預熱 GAS（Ping）...");
+            
+            fetch(`${GAS_URL}?action=ping&t=${Date.now()}`, {
+                method: 'GET',
+                mode: 'no-cors'
+            })
+            .then(() => {
+                console.log("✅ GAS 預熱完成（背景）");
+            })
+            .catch(() => {
+                // 預熱失敗不影響主流程
+                console.log("⚠️ GAS 預熱失敗（背景），不影響登入");
+            });
         }
 
         // ============================================================
-        //  🔥 確認分店（改為固定分店，不顯示選擇視窗）
+        //  🔥 登入請求（含自動重試 1 次）
         // ============================================================
-        async function confirmBranch() {
-            const branch = '老娘鍋河堤店';
-            const confirmBtn = document.querySelector('.confirm-btn');
-            if (confirmBtn) {
-                confirmBtn.disabled = true;
-                confirmBtn.textContent = '進入系統中...';
-            }
-
-            const userId = encodeURIComponent((document.getElementById('userId').value || '').trim());
-            const keyword = encodeURIComponent((document.getElementById('keyword').value || '').trim());
-            const clientIp = encodeURIComponent(currentStaff.clientIp || '');
-            const lineUid = encodeURIComponent(currentStaff.lineUid || '');
-            const branchEncoded = encodeURIComponent(branch);
-
-            const finalUrl = `${GAS_URL}?action=staffLogin&userId=${userId}&keyword=${keyword}&lineUid=${lineUid}&clientIp=${clientIp}&branch=${branchEncoded}`;
+        async function loginWithRetry(verifyUrl) {
+            let lastError = null;
             
-            console.log("📌 confirmBranch 請求 URL:", finalUrl);
-
-            try {
-                const response = await fetch(finalUrl, { method: 'GET', redirect: 'follow' });
-                const result = await response.json();
-                
-                console.log("📌 confirmBranch 後端回傳:", JSON.stringify(result));
-
-                if (result.success) {
-                    const targetUrl = `staff.html?name=${encodeURIComponent(currentStaff.name)}&branch=${encodeURIComponent(branch)}&loginId=${encodeURIComponent(currentStaff.loginId)}&role=${encodeURIComponent(currentStaff.role || '')}&clientIp=${encodeURIComponent(clientIp)}`;
-                    window.location.href = targetUrl;
-                } else {
-                    showError(result.message || '登入失敗，請重新嘗試');
-                    if (confirmBtn) {
-                        confirmBtn.disabled = false;
-                        confirmBtn.textContent = '確認進入系統';
+            // 最多嘗試 2 次（第 1 次 + 1 次重試）
+            for (let attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    console.log(`📤 登入嘗試 ${attempt}/2`);
+                    
+                    const response = await fetch(verifyUrl, {
+                        method: 'GET',
+                        redirect: 'follow'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log(`✅ 登入嘗試 ${attempt} 成功`);
+                    return result;
+                    
+                } catch (error) {
+                    lastError = error;
+                    console.warn(`⚠️ 登入嘗試 ${attempt} 失敗:`, error.message);
+                    
+                    // 如果是第一次失敗，重試 1 次（等待 1 秒）
+                    if (attempt === 1) {
+                        console.log("⏳ 1 秒後重試...");
+                        await new Promise(resolve => setTimeout(resolve, 1000));
                     }
                 }
-            } catch (e) {
-                console.error("更新登入分店失敗:", e);
-                showError('⚠️ 系統連線異常，請稍後再試');
-                if (confirmBtn) {
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = '確認進入系統';
-                }
             }
-        }
-
-        // ============================================================
-        //  🔥 顯示分店選擇視窗（改為直接跳轉）
-        // ============================================================
-        async function showBranchModal(staff) {
-            currentStaff = staff;
-            await confirmBranch();
+            
+            // 兩次都失敗
+            throw lastError || new Error('所有登入嘗試皆失敗');
         }
 
         // ============================================================
@@ -379,11 +302,14 @@
                 return;
             }
             
+            // 🔥 隱藏舊錯誤
+            hideError();
+            
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="spinner"></span> 驗證中...';
-            document.getElementById('errorMsg').style.display = 'none';
             
             try {
+                // 取得 IP
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
                 const clientIp = ipData.ip;
@@ -392,28 +318,32 @@
                 const deviceName = getDeviceName();
                 const lineUid = _lineUid || '';
 
-                const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true`;
+                // 組裝登入 URL
+                const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true&t=${Date.now()}`;
                 
                 console.log("📌 登入請求 URL:", verifyUrl);
                 
-                const response = await fetch(verifyUrl, { method: 'GET', redirect: 'follow' });
-                const result = await response.json();
+                // 🔥 使用含重試機制的登入函數
+                const result = await loginWithRetry(verifyUrl);
                 
                 console.log("📌 後端回傳:", JSON.stringify(result));
                 
                 if (result.success) {
-                    currentStaff = {
+                    // 🔥 存入 localStorage 備份
+                    const staffData = {
                         name: result.name,
                         role: result.role || "夥伴",
                         loginId: result.loginId || userId,
+                        branch: result.branch || '老娘鍋河堤店',
                         clientIp: clientIp,
                         lineUid: lineUid
                     };
+                    localStorage.setItem('staffData', JSON.stringify(staffData));
+                    console.log("✅ 登入資料已存入 localStorage");
                     
-                    await showBranchModal(currentStaff);
-                    
-                    loginBtn.disabled = false;
-                    loginBtn.innerHTML = '登入系統';
+                    // 跳轉到 staff.html
+                    const targetUrl = `staff.html?name=${encodeURIComponent(result.name)}&branch=${encodeURIComponent('老娘鍋河堤店')}&loginId=${encodeURIComponent(result.loginId || userId)}&role=${encodeURIComponent(result.role || '')}`;
+                    window.location.href = targetUrl;
                 } else {
                     showError(result.message || '帳號或密碼錯誤，請重新輸入');
                     loginBtn.disabled = false;
@@ -426,6 +356,23 @@
                 loginBtn.disabled = false;
                 loginBtn.innerHTML = '登入系統';
             }
+        }
+
+        // ============================================================
+        //  🔥 點擊輸入框時觸發預熱（加上頁面載入預熱）
+        // ============================================================
+        function setupWarmUp() {
+            // 1. 頁面載入時預熱
+            warmUpGAS();
+            
+            // 2. 點擊輸入框時再次預熱（確保 GAS 已喚醒）
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    console.log("📱 輸入框聚焦，再次預熱 GAS");
+                    warmUpGAS();
+                });
+            });
         }
 
         // ============================================================
@@ -453,8 +400,10 @@
                 
                 const profile = await liff.getProfile();
                 _lineUid = profile.userId;
+                console.log("✅ LINE UID 取得成功:", _lineUid);
                 
             } catch(e) {
+                console.error('LIFF 初始化失敗:', e);
                 showError('初始化失敗，請在 LINE App 中開啟');
             }
         }
@@ -462,7 +411,11 @@
         // ============================================================
         //  ✅ 啟動
         // ============================================================
-        initLiff();
+        // 頁面載入完成後，設定預熱 + 啟動 LIFF
+        document.addEventListener('DOMContentLoaded', function() {
+            setupWarmUp();
+            initLiff();
+        });
     </script>
 </body>
 </html>
