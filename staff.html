@@ -660,6 +660,10 @@ if (scanMode === 'coupon') {
                   '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
                   '&couponType=' + encodeURIComponent(result.type || '') +
                   '&couponName=' + encodeURIComponent(result.couponName || '優惠券');
+             // 🔥🔥🔥 加入登入參數
+                      '&name=' + encodeURIComponent(staff.name) +
+                      '&branch=' + encodeURIComponent(staff.branch) +
+                      '&loginId=' + encodeURIComponent(staff.loginId);
             
             window.location.href = redirectUrl;
             return;
