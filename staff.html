@@ -475,7 +475,6 @@ function resetMember() {
 function parseScannedCode(scannedText) {
     let clean = String(scannedText).trim();
     console.log("🔍 parseScannedCode 收到:", clean);
-    console.log("🔍 cachedPrefixes 內容:", JSON.stringify(cachedPrefixes));
     
     // 清理 data= 前綴
     if (clean.indexOf("data=") > -1) {
@@ -485,64 +484,59 @@ function parseScannedCode(scannedText) {
     if (clean.indexOf("##") === 0) clean = clean.substring(2);
 
     // ============================================================
-    //  1️⃣ 先拆解 QR Code 內容
+    //  1️⃣ 拆解 QR Code 內容
     // ============================================================
     var parts = clean.split("_");
     console.log("📌 拆解結果:", parts);
     console.log("📌 parts 長度:", parts.length);
     
     // ============================================================
-    //  2️⃣ 檢查是否為會員 QR（格式：{shopCode}_{key}_{userId}）
-    //    先檢查，因為會員 QR 長度固定為 3
+    //  2️⃣ 判斷 QR 類型
     // ============================================================
+    
+    // 🔥 會員 QR：格式 {shopCode}_{key}_{userId}，長度為 3
     if (parts.length === 3) {
         var shopCode = parts[0];
         var shopKey = parts[1];
         var userId = parts[2];
         if (shopCode === "omp" || shopCode === "swo") {
-            console.log("✅ 識別為會員 QR，userId:", userId);
+            console.log("✅ 識別為【會員 QR】，memberId:", userId);
             return { 
                 type: "member", 
-                userId: userId, 
+                userId: userId,      // ← memberId
                 shopCode: shopCode,
                 shopKey: shopKey
             };
         }
     }
     
-    // ============================================================
-    //  3️⃣ 檢查是否為優惠券（比對 cachedPrefixes）
-    //    優惠券 QR 長度為 4（prefix_brandCode_couponId_userId）
-    // ============================================================
-    if (cachedPrefixes && cachedPrefixes.length > 0) {
-        for (var p = 0; p < cachedPrefixes.length; p++) {
-            var prefixCheck = cachedPrefixes[p] + "_";
-            if (clean.indexOf(prefixCheck) === 0) {
-                console.log("✅ 識別為優惠券，前綴:", cachedPrefixes[p]);
-                // userId 是最後一段（memberId）
-                var userId = parts[parts.length - 1] || "";
-                var couponId = parts.length >= 3 ? parts[2] : "";
-                console.log("   userId (memberId):", userId);
-                console.log("   couponId:", couponId);
-                return { 
-                    type: "coupon", 
-                    userId: userId,
-                    couponId: couponId,
-                    fullData: clean
-                };
-            }
+    // 🔥 優惠券 QR：格式 {prefix}_{brandCode}_{couponId}_{memberId}，長度為 4
+    if (parts.length === 4) {
+        var brandCode = parts[1];
+        var couponId = parts[2];
+        var userId = parts[3];      // ← 這裡就是 memberId
+        
+        // 確認品牌代號有效
+        if (brandCode === "omp" || brandCode === "swo") {
+            console.log("✅ 識別為【優惠券 QR】");
+            console.log("   brandCode:", brandCode);
+            console.log("   couponId:", couponId);
+            console.log("   memberId (userId):", userId);
+            return { 
+                type: "coupon", 
+                userId: userId,      // ← 這裡就是 memberId
+                couponId: couponId,
+                fullData: clean
+            };
         }
     }
     
     // ============================================================
-    //  4️⃣ 無法識別
+    //  3️⃣ 無法識別
     // ============================================================
     console.warn("⚠️ 無法識別的 QR Code:", clean);
-    console.warn("   parts:", parts);
-    console.warn("   parts.length:", parts.length);
     return { type: "unknown", userId: clean };
 }
-    
 // ============================================================
 //  🔥 掃描模式（預設為掃描消費）
 // ============================================================
@@ -627,6 +621,8 @@ if (scanMode === 'coupon') {
         //  🔥 優惠券處理
         // ============================================================
         if (parsed.type === "coupon") {
+    // 🔥 parsed.userId 就是 memberId
+    console.log("🎯 優惠券掃描，memberId:", parsed.userId);
     const realStaffName = staff.name;
     const realStaffBranch = staff.branch;
     const clientIp = await getUserIP();
