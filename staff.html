@@ -621,8 +621,10 @@ if (scanMode === 'coupon') {
         //  🔥 優惠券處理
         // ============================================================
         if (parsed.type === "coupon") {
-    // 🔥 parsed.userId 就是 memberId
-    console.log("🎯 優惠券掃描，memberId:", parsed.userId);
+    console.log("🎯 優惠券掃描，memberId:", memberId);
+    console.log("🎯 完整 QR:", fullQr);
+    const fullQr = parsed.fullData;  // 完整 QR：ANN_omp_pt01_U590bde4b2a90d90e834dd8d395ebf3f1
+    const memberId = parsed.userId;  // memberId：U590bde4b2a90d90e834dd8d395ebf3f1
     const realStaffName = staff.name;
     const realStaffBranch = staff.branch;
     const clientIp = await getUserIP();
@@ -635,7 +637,9 @@ if (scanMode === 'coupon') {
     showLoading("🔄 處理優惠券兌換中...");
     
     try {
-        const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(parsed.userId)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
+         // 🔥 傳送完整 QR 給 GAS
+        const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(fullQr)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
+        }        
         const res = await fetch(url);
         const result = await res.json();
         console.log("📊 優惠券兌換回應:", JSON.stringify(result));
