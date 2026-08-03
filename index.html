@@ -450,7 +450,7 @@ function renderAllData(data) {
   console.log("✅ 頁面渲染完成");
 }
 // ============================================================
-//  🔄 背景更新（SWR）- 加入品牌參數
+//  🔄 背景更新（SWR）- 修正版（使用 fetch）
 // ============================================================
 
 function backgroundUpdate(userId, brandParam) {
@@ -462,15 +462,25 @@ function backgroundUpdate(userId, brandParam) {
         brandParam = urlParams.get('brand') || 'OMP';
     }
     
-    // ✅ 從快取讀取時不刪除過期資料（用於比對）
-    var cachedData = getCachedMember(userId, brandParam, true);  // ← 第三個參數 true = 不刪除
+    // 🔥 從快取讀取舊資料（不刪除過期快取）
+    var cachedData = getCachedMember(userId, brandParam, 300, true);
     
-    google.script.run
-        .withSuccessHandler(function(response) {
-            if (response.success) {
-                var newData = response.data;
+    // 🔥 改用 fetch API（取代 google.script.run）
+    var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + 
+              '&brand=' + brandParam + 
+              '&t=' + Date.now() + 
+              '&_=' + Math.random();
+    
+    fetch(url)
+        .then(function(response) {
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            return response.json();
+        })
+        .then(function(result) {
+            if (result.success) {
+                var newData = result.data;
                 
-                // 比對是否有變化
+                // 比對是否有變化（_cacheTime 除外）
                 var oldDataCopy = Object.assign({}, cachedData);
                 delete oldDataCopy._cacheTime;
                 
@@ -489,10 +499,9 @@ function backgroundUpdate(userId, brandParam) {
                 }
             }
         })
-        .withFailureHandler(function(error) {
+        .catch(function(error) {
             console.warn("⚠️ 背景更新失敗:", error);
-        })
-        .getAggregatedData(userId, brandParam);  // ✅ 傳入品牌
+        });
 }
     
 // 🔥 輔助函式：安全設定元素文字
