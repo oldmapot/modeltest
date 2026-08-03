@@ -1204,14 +1204,15 @@ async function fetchData(isReload, brandParam) {
         coupons: newData.coupons,
         meta: newData.meta,
         
-        // ✅ 扁平欄位（給 displayMemberUI 和側邊選單用）
-        isMember: true,
-        "目前剩餘點": newData.user?.currentPoints || 0,
-        points: newData.user?.currentPoints || 0,
-        name: newData.user?.displayName || '',
-        welcomeQuote: newData.meta?.announcement || "歡迎光臨！",
-        shopKey: newData.user?.shopKey || '',
-        shopCode: newData.meta?.brandCode || 'OMP',
+// ✅ 扁平欄位（給 displayMemberUI 和側邊選單用）
+isMember: true,
+"目前剩餘點": newData.user?.currentPoints || 0,
+points: newData.user?.currentPoints || 0,
+name: newData.user?.displayName || '',
+welcomeQuote: newData.meta?.announcement || "歡迎光臨！",  // 保留但 displayMemberUI 不再使用
+shopKey: newData.user?.shopKey || '',
+shopCode: newData.meta?.brandCode || 'OMP',
+welcomePhrases: newData.meta?.welcomePhrases || [],  // ✅ 新增這個！
         
         // ✅ 補齊 profile（給 openProfile 用）
         profile: {
@@ -1312,9 +1313,15 @@ function displayMemberUI(data) {
         generateMemberCode();
     }
     
-    // 🔥 歡迎詞使用文句池
-    var welcomeQuote = data.welcomeQuote || "歡迎光臨！";
-    document.getElementById('welcomeQuote').innerText = welcomeQuote;
+   // 🔥 從文句池隨機選取歡迎詞
+var welcomePhrases = data.welcomePhrases || [];
+var welcomeQuote = "歡迎光臨！";  // 預設值
+
+if (welcomePhrases.length > 0) {
+    var randomIndex = Math.floor(Math.random() * welcomePhrases.length);
+    welcomeQuote = welcomePhrases[randomIndex];
+}
+document.getElementById('welcomeQuote').innerText = welcomeQuote;
     
     console.log('✅ 會員畫面已顯示，點數:', displayPoints);
 }
