@@ -392,7 +392,52 @@ function renderAllData(data) {
   
   console.log("✅ 頁面渲染完成");
 }
+// ============================================================
+//  🔄 背景更新（SWR）- 加入品牌參數
+// ============================================================
 
+function backgroundUpdate(userId, brandParam) {
+    console.log("🔄 背景更新開始，brand:", brandParam);
+    
+    // 如果沒有傳入 brand，從 URL 讀取或預設 OMP
+    if (!brandParam) {
+        var urlParams = new URLSearchParams(window.location.search);
+        brandParam = urlParams.get('brand') || 'OMP';
+    }
+    
+    // ✅ 從快取讀取時不刪除過期資料（用於比對）
+    var cachedData = getCachedMember(userId, brandParam, true);  // ← 第三個參數 true = 不刪除
+    
+    google.script.run
+        .withSuccessHandler(function(response) {
+            if (response.success) {
+                var newData = response.data;
+                
+                // 比對是否有變化
+                var oldDataCopy = Object.assign({}, cachedData);
+                delete oldDataCopy._cacheTime;
+                
+                var newDataCopy = Object.assign({}, newData);
+                delete newDataCopy._cacheTime;
+                
+                var oldStr = JSON.stringify(oldDataCopy);
+                var newStr = JSON.stringify(newDataCopy);
+                
+                if (oldStr !== newStr) {
+                    console.log("🔄 資料有變化，更新 UI 和快取");
+                    setCachedMember(userId, brandParam, newData);
+                    renderAllData(newData);
+                } else {
+                    console.log("✅ 資料無變化");
+                }
+            }
+        })
+        .withFailureHandler(function(error) {
+            console.warn("⚠️ 背景更新失敗:", error);
+        })
+        .getAggregatedData(userId, brandParam);  // ✅ 傳入品牌
+}
+    
 // 🔥 輔助函式：安全設定元素文字
 function setElementText(id, text) {
   var el = document.getElementById(id);
@@ -415,16 +460,32 @@ function hideLoading() {
   var el = document.getElementById('loading-overlay');
   if (el) el.style.display = 'none';
 }
+// ============================================================
+//  LocalStorage 快取工具（品牌隔離版）
+// ============================================================
+
 /**
- * 從 LocalStorage 讀取快取資料
- * @param {string} userId - 會員 ID
- * @param {number} ttlSeconds - 快取存活時間（秒），預設 300 秒（5 分鐘）
- * @returns {Object|null} 快取資料，過期或無資料回傳 null
+ * 產生品牌隔離的快取 Key
  */
-function getCachedMember(userId, ttlSeconds) {
-    ttlSeconds = ttlSeconds || 300; // 預設 5 分鐘
+function getCacheKey(userId, brandParam) {
+    var brand = brandParam || 'OMP';
+    brand = brand.toUpperCase();  // ✅ 防禦性大寫
+    return 'member_data_' + brand + '_' + userId;
+}
+
+/**
+ * 讀取快取
+ * @param {string} userId - 會員 ID
+ * @param {string} brandParam - 品牌代號 (OMP / SWO)
+ * @param {number} ttlSeconds - 快取存活時間（秒），預設 300 秒（5 分鐘）
+ * @param {boolean} keepExpired - 過期時是否保留（背景更新比對用）
+ * @returns {Object|null} 快取資料
+ */
+function getCachedMember(userId, brandParam, ttlSeconds, keepExpired) {
+    ttlSeconds = ttlSeconds || 300;
+    keepExpired = keepExpired || false;
     
-    var key = 'member_data_' + userId;
+    var key = getCacheKey(userId, brandParam);  // ✅ 使用 getCacheKey
     var cached = localStorage.getItem(key);
     
     if (!cached) return null;
@@ -436,8 +497,13 @@ function getCachedMember(userId, ttlSeconds) {
         
         // 檢查是否過期
         if (Date.now() - cacheTime > expiresIn) {
+            // keepExpired = true 時不刪除，回傳資料（背景更新比對用）
+            if (keepExpired) {
+                console.log("⏰ 快取已過期，但保留用於比對");
+                return data;
+            }
             localStorage.removeItem(key);
-            console.log("⏰ 快取已過期");
+            console.log("⏰ 快取已過期並清除");
             return null;
         }
         
@@ -453,15 +519,15 @@ function getCachedMember(userId, ttlSeconds) {
 /**
  * 寫入快取
  * @param {string} userId - 會員 ID
+ * @param {string} brandParam - 品牌代號 (OMP / SWO)
  * @param {Object} data - 要快取的資料（user + coupons + meta）
  */
-function setCachedMember(userId, data) {
+function setCachedMember(userId, brandParam, data) {
     try {
-        // 加入快取時間
         data._cacheTime = Date.now();
-        var key = 'member_data_' + userId;
+        var key = getCacheKey(userId, brandParam);  // ✅ 使用 getCacheKey
         localStorage.setItem(key, JSON.stringify(data));
-        console.log("✅ 快取已寫入");
+        console.log("✅ 快取已寫入:", key);
     } catch(e) {
         console.warn("⚠️ 寫入快取失敗:", e);
     }
@@ -469,15 +535,30 @@ function setCachedMember(userId, data) {
 
 /**
  * 清除快取
- * @param {string} userId - 會員 ID（可選，不傳則清除所有會員快取）
+ * @param {string} userId - 會員 ID（可選）
+ * @param {string} brandParam - 品牌代號（可選，不傳則清除該用戶所有品牌）
  */
-function clearCachedMember(userId) {
-    if (userId) {
-        var key = 'member_data_' + userId;
+function clearCachedMember(userId, brandParam) {
+    if (userId && brandParam) {
+        // ✅ 清除特定品牌快取
+        var key = getCacheKey(userId, brandParam);
         localStorage.removeItem(key);
-        console.log("🧹 已清除快取:", userId);
+        console.log("🧹 已清除快取:", key);
+    } else if (userId) {
+        // ✅ 清除該用戶所有品牌快取
+        var keys = [];
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && key.indexOf('member_data_') === 0 && key.indexOf('_' + userId) > 0) {
+                keys.push(key);
+            }
+        }
+        for (var j = 0; j < keys.length; j++) {
+            localStorage.removeItem(keys[j]);
+        }
+        console.log("🧹 已清除該用戶所有品牌快取，共 " + keys.length + " 筆");
     } else {
-        // 清除所有 member_data_ 開頭的快取
+        // ✅ 清除所有會員快取
         var keys = [];
         for (var i = 0; i < localStorage.length; i++) {
             var key = localStorage.key(i);
@@ -491,12 +572,13 @@ function clearCachedMember(userId) {
         console.log("🧹 已清除所有會員快取，共 " + keys.length + " 筆");
     }
 }
+
 /**
  * 檢查快取是否有效（不解析資料）
  */
-function hasValidCache(userId, ttlSeconds) {
+function hasValidCache(userId, brandParam, ttlSeconds) {
     ttlSeconds = ttlSeconds || 300;
-    var key = 'member_data_' + userId;
+    var key = getCacheKey(userId, brandParam);  // ✅ 使用 getCacheKey
     var cached = localStorage.getItem(key);
     
     if (!cached) return false;
