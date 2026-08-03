@@ -2198,6 +2198,8 @@ loadingText.innerText = defaultTexts[randomIndex];
         await new Promise(resolve => setTimeout(resolve, 300));
         
         const currentUserId = (await liff.getProfile()).userId;
+        console.log('🔥 從 LIFF 取得的 userId:', currentUserId); 
+         
         const storedUserId = sessionStorage.getItem('liff_user_id');
         const storedFrom = sessionStorage.getItem('liff_from');
         
