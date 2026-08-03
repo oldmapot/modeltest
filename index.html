@@ -1127,7 +1127,7 @@ async function refreshAll() {
     }
 }
 // ============================================================
-// ✅ fetchData（優化版 - 含每日強制刷新 + 品牌參數）
+// ✅ fetchData（完整修正版 - 解決 DOMException 和註冊畫面問題）
 // ============================================================
 async function fetchData(isReload, brandParam) {
     if (isReload === undefined) isReload = false;
@@ -1159,14 +1159,16 @@ async function fetchData(isReload, brandParam) {
         cachedData = getCachedMember(userId, brandParam);
     }
 
+    // ✅ 如果有快取，直接顯示（不管是否過期）
     if (cachedData) {
         console.log('✅ 從快取載入會員資料');
         userData = cachedData;
         document.getElementById('loading').style.display = 'none';
         displayMemberUI(cachedData);
+        // 背景更新（不阻塞畫面）
         setTimeout(function () {
             backgroundUpdate(userId, brandParam);
-        }, 500);
+        }, 1000);
         return;
     }
 
@@ -1181,21 +1183,12 @@ async function fetchData(isReload, brandParam) {
     loadingText.innerText = defaultTexts[Math.floor(Math.random() * defaultTexts.length)];
 
     try {
-        // 🔥 加入多個 cache-busting 參數
         var url = GAS_URL + '?action=getAggregatedData&userId=' + userId +
             '&brand=' + brandParam +
             '&t=' + Date.now() +
             '&_=' + Math.random();
 
-        // ⏱️ 設置超時（避免 GAS 冷啟動導致無限等待）
-        var controller = new AbortController();
-        var timeoutId = setTimeout(function () {
-            controller.abort();
-        }, 10000); // 10 秒超時
-
-        var res = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeoutId);
-
+        var res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var result = await res.json();
 
@@ -1252,23 +1245,37 @@ async function fetchData(isReload, brandParam) {
                     displayMemberUI(cachedDataFallback);
                     showToast('⚠️ 資料載入異常，顯示上次快取');
                 } else {
-                    showToast(result.message || '載入失敗，請重新整理');
+                    // ✅ 沒有快取，顯示註冊頁面（但保留 loading 已關閉）
+                    document.getElementById('loading').style.display = 'none';
+                    showToast('請先註冊會員');
                     document.getElementById('memberUI').style.display = 'none';
                     document.getElementById('regUI').style.display = 'none';
                     document.getElementById('welcomeUI').style.display = 'flex';
                 }
             }
         } else {
-            showToast(result.message || '載入失敗');
-            document.getElementById('memberUI').style.display = 'none';
-            document.getElementById('regUI').style.display = 'none';
-            document.getElementById('welcomeUI').style.display = 'flex';
+            // ✅ API 回傳失敗，嘗試使用快取
+            console.warn("⚠️ API 回傳失敗:", result.message);
+            var cachedDataFallback = getCachedMember(userId, brandParam);
+            if (cachedDataFallback) {
+                console.log("📦 使用快取資料（API 失敗）");
+                userData = cachedDataFallback;
+                document.getElementById('loading').style.display = 'none';
+                displayMemberUI(cachedDataFallback);
+                showToast('⚠️ 伺服器異常，顯示上次快取');
+            } else {
+                document.getElementById('loading').style.display = 'none';
+                showToast(result.message || '載入失敗，請重新整理');
+                document.getElementById('memberUI').style.display = 'none';
+                document.getElementById('regUI').style.display = 'none';
+                document.getElementById('welcomeUI').style.display = 'flex';
+            }
         }
     } catch (e) {
-        // 🔥 超時或網路錯誤
+        // 🔥 DOMException 或網路錯誤
         console.error('Fetch Error:', e);
 
-        // 嘗試使用快取
+        // ✅ 優先使用快取
         var cachedDataFallback = getCachedMember(userId, brandParam);
         if (cachedDataFallback) {
             console.log("📦 使用快取資料（網路錯誤）");
@@ -1277,8 +1284,9 @@ async function fetchData(isReload, brandParam) {
             displayMemberUI(cachedDataFallback);
             showToast('⚠️ 網路異常，顯示上次快取');
         } else {
+            // ✅ 沒有快取，顯示歡迎頁面
             document.getElementById('loading').style.display = 'none';
-            showToast('資料載入失敗，請稍後再試');
+            showToast('無法連線伺服器，請檢查網路');
             document.getElementById('memberUI').style.display = 'none';
             document.getElementById('regUI').style.display = 'none';
             document.getElementById('welcomeUI').style.display = 'flex';
