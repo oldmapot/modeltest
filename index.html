@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+     <!-- 🔥 防止快取 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>老娘的一點心意/內測版</title>
@@ -1048,24 +1052,54 @@ async function refreshAll() {
     }
 }
 // ============================================================
-// ✅ fetchData（優化版 - 使用打包 API）
+// ✅ fetchData（優化版 - 含每日強制刷新 + 品牌參數）
 // ============================================================
-async function fetchData(isReload) {
+async function fetchData(isReload, brandParam) {
     if (isReload === undefined) isReload = false;
     
-    // 🔥 1️⃣ 檢查快取
-    var cachedData = getCachedMember(userId);
-    if (cachedData && !isReload) {
+    // 如果沒有傳入 brand，從 URL 讀取或預設 OMP
+    if (!brandParam) {
+        var urlParams = new URLSearchParams(window.location.search);
+        brandParam = urlParams.get('brand') || 'OMP';
+    }
+    
+    // ============================================================
+    //  🔥 每日首次開啟強制刷新
+    // ============================================================
+    var lastFetchDateKey = 'last_fetch_date_' + userId + '_' + brandParam;
+    var lastFetchDate = localStorage.getItem(lastFetchDateKey);
+    var today = new Date().toDateString();
+    
+    var forceRefresh = false;
+    if (lastFetchDate !== today) {
+        console.log("📅 每日首次開啟，強制刷新資料");
+        forceRefresh = true;
+        localStorage.setItem(lastFetchDateKey, today);
+    }
+    
+    // ============================================================
+    //  🔥 檢查快取（強制刷新時跳過）
+    // ============================================================
+    var cachedData = null;
+    if (!forceRefresh && !isReload) {
+        cachedData = getCachedMember(userId, brandParam);
+    }
+    
+    if (cachedData) {
         console.log('✅ 從快取載入會員資料');
         userData = cachedData;
         document.getElementById('loading').style.display = 'none';
-        renderAllData(cachedData);  // ← 改用 renderAllData
+        renderAllData(cachedData);
         // 背景更新
-        setTimeout(function() { backgroundUpdate(userId); }, 500);
+        setTimeout(function() { 
+            backgroundUpdate(userId, brandParam); 
+        }, 500);
         return;
     }
     
-    // 🔥 2️⃣ 顯示 loading
+    // ============================================================
+    //  🔥 顯示 loading 並從 GAS 讀取
+    // ============================================================
     document.getElementById('loading').style.display = 'flex';
     var loadingText = document.getElementById('loading-text');
     var defaultTexts = currentFrom === 'so' ? 
@@ -1074,8 +1108,11 @@ async function fetchData(isReload) {
     loadingText.innerText = defaultTexts[Math.floor(Math.random() * defaultTexts.length)];
     
     try {
-        // 🔥 3️⃣ 改用 getAggregatedData（1 次請求）
-        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + '&t=' + Date.now();
+        // 🔥 加入多個 cache-busting 參數
+        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + 
+                  '&brand=' + brandParam + 
+                  '&t=' + Date.now() + 
+                  '&_=' + Math.random();
         var res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var result = await res.json();
@@ -1084,8 +1121,8 @@ async function fetchData(isReload) {
         
         if (result.success) {
             userData = result.data;
-            setCachedMember(userId, result.data);
-            renderAllData(result.data);  // ← 改用 renderAllData
+            setCachedMember(userId, brandParam, result.data);
+            renderAllData(result.data);
             if (isReload) showToast('✅ 資料已更新');
         } else {
             showToast(result.message || '載入失敗');
