@@ -521,30 +521,32 @@ function backgroundUpdate(userId, brandParam) {
 
                 // ✅ 轉換資料格式（和  一樣！）
                 var convertedData = {
-                    user: newData.user,
-                    coupons: newData.coupons || [],
-                    meta: newData.meta || {},
-                    isMember: true,
-                    "目前剩餘點": newData.user?.currentPoints || 0,
-                    points: newData.user?.currentPoints || 0,
-                    name: newData.user?.displayName || '',
-                    welcomePhrases: newData.meta?.welcomePhrases || [],
-                    shopKey: newData.user?.shopKey || '',
-                    shopCode: newData.meta?.brandCode || 'OMP',
-                    profile: {
-                        name: newData.user?.displayName || '',
-                        phone: newData.user?.phone || '',
-                        birthday: newData.user?.birthday || ''
-                    },
-                    coupons: newData.coupons || [],
-                    myReferrer: newData.myReferrer || '無',
-                    myReferrals: newData.myReferrals || [],
-                    history: newData.history || [],
-                    shopInfo: newData.shopInfo || [],
-                    soEvents: newData.soEvents || [],
-                    ompEvents: newData.ompEvents || [],
-                    expiringPoints: newData.expiringPoints || 0
-                };
+    user: Object.assign({}, newData.user || {}, {
+        shopCode: newData.meta?.brandCode || 'OMP',
+        shopKey: newData.user?.shopKey || 'TEMP_' + userId.substring(0, 8)
+    }),
+    coupons: newData.coupons || [],
+    meta: newData.meta || {},
+    isMember: true,
+    "目前剩餘點": newData.user?.currentPoints || 0,
+    points: newData.user?.currentPoints || 0,
+    name: newData.user?.displayName || '',
+    welcomePhrases: newData.meta?.welcomePhrases || [],
+    shopKey: newData.user?.shopKey || '',
+    shopCode: newData.meta?.brandCode || 'OMP',
+    profile: {
+        name: newData.user?.displayName || '',
+        phone: newData.user?.phone || '',
+        birthday: newData.user?.birthday || ''
+    },
+    myReferrer: newData.myReferrer || '無',
+    myReferrals: newData.myReferrals || [],
+    history: newData.history || [],
+    shopInfo: newData.shopInfo || [],
+    soEvents: newData.soEvents || [],
+    ompEvents: newData.ompEvents || [],
+    expiringPoints: newData.expiringPoints || 0
+};
 
                 // ✅ 比對是否有變化
                 var oldDataCopy = Object.assign({}, cachedData);
@@ -1273,7 +1275,7 @@ async function fetchData(isReload, brandParam) {
         phone: newData.user?.phone || '',
         birthday: newData.user?.birthday || ''
     },
-    coupons: newData.coupons || [],
+   
     myReferrer: newData.myReferrer || '無',
     myReferrals: newData.myReferrals || [],
     history: newData.history || [],
@@ -1384,30 +1386,32 @@ async function refreshInBackground() {
 
             // ✅ 轉換資料格式
             var convertedData = {
-                user: newData.user,
-                coupons: newData.coupons || [],
-                meta: newData.meta || {},
-                isMember: true,
-                "目前剩餘點": newData.user?.currentPoints || 0,
-                points: newData.user?.currentPoints || 0,
-                name: newData.user?.displayName || '',
-                welcomePhrases: newData.meta?.welcomePhrases || [],
-                shopKey: newData.user?.shopKey || '',
-                shopCode: newData.meta?.brandCode || 'OMP',
-                profile: {
-                    name: newData.user?.displayName || '',
-                    phone: newData.user?.phone || '',
-                    birthday: newData.user?.birthday || ''
-                },
-                coupons: newData.coupons || [],
-                myReferrer: newData.myReferrer || '無',
-                myReferrals: newData.myReferrals || [],
-                history: newData.history || [],
-                shopInfo: newData.shopInfo || [],
-                soEvents: newData.soEvents || [],
-                ompEvents: newData.ompEvents || [],
-                expiringPoints: newData.expiringPoints || 0
-            };
+    user: Object.assign({}, newData.user || {}, {
+        shopCode: newData.meta?.brandCode || 'OMP',
+        shopKey: newData.user?.shopKey || 'TEMP_' + userId.substring(0, 8)
+    }),
+    coupons: newData.coupons || [],
+    meta: newData.meta || {},
+    isMember: true,
+    "目前剩餘點": newData.user?.currentPoints || 0,
+    points: newData.user?.currentPoints || 0,
+    name: newData.user?.displayName || '',
+    welcomePhrases: newData.meta?.welcomePhrases || [],
+    shopKey: newData.user?.shopKey || '',
+    shopCode: newData.meta?.brandCode || 'OMP',
+    profile: {
+        name: newData.user?.displayName || '',
+        phone: newData.user?.phone || '',
+        birthday: newData.user?.birthday || ''
+    },
+    myReferrer: newData.myReferrer || '無',
+    myReferrals: newData.myReferrals || [],
+    history: newData.history || [],
+    shopInfo: newData.shopInfo || [],
+    soEvents: newData.soEvents || [],
+    ompEvents: newData.ompEvents || [],
+    expiringPoints: newData.expiringPoints || 0
+};
 
             var oldData = getCachedMember(userId, brandParam);
             var oldStr = JSON.stringify(oldData);
