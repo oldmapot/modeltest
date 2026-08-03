@@ -1208,8 +1208,8 @@ async function fetchData(isReload, brandParam) {
                 var convertedData = {
     // 💡 把原本的 user: newData.user, 改成這樣打包（確保 userData.user.shopKey 抓得到）：
     user: Object.assign({}, newData.user || {}, {
-        shopCode: (newData.meta && newData.meta.brandCode) || brandParam || 'OMP',
-        shopKey: (newData.user && newData.user.shopKey) || ''
+        shopCode: newData.meta?.brandCode || 'OMP',
+        shopKey: (newData.user && newData.user.shopKey) || getRandomKeyFromCache(brandParam) || 'TEMP_' + userId.substring(0, 8)
     }),
                     coupons: newData.coupons || [],
                     meta: newData.meta || {},
@@ -1296,6 +1296,15 @@ async function fetchData(isReload, brandParam) {
             document.getElementById('welcomeUI').style.display = 'flex';
         }
     }
+}
+function getRandomKeyFromCache(brandParam) {
+    var cacheKey = 'shopKey_' + brandParam;
+    var cached = localStorage.getItem(cacheKey);
+    if (cached) return cached;
+    
+    var newKey = 'TEMP_' + Date.now().toString(36).toUpperCase();
+    localStorage.setItem(cacheKey, newKey);
+    return newKey;
 }
 // ============================================================
 // ✅ 背景更新（不阻塞畫面）- 修正版
