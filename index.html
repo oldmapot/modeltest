@@ -250,7 +250,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Helvetica
         <div class="side-menu-header"><h3>心意盒</h3></div>
         <div class="side-menu-items">
             <button class="side-menu-item" onclick="openProfile(); closeSideMenu()">👤 個人資料</button>
-            <button class="side-menu-item" onclick="openGiftBox(); closeSideMenu()">🎁 盒</button>
+            <button class="side-menu-item" onclick="openGiftBox(); closeSideMenu()">🎁 心意寶盒</button>
             <button class="side-menu-item" onclick="openReferral(); closeSideMenu()">👥 推薦名單</button>
             <button class="side-menu-item" onclick="openPointHistory(); closeSideMenu()">📜 點數明細</button>
             <button class="side-menu-item" onclick="openShopInfo(); closeSideMenu()">🏪 店面資訊</button>
@@ -891,11 +891,11 @@ function generateMemberCode() {
 // ✅ 心意寶盒（點擊彈出 QR Code）- 修正版
 // ============================================================
 function openGiftBox() {
-   console.log('newData:', newData);
-console.log('newData.coupons:', newData?.coupons);
     console.log("📊 userData.coupons:", userData?.coupons);
     console.log('userData.coupons:', userData?.coupons);
     console.log('userData.coupons 長度:', userData?.coupons?.length);
+     console.log('newData 是否存在:', typeof newData);
+console.log('newData.coupons:', newData?.coupons);
     
     var coupons = userData?.coupons || [];
     console.log("📊 coupons 數量:", coupons.length);
