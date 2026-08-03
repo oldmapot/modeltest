@@ -328,6 +328,59 @@ body { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Helvetica
         <button style="width:100%; padding:18px; border:none; background:#eee; font-weight:bold;" onclick="closeModal()">關閉</button>
     </div>
 </div>
+
+<!-- ============================================================
+     遊戲 Modal（iframe 嵌入）
+     ============================================================ -->
+<div id="gameModal" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+">
+    <div style="
+        position: relative;
+        width: 95%;
+        max-width: 480px;
+        height: 95vh;
+        max-height: 800px;
+        background: #1a0a0a;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 0 60px rgba(200,50,50,0.3);
+    ">
+        <!-- 關閉按鈕 -->
+        <button onclick="closeGameModal()" style="
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            z-index: 10;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 22px;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        ">✕</button>
+        
+        <!-- iframe -->
+        <iframe id="gameIframe" src="" style="
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        "></iframe>
+    </div>
+</div>
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/vconsole@latest/dist/vconsole.min.js"></script>//上線刪除
 <script>//上線刪除
@@ -1262,20 +1315,40 @@ async function doRegister() {
     }
 }
 // ============================================================
-// ✅ 開啟火鍋達人遊戲
+//  🎮 開啟火鍋達人遊戲（iframe Modal 版本）
 // ============================================================
+
 function openGame() {
     if (!userId) {
         showToast('⚠️ 請先登入會員');
         return;
     }
 
-    const gameUrl = 'https://oldmapot.github.io/modeltest/game.html';
-    const fullUrl = gameUrl + '?userId=' + encodeURIComponent(userId) + 
-                    '&api=' + encodeURIComponent(GAS_URL) +
-                    '&t=' + Date.now();
+    // 構建遊戲 URL（帶入 userId 和 API 網址）
+    var gameUrl = 'https://oldmapot.github.io/modeltest/game.html';
+    var fullUrl = gameUrl + '?userId=' + encodeURIComponent(userId) + 
+                  '&api=' + encodeURIComponent(GAS_URL) +
+                  '&t=' + Date.now();
 
-    window.location.href = fullUrl;
+    // 設定 iframe 並顯示 Modal
+    var iframe = document.getElementById('gameIframe');
+    iframe.src = fullUrl;
+    
+    var modal = document.getElementById('gameModal');
+    modal.style.display = 'flex';
+}
+
+// ============================================================
+//  🎮 關閉遊戲 Modal
+// ============================================================
+
+function closeGameModal() {
+    var modal = document.getElementById('gameModal');
+    modal.style.display = 'none';
+    
+    // 清除 iframe src（停止遊戲運行）
+    var iframe = document.getElementById('gameIframe');
+    iframe.src = '';
 }
 // ============================================================
 // ✅ 活動、推薦、點數明細、個人資料
@@ -1828,7 +1901,32 @@ document.getElementById('regPhone').addEventListener('input', function(e) {
 // ============================================================
 // ✅ 啟動
 // ============================================================
+// ============================================================
+//  📨 監聽遊戲結束訊息（postMessage）
+//  🔥 放在 initLiff() 之前或之後都可以
+// ============================================================
+
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'GAME_OVER') {
+        console.log('🎮 收到遊戲結束訊息:', event.data);
+        closeGameModal();
+        if (event.data.success) {
+            if (event.data.isWin) {
+                showToast('🎉 恭喜獲得 ' + event.data.bonusPoints + ' 點！');
+            } else {
+                showToast('😅 再接再厲！得分：' + event.data.score + ' 分');
+            }
+            setTimeout(function() {
+                refreshAll();
+            }, 500);
+        } else {
+            showToast('⚠️ ' + (event.data.message || '遊戲結果儲存失敗'));
+        }
+    }
+});
+
 initLiff();
+    
 </script>
 </body>
 </html>
