@@ -1315,20 +1315,87 @@ function displayMemberUI(data) {
     console.log('✅ 會員畫面已顯示，點數:', displayPoints);
 }
 // ============================================================
-// ✅ 檢查好友狀態（呼叫 GAS API）
+// ✅ 檢查好友狀態（加入防呆 + 重試機制）
 // ============================================================
 async function checkFriendshipStatus(userId) {
-  try {
-    var brand = currentFrom === 'so' ? 'swo' : 'omp';
-    var url = GAS_URL + '?action=checkFriendship&userId=' + encodeURIComponent(userId) + '&brand=' + brand + '&t=' + Date.now();
-    var res = await fetch(url);
-    var result = await res.json();
-    console.log("📱 好友檢查結果:", result);
-    return result.isFriend === true;
-  } catch(e) {
-    console.error("❌ 檢查好友狀態失敗:", e);
-    return false;
-  }
+    try {
+        console.log("🔍 開始檢查好友狀態，userId:", userId);
+        
+        // 🔥 確保 LIFF SDK 已完全初始化
+        if (typeof liff === 'undefined') {
+            console.warn("⚠️ LIFF 尚未定義，等待初始化...");
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        // 🔥 等待 LIFF 完全準備好（最多等待 5 秒）
+        let retries = 0;
+        let maxRetries = 5;
+        let friendFlag = false;
+        let lastError = null;
+        
+        while (retries < maxRetries) {
+            try {
+                console.log(`🔄 嘗試檢查好友 (${retries + 1}/${maxRetries})`);
+                
+                // 檢查 LIFF 是否可用
+                if (!liff.isLoggedIn()) {
+                    console.warn("⚠️ 尚未登入 LIFF，等待...");
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    retries++;
+                    continue;
+                }
+                
+                // 🔥 呼叫 LIFF SDK 檢查好友
+                const friendStatus = await liff.getFriendship();
+                console.log("📱 好友狀態原始回應:", friendStatus);
+                
+                friendFlag = friendStatus.friendFlag === true;
+                console.log("📱 好友檢查結果:", friendFlag);
+                
+                if (friendFlag) {
+                    console.log("✅ 已加入官方帳號好友！");
+                    return true;
+                } else {
+                    console.log("⚠️ 尚未加入官方帳號好友");
+                    return false;
+                }
+                
+            } catch (innerError) {
+                lastError = innerError;
+                console.warn(`⚠️ 檢查好友失敗 (嘗試 ${retries + 1}/${maxRetries}):`, innerError.message);
+                
+                // 等待後重試
+                await new Promise(resolve => setTimeout(resolve, 800));
+                retries++;
+            }
+        }
+        
+        // 所有重試都失敗
+        console.error("❌ 檢查好友狀態最終失敗:", lastError);
+        
+        // 🔥 關鍵：如果 GAS API 失敗，改用前端 LIFF SDK 檢查
+        console.log("🔄 改用備用方案：前端 LIFF 檢查");
+        try {
+            if (liff.isInClient()) {
+                // 使用前端 LIFF 方式檢查好友
+                const friendStatus = await liff.getFriendship();
+                console.log("📱 前端 LIFF 好友檢查結果:", friendStatus);
+                return friendStatus.friendFlag === true;
+            }
+        } catch (fallbackError) {
+            console.error("❌ 備用方案也失敗:", fallbackError);
+        }
+        
+        // 最後防呆：如果全部失敗，假設已加入好友（讓流程繼續）
+        console.warn("⚠️ 好友檢查完全失敗，預設回傳 true（讓流程繼續）");
+        return true;
+        
+    } catch (e) {
+        console.error("❌ checkFriendshipStatus 外部錯誤:", e);
+        // 🔥 最後防呆：回傳 true，避免用戶被卡住
+        console.warn("⚠️ 好友檢查異常，預設回傳 true（讓流程繼續）");
+        return true;
+    }
 }
 // ============================================================
 // ✅ 顯示引導加入好友畫面
@@ -1925,6 +1992,9 @@ async function initLiff() {
     try {
         await liff.init({ liffId: LIFF_ID });
         
+        // 🔥🔥🔥 加入這行：等待 LIFF SDK 完全初始化
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
         if (!liff.isInClient()) {
             console.log('❌ 請在 LINE App 內開啟');
             showBlockPage('📱 僅支援手機 LINE App 開啟使用');
@@ -1992,6 +2062,9 @@ loadingText.innerText = defaultTexts[randomIndex];
             return; 
         }
         
+        // 🔥🔥🔥 加入這行：確保 Profile 可以正常讀取
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         const currentUserId = (await liff.getProfile()).userId;
         const storedUserId = sessionStorage.getItem('liff_user_id');
         const storedFrom = sessionStorage.getItem('liff_from');
@@ -2032,19 +2105,20 @@ loadingText.innerText = defaultTexts[randomIndex];
             userId = currentUserId;
             console.log('✅ 設定 userId:', userId);
         }
-// ============================================================
-// 🔥 加入好友檢查（在載入會員資料之前）
-// ============================================================
-console.log('🔍 檢查好友狀態，userId:', userId);
-var friendCheckResult = await checkFriendshipStatus(userId);
-console.log('📱 好友檢查結果:', friendCheckResult);
-
-if (!friendCheckResult) {
-    // 未加入好友 → 顯示引導畫面，不繼續載入會員資料
-    document.getElementById('loading').style.display = 'none';
-    showAddFriendGuide();
-    return;  // 停止繼續執行
-}
+        
+        // ============================================================
+        // 🔥 加入好友檢查（在載入會員資料之前）
+        // ============================================================
+        console.log('🔍 檢查好友狀態，userId:', userId);
+        var friendCheckResult = await checkFriendshipStatus(userId);
+        console.log('📱 好友檢查結果:', friendCheckResult);
+        
+        if (!friendCheckResult) {
+            // 未加入好友 → 顯示引導畫面，不繼續載入會員資料
+            document.getElementById('loading').style.display = 'none';
+            showAddFriendGuide();
+            return;  // 停止繼續執行
+        }
         
         await fetchData(false, brandParam);
         
