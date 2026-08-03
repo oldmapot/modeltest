@@ -1184,7 +1184,11 @@ async function fetchData(isReload, brandParam) {
         
         if (result.success) {
     var newData = result.data;
-    
+    // ✅ 先定義 isValidData
+    var isValidData = newData && 
+                      newData.user && 
+                      newData.user.displayName && 
+                      newData.user.displayName.trim() !== '';
     // ============================================================
     //  🔥🔥🔥 防禦性檢查：確保資料有效才更新
     // ============================================================
