@@ -1322,7 +1322,7 @@ function displayMemberUI(data) {
 // 邏輯：已註冊會員 → 直接放行，不檢查好友
 //       未註冊會員 → 檢查好友狀態
 // ============================================================
-async function checkFriendshipStatus(userId) {
+async function checkFriendshipStatus(userId, brandParam) {
     try {
         console.log("🔍 檢查好友狀態，userId:", userId);
         
@@ -2096,7 +2096,7 @@ loadingText.innerText = defaultTexts[randomIndex];
         // 🔥 加入好友檢查（在載入會員資料之前）
         // ============================================================
         console.log('🔍 檢查好友狀態，userId:', userId);
-        var friendCheckResult = await checkFriendshipStatus(userId);
+        var friendCheckResult = await checkFriendshipStatus(userId, brandParam);
         console.log('📱 好友檢查結果:', friendCheckResult);
         
         if (!friendCheckResult) {
