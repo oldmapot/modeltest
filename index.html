@@ -479,9 +479,6 @@ function renderAllData(data) {
   
   console.log("✅ 頁面渲染完成");
 }
-// ============================================================
-//  🔄 背景更新（SWR）- 修正版（加入防禦性檢查）
-// ============================================================
 
 // ============================================================
 //  🔄 背景更新（SWR）- 修正版
@@ -1289,32 +1286,75 @@ async function fetchData(isReload, brandParam) {
     }
 }
 // ============================================================
-// ✅ 背景更新（改用 getAggregatedData）
+// ✅ 背景更新（不阻塞畫面）- 修正版
 // ============================================================
 async function refreshInBackground() {
     try {
-        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + '&t=' + Date.now();
+        var urlParams = new URLSearchParams(window.location.search);
+        var brandParam = urlParams.get('brand') || 'OMP';
+
+        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId +
+            '&brand=' + brandParam +
+            '&t=' + Date.now();
         var res = await fetch(url);
         var result = await res.json();
-        
+
         if (result.success) {
             var newData = result.data;
-            var oldData = getCachedMember(userId);
+
+            // ✅ 防禦性檢查
+            var isValidData = newData &&
+                newData.user &&
+                newData.user.displayName &&
+                newData.user.displayName.trim() !== '';
+
+            if (!isValidData) {
+                console.warn("⚠️ 背景更新收到無效資料");
+                return;
+            }
+
+            // ✅ 轉換資料格式
+            var convertedData = {
+                user: newData.user,
+                coupons: newData.coupons || [],
+                meta: newData.meta || {},
+                isMember: true,
+                "目前剩餘點": newData.user?.currentPoints || 0,
+                points: newData.user?.currentPoints || 0,
+                name: newData.user?.displayName || '',
+                welcomePhrases: newData.meta?.welcomePhrases || [],
+                shopKey: newData.user?.shopKey || '',
+                shopCode: newData.meta?.brandCode || 'OMP',
+                profile: {
+                    name: newData.user?.displayName || '',
+                    phone: newData.user?.phone || '',
+                    birthday: newData.user?.birthday || ''
+                },
+                coupons: newData.coupons || [],
+                myReferrer: newData.myReferrer || '無',
+                myReferrals: newData.myReferrals || [],
+                history: newData.history || [],
+                shopInfo: newData.shopInfo || [],
+                soEvents: newData.soEvents || [],
+                ompEvents: newData.ompEvents || [],
+                expiringPoints: newData.expiringPoints || 0
+            };
+
+            var oldData = getCachedMember(userId, brandParam);
             var oldStr = JSON.stringify(oldData);
-            var newStr = JSON.stringify(newData);
-            
+            var newStr = JSON.stringify(convertedData);
+
             if (oldStr !== newStr) {
-                userData = newData;
-                setCachedMember(userId, newData);
-                renderAllData(newData);
+                userData = convertedData;
+                setCachedMember(userId, brandParam, convertedData);
+                displayMemberUI(convertedData);
                 console.log('🔄 背景更新完成');
             }
         }
-    } catch(e) {
+    } catch (e) {
         console.log('背景更新失敗:', e);
     }
 }
-
 // ============================================================
 // ✅ 顯示會員畫面
 // ============================================================
