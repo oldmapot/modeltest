@@ -1109,7 +1109,7 @@ function toggleGiftItem(itemId) {
 }
 
 // ============================================================
-// ✅ refreshAll（改用 getAggregatedData）
+// ✅ refreshAll（改用 getAggregatedData + 轉換格式）
 // ============================================================
 async function refreshAll() {
     if (!userId) return;
@@ -1118,15 +1118,51 @@ async function refreshAll() {
     if (refreshBtn) refreshBtn.disabled = true;
     
     try {
-        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + '&t=' + Date.now();
+        var urlParams = new URLSearchParams(window.location.search);
+        var brandParam = urlParams.get('brand') || 'OMP';
+        
+        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + 
+                  '&brand=' + brandParam +
+                  '&t=' + Date.now() + 
+                  '&_=' + Math.random();
         var res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var result = await res.json();
         
         if (result.success) {
-            userData = result.data;
-            setCachedMember(userId, result.data);
-            renderAllData(result.data);
+            var newData = result.data;
+            
+            // 🔥 轉換成 displayMemberUI 要的格式
+            var convertedData = {
+                user: Object.assign({}, newData.user || {}, {
+                    shopCode: newData.meta?.brandCode || 'OMP',
+                    shopKey: (newData.user && newData.user.shopKey) || 'TEMP_' + userId.substring(0, 8)
+                }),
+                coupons: newData.coupons || [],
+                meta: newData.meta || {},
+                isMember: true,
+                "目前剩餘點": newData.user?.currentPoints || 0,
+                points: newData.user?.currentPoints || 0,
+                name: newData.user?.displayName || '',
+                welcomePhrases: newData.meta?.welcomePhrases || [],
+                profile: {
+                    name: newData.user?.displayName || '',
+                    phone: newData.user?.phone || '',
+                    birthday: newData.user?.birthday || ''
+                },
+                coupons: newData.coupons || [],
+                myReferrer: newData.myReferrer || '無',
+                myReferrals: newData.myReferrals || [],
+                history: newData.history || [],
+                shopInfo: newData.shopInfo || [],
+                soEvents: newData.soEvents || [],
+                ompEvents: newData.ompEvents || [],
+                expiringPoints: newData.expiringPoints || 0
+            };
+            
+            userData = convertedData;
+            setCachedMember(userId, brandParam, convertedData);
+            displayMemberUI(convertedData);  // ✅ 改用 displayMemberUI
             showToast('✅ 資料已更新');
         } else {
             showToast('資料更新失敗，請稍後再試');
