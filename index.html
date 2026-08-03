@@ -861,13 +861,30 @@ function updateCountdownDisplay() {
 }
 
 function generateMemberCode() {
-    if (!userId || !userData?.shopKey) return;
-    var shopCode = userData.shopCode;
-    var randomKey = userData.shopKey;
+    if (!userId) {
+        console.warn('⚠️ userId 為空，無法產生 QR Code');
+        return;
+    }
+    
+    // 🔥 從 user 物件讀取
+    var shopCode = userData?.user?.shopCode || userData?.shopCode || 'omp';
+    var randomKey = userData?.user?.shopKey || userData?.shopKey || '';
+    
+    if (!randomKey) {
+        console.warn('⚠️ shopKey 為空，使用臨時金鑰');
+        randomKey = 'TEMP_' + userId.substring(0, 8);
+    }
+    
     var qrData = shopCode + '_' + randomKey + '_' + userId;
     var qrImg = document.getElementById('qrcode');
-    qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(qrData);
-    startCountdown(60);
+    
+    if (qrImg) {
+        qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(qrData);
+        startCountdown(60);
+        console.log('✅ QR Code 已產生');
+    } else {
+        console.error('❌ 找不到 qrcode 元素');
+    }
 }
 
 // ============================================================
@@ -1205,35 +1222,35 @@ async function fetchData(isReload, brandParam) {
 
             if (isValidData) {
                 // ✅ 轉換資料格式
-                var convertedData = {
-    // 💡 把原本的 user: newData.user, 改成這樣打包（確保 userData.user.shopKey 抓得到）：
+               var convertedData = {
+    // ✅ 把 shopCode 和 shopKey 只放在 user 物件裡面
     user: Object.assign({}, newData.user || {}, {
         shopCode: newData.meta?.brandCode || 'OMP',
         shopKey: (newData.user && newData.user.shopKey) || getRandomKeyFromCache(brandParam) || 'TEMP_' + userId.substring(0, 8)
     }),
-                    coupons: newData.coupons || [],
-                    meta: newData.meta || {},
-                    isMember: true,
-                    "目前剩餘點": newData.user?.currentPoints || 0,
-                    points: newData.user?.currentPoints || 0,
-                    name: newData.user?.displayName || '',
-                    welcomePhrases: newData.meta?.welcomePhrases || [],
-                    shopCode: newData.meta?.brandCode || brandParam || 'OMP',
-                    shopKey: newData.user?.shopKey || '',
-                    profile: {
-                        name: newData.user?.displayName || '',
-                        phone: newData.user?.phone || '',
-                        birthday: newData.user?.birthday || ''
-                    },
-                    coupons: newData.coupons || [],
-                    myReferrer: newData.myReferrer || '無',
-                    myReferrals: newData.myReferrals || [],
-                    history: newData.history || [],
-                    shopInfo: newData.shopInfo || [],
-                    soEvents: newData.soEvents || [],
-                    ompEvents: newData.ompEvents || [],
-                    expiringPoints: newData.expiringPoints || 0
-                };
+    coupons: newData.coupons || [],
+    meta: newData.meta || {},
+    isMember: true,
+    "目前剩餘點": newData.user?.currentPoints || 0,
+    points: newData.user?.currentPoints || 0,
+    name: newData.user?.displayName || '',
+    welcomePhrases: newData.meta?.welcomePhrases || [],
+    // ❌ 刪除這行：shopCode: newData.meta?.brandCode || brandParam || 'OMP',
+    // ❌ 刪除這行：shopKey: newData.user?.shopKey || '',
+    profile: {
+        name: newData.user?.displayName || '',
+        phone: newData.user?.phone || '',
+        birthday: newData.user?.birthday || ''
+    },
+    coupons: newData.coupons || [],
+    myReferrer: newData.myReferrer || '無',
+    myReferrals: newData.myReferrals || [],
+    history: newData.history || [],
+    shopInfo: newData.shopInfo || [],
+    soEvents: newData.soEvents || [],
+    ompEvents: newData.ompEvents || [],
+    expiringPoints: newData.expiringPoints || 0
+};
 
                 userData = convertedData;
                 setCachedMember(userId, brandParam, convertedData);
