@@ -582,11 +582,11 @@ async function getCouponPrefixes() {
         
         // 🔥 如果 API 失敗，才用預設值（但這個情況應該很少發生）
         console.error("❌ API 回傳空或失敗，使用硬編碼預設值（請檢查 GAS）");
-        cachedPrefixes = ["ANN_omp_pt01", "GIFT_omp_gf01", "BIR_omp_gf02", "SPC_omp_fe01", "MEM_omp_pt02"];
+        cachedPrefixes = ["ANN_OMP_pt01", "GIFT_OMP_gf01", "BIR_OMP_gf02", "SPC_OMP_fe01", "MEM_OMP_pt02"];
         return cachedPrefixes;
     } catch (e) {
         console.error("❌ 取得優惠券前綴失敗:", e);
-        cachedPrefixes = ["ANN_omp_pt01", "GIFT_omp_gf01", "BIR_omp_gf02", "SPC_omp_fe01", "MEM_omp_pt02"];
+        cachedPrefixes = ["ANN_OMP_pt01", "GIFT_OMP_gf01", "BIR_OMP_gf02", "SPC_OMP_fe01", "MEM_OMP_pt02"];
         return cachedPrefixes;
     }
 }
@@ -1250,7 +1250,7 @@ function parseScannedCode(scannedText) {
         var shopCode = parts[0];
         var shopKey = parts[1];
         var userId = parts[2];
-        if (shopCode === "omp" || shopCode === "swo") {
+        if (shopCode === "OMP" || shopCode === "") {
             console.log("✅ 識別為【會員 QR】，memberId:", userId);
             return { 
                 type: "member", 
@@ -1268,7 +1268,7 @@ function parseScannedCode(scannedText) {
         var userId = parts[3];      // ← 這裡就是 memberId
         
         // 確認品牌代號有效
-        if (brandCode === "omp" || brandCode === "swo") {
+        if (brandCode === "OMP" || brandCode === "") {
             console.log("✅ 識別為【優惠券 QR】");
             console.log("   brandCode:", brandCode);
             console.log("   couponId:", couponId);
@@ -1380,7 +1380,7 @@ if (scanMode === 'coupon') {
     const deviceId = staff.deviceId || "";
     
     // 🔥 傳送完整 QR 字串
-    const fullQr = parsed.fullData;  // ANN_omp_pt01_U590...
+    const fullQr = parsed.fullData;  // ANN_OMP_pt01_U590...
     console.log("🎯 優惠券掃描，完整 QR:", fullQr);
     
     showLoading("🔄 處理優惠券兌換中...");
@@ -1480,7 +1480,7 @@ if (scanMode === 'coupon') {
                     config.earnRate = Number(config.earnRate) || 0.03;
                     config.maxRate = Number(config.maxRate) || 0;
                     config.minSpend = Number(config.minSpend) || 0;
-                    config.shopCode = config.shopCode || parsed.shopCode || "omp";
+                    config.shopCode = config.shopCode || parsed.shopCode || "OMP";
                     
                     customerId = data.member.userId;
                     currentPoints = data.member.points || 0;
@@ -1629,7 +1629,7 @@ function doCalc() {
     const levelRate = cfg.levelRate || 1;
     const eventMultiplier = cfg.eventMultiplier || 1;
     const maxRate = cfg.maxRate || 0;
-    const shopCode = cfg.shopCode || 'omp';
+    const shopCode = cfg.shopCode || 'OMP';
     
     // ---------- 6. 計算實際消費金額 ----------
     // 實際消費 = 總額 - 餐券 - 活動折抵（優惠券折抵）
@@ -1719,7 +1719,7 @@ function doCalc() {
             tipMessage = '🚫 今日活動暫停折抵';
             tipClass = 'redeem-tip tip-no-redeem';
         } else {
-            const minSpendThreshold = shopCode === 'swo' ? 500 : 1500;
+            const minSpendThreshold = shopCode === '' ? 500 : 1500;
             
             if (baseAmount < minSpendThreshold) {
                 maxRedeem = 0;
