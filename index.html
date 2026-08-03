@@ -894,6 +894,8 @@ function openGiftBox() {
     console.log("🎁 開啟心意寶盒");
     console.log("📊 userData:", userData);
     console.log("📊 userData.coupons:", userData?.coupons);
+    console.log('userData.coupons:', userData?.coupons);
+    console.log('userData.coupons 長度:', userData?.coupons?.length);
     
     var coupons = userData?.coupons || [];
     console.log("📊 coupons 數量:", coupons.length);
