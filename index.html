@@ -519,7 +519,7 @@ function backgroundUpdate(userId, brandParam) {
                     return;
                 }
 
-                // ✅ 轉換資料格式（和 fetchData 一樣！）
+                // ✅ 轉換資料格式（和  一樣！）
                 var convertedData = {
                     user: newData.user,
                     coupons: newData.coupons || [],
@@ -1206,7 +1206,11 @@ async function fetchData(isReload, brandParam) {
             if (isValidData) {
                 // ✅ 轉換資料格式
                 var convertedData = {
-                    user: newData.user,
+    // 💡 把原本的 user: newData.user, 改成這樣打包（確保 userData.user.shopKey 抓得到）：
+    user: Object.assign({}, newData.user || {}, {
+        shopCode: (newData.meta && newData.meta.brandCode) || brandParam || 'OMP',
+        shopKey: (newData.user && newData.user.shopKey) || ''
+    }),
                     coupons: newData.coupons || [],
                     meta: newData.meta || {},
                     isMember: true,
@@ -1214,8 +1218,8 @@ async function fetchData(isReload, brandParam) {
                     points: newData.user?.currentPoints || 0,
                     name: newData.user?.displayName || '',
                     welcomePhrases: newData.meta?.welcomePhrases || [],
+                    shopCode: newData.meta?.brandCode || brandParam || 'OMP',
                     shopKey: newData.user?.shopKey || '',
-                    shopCode: newData.meta?.brandCode || 'OMP',
                     profile: {
                         name: newData.user?.displayName || '',
                         phone: newData.user?.phone || '',
