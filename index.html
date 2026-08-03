@@ -545,7 +545,7 @@ function backgroundUpdate(userId, brandParam) {
                 if (oldStr !== newStr) {
                     console.log("🔄 資料有變化，更新 UI 和快取");
                     setCachedMember(userId, brandParam, newData);
-                    renderAllData(newData);
+                     displayMemberUI(newData);  // ✅ 改這裡！
                 } else {
                     console.log("✅ 資料無變化");
                 }
@@ -1152,7 +1152,7 @@ async function fetchData(isReload, brandParam) {
         console.log('✅ 從快取載入會員資料');
         userData = cachedData;
         document.getElementById('loading').style.display = 'none';
-        renderAllData(cachedData);
+        displayMemberUI(cachedData);
         // 背景更新
         setTimeout(function() { 
             backgroundUpdate(userId, brandParam); 
@@ -1232,7 +1232,7 @@ async function fetchData(isReload, brandParam) {
     // ✅ 儲存轉換後的資料
     userData = convertedData;
     setCachedMember(userId, brandParam, convertedData);
-    renderAllData(convertedData);
+    displayMemberUI(convertedData);
     if (isReload) showToast('✅ 資料已更新');
 } else {
         // ❌ 資料無效，保留原有快取或顯示錯誤
@@ -1243,7 +1243,7 @@ async function fetchData(isReload, brandParam) {
         if (cachedData) {
             console.log("📦 使用快取資料");
             userData = cachedData;
-            renderAllData(cachedData);
+            displayMemberUI(cachedData);
             showToast('⚠️ 資料載入異常，顯示上次快取');
         } else {
             // 無快取，顯示歡迎頁面
