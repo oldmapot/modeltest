@@ -408,6 +408,36 @@ let currentCountdown = 60;
 function renderAllData(data) {
   console.log("🎨 開始渲染頁面資料");
   
+  // ============================================================
+  //  🔥🔥🔥 新增：顯示會員 UI，隱藏其他畫面
+  // ============================================================
+  
+  // 顯示會員 UI
+  const memberUI = document.getElementById('memberUI');
+  if (memberUI) {
+      memberUI.style.display = 'block';
+      memberUI.style.visibility = 'visible';
+      memberUI.style.opacity = '1';
+  }
+  
+  // 隱藏歡迎頁面
+  const welcomeUI = document.getElementById('welcomeUI');
+  if (welcomeUI) {
+      welcomeUI.style.display = 'none';
+  }
+  
+  // 隱藏註冊頁面
+  const regUI = document.getElementById('regUI');
+  if (regUI) {
+      regUI.style.display = 'none';
+  }
+  
+  // 隱藏 loading
+  const loading = document.getElementById('loading');
+  if (loading) {
+      loading.style.display = 'none';
+  }
+  
   // 1️⃣ 渲染會員資訊
   if (data.user) {
     var user = data.user;
