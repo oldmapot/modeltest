@@ -1111,7 +1111,7 @@ async function recheckFriendship() {
       if (guide) guide.remove();
       showToast('✅ 已加入官方帳號！');
       document.getElementById('loading').style.display = 'flex';
-      await fetchData();
+      await fetchData(false, brandParam); 
     } else {
       var guide = document.getElementById('friendGuide');
       if (guide) guide.remove();
@@ -1612,6 +1612,7 @@ async function initLiff() {
 // ✅ 定義 urlParams（從這裡開始使用）
 // ============================================================
 const urlParams = new URLSearchParams(window.location.search);
+var brandParam = urlParams.get('brand') || 'OMP';
 
 currentFrom = urlParams.get('from') || 'omp';
 
@@ -1707,7 +1708,7 @@ if (!friendCheckResult) {
     return;  // 停止繼續執行
 }
         
-        await fetchData();
+        await fetchData(false, brandParam);
         
     } catch(e) { 
         console.error('LIFF init error:', e);
