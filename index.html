@@ -891,35 +891,33 @@ function generateMemberCode() {
 // ✅ 心意寶盒（點擊彈出 QR Code）- 修正版
 // ============================================================
 // ============================================================
-// ✅ 心意寶盒（修正版）- 只使用 userData
+// ✅ 心意寶盒（最終修正版）
 // ============================================================
 function openGiftBox() {
     console.log("🎁 開啟心意寶盒");
     
-    // 🔥 只從 userData 讀取，不使用 newData
-    var coupons = userData?.coupons || [];
+    // 🔥 從 userData 讀取優惠券（不要用 newData！）
+    var coupons = userData && userData.coupons ? userData.coupons : [];
     console.log("📊 userData.coupons 數量:", coupons.length);
-    
-    if (!Array.isArray(coupons)) {
-        console.error("❌ coupons 不是陣列:", coupons);
-        coupons = [];
-    }
     
     if (coupons.length === 0) {
         openModal('<div style="text-align:center;padding:20px;"><div style="font-size:48px;margin-bottom:15px;">🎁</div><div style="font-weight:bold;margin-bottom:10px;">暫無優惠券</div><div style="font-size:14px;color:#999;margin-top:10px;">目前沒有可用的優惠券</div></div>');
         return;
     }
     
+    // 過濾有效優惠券（未使用 + 未過期）
     var now = new Date();
-    var validCoupons = coupons.filter(function(c) {
-        if (!c || typeof c !== 'object') return false;
-        if (c.status !== "未使用") return false;
+    var validCoupons = [];
+    for (var i = 0; i < coupons.length; i++) {
+        var c = coupons[i];
+        if (!c) continue;
+        if (c.status !== "未使用") continue;
         if (c.expiresAt) {
-            var expiresAt = new Date(c.expiresAt);
-            return now <= expiresAt;
+            var expireDate = new Date(c.expiresAt);
+            if (expireDate < now) continue;
         }
-        return true;
-    });
+        validCoupons.push(c);
+    }
     
     console.log("📊 有效優惠券數量:", validCoupons.length);
     
@@ -928,6 +926,7 @@ function openGiftBox() {
         return;
     }
     
+    // 組裝 HTML
     var html = `
         <style>
             .giftbox-header {
