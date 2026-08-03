@@ -868,13 +868,20 @@ function generateMemberCode() {
         return;
     }
     
-    // 🔥 從 user 物件讀取
+    // 🔥 從 user 物件或直接從 userData 讀取
     var shopCode = userData?.user?.shopCode || userData?.shopCode || 'OMP';
     var randomKey = userData?.user?.shopKey || userData?.shopKey || '';
     
+    // 🔥 如果 shopKey 是空的，立刻從快取或動態產生一個
     if (!randomKey) {
-        console.warn('⚠️ shopKey 為空，使用臨時金鑰');
-        randomKey = 'TEMP_' + userId.substring(0, 8);
+        console.warn('⚠️ shopKey 為空，立即產生臨時金鑰');
+        randomKey = 'TEMP_' + userId.substring(0, 8) + '_' + Date.now().toString(36).toUpperCase();
+        // ✅ 立刻存回 userData，避免下次再掉
+        if (userData) {
+            if (!userData.user) userData.user = {};
+            userData.user.shopKey = randomKey;
+            userData.shopKey = randomKey;
+        }
     }
     
     var qrData = shopCode + '_' + randomKey + '_' + userId;
@@ -883,7 +890,7 @@ function generateMemberCode() {
     if (qrImg) {
         qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(qrData);
         startCountdown(60);
-        console.log('✅ QR Code 已產生');
+        console.log('✅ QR Code 已產生，shopKey:', randomKey);
     } else {
         console.error('❌ 找不到 qrcode 元素');
     }
@@ -1437,11 +1444,9 @@ function displayMemberUI(data) {
     document.getElementById('welcomeUI').style.display = 'none';
     document.getElementById('regUI').style.display = 'none';
 
-    // 1️⃣ 點數
     var displayPoints = data["目前剩餘點"] || data.points || 0;
     document.getElementById('pointsDisplay').innerText = displayPoints;
 
-    // 2️⃣ 歡迎詞（從文句池隨機選取）
     var welcomePhrases = data.welcomePhrases || [];
     var welcomeQuote = "歡迎光臨！";
     if (welcomePhrases.length > 0) {
@@ -1450,12 +1455,8 @@ function displayMemberUI(data) {
     }
     document.getElementById('welcomeQuote').innerText = welcomeQuote;
 
-    // 3️⃣ QR Code
-    if (data.shopKey) {
-        generateMemberCode();
-    } else {
-        console.warn('⚠️ shopKey 為空，無法產生 QR Code');
-    }
+    // ✅ 強制產生 QR Code（不管 data.shopKey 是否存在）
+    generateMemberCode();
 
     console.log('✅ 會員畫面已顯示，點數:', displayPoints);
 }
