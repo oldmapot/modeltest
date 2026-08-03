@@ -302,7 +302,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Helvetica
     </div>
 
     <div class="brand-actions">
-        <button class="event-brand-btn" onclick="openEvents('omp')">老娘精選</button>
+        <button class="event-brand-btn" onclick="openEvents('OMP')">老娘精選</button>
         <button class="event-brand-btn" onclick="openGame()">🎮 火鍋達人</button>
     </div>
     <button class="share-btn" onclick="shareWithTargetPicker()">🚀 分享推薦碼，享好友消費回饋</button>
@@ -395,7 +395,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Helvetica
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec";
 const LIFF_ID = "2009761099-xXvMY51i";
-let userId = '', userData = null, currentFrom = 'omp', referrerParam = '', userToken = '', pendingCheckboxId = null;
+let userId = '', userData = null, currentFrom = 'OMP', referrerParam = '', userToken = '', pendingCheckboxId = null;
 let countdownInterval = null;
 let currentCountdown = 60;
 
@@ -867,7 +867,7 @@ function generateMemberCode() {
     }
     
     // 🔥 從 user 物件讀取
-    var shopCode = userData?.user?.shopCode || userData?.shopCode || 'omp';
+    var shopCode = userData?.user?.shopCode || userData?.shopCode || 'OMP';
     var randomKey = userData?.user?.shopKey || userData?.shopKey || '';
     
     if (!randomKey) {
@@ -2118,7 +2118,7 @@ async function initLiff() {
 const urlParams = new URLSearchParams(window.location.search);
 var brandParam = urlParams.get('brand') || 'OMP';
 
-currentFrom = urlParams.get('from') || 'omp';
+currentFrom = urlParams.get('from') || 'OMP';
 
 let rawReferrer = urlParams.get('referrer');
 if (rawReferrer) {
@@ -2130,14 +2130,14 @@ const loadingText = document.getElementById('loading-text');
 
 // 🔥 1️⃣ 先顯示「預設」等待詞（速度快）
 const defaultLoadingTexts = {
-    omp: [
+    OMP: [
         "老娘正在翻帳本，幫你算驚喜...",
         "老娘正在火速趕來...",
         "別催，老娘正在幫你算點數...",
         "正在幫您端上熱騰騰的驚喜...",
         "火鍋滾了，心意也快好了..."
     ],
-    swo: [
+    SWO: [
         "正在為你的生活，加入一點甜...",
         "攪拌心意中，請稍候片刻...",
         "正準備為您送上今日份的療癒...",
@@ -2145,7 +2145,7 @@ const defaultLoadingTexts = {
         "STAY SWEET！"
     ]
 };
-const defaultTexts = currentFrom === 'so' ? defaultLoadingTexts.swo : defaultLoadingTexts.omp;
+const defaultTexts = currentFrom === 'SO' ? defaultLoadingTexts.SWO : defaultLoadingTexts.OMP;
 const randomIndex = Math.floor(Math.random() * defaultTexts.length);
 loadingText.innerText = defaultTexts[randomIndex];
 
