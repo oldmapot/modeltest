@@ -342,41 +342,156 @@ let userId = '', userData = null, currentFrom = 'omp', referrerParam = '', userT
 let countdownInterval = null;
 let currentCountdown = 60;
 
+
 // ============================================================
-//  LocalStorage 快取工具
+//  📱 前端 LIFF - 新增 renderAllData()
+//  位置：index.html 或 liff.html 的 <script> 區塊
 // ============================================================
 
-function getCachedMember(userId) {
-    var key = 'member_' + userId;
+function renderAllData(data) {
+  console.log("🎨 開始渲染頁面資料");
+  
+  // 1️⃣ 渲染會員資訊
+  if (data.user) {
+    var user = data.user;
+    setElementText('user-name', user.displayName || '會員');
+    setElementText('user-points', user.currentPoints || 0);
+    setElementText('user-level', user.memberLevel || '一般會員');
+    setElementText('user-phone', user.phone || '');
+    setElementText('user-total-spend', user.totalSpend || 0);
+  }
+  
+  // 2️⃣ 渲染優惠券列表
+  if (data.coupons && data.coupons.length > 0) {
+    var couponHtml = '';
+    for (var i = 0; i < data.coupons.length; i++) {
+      var c = data.coupons[i];
+      couponHtml += `
+        <div class="coupon-item" data-coupon-id="${c.couponId}">
+          <div class="coupon-title">${c.title}</div>
+          <div class="coupon-content">${c.content || ''}</div>
+          <div class="coupon-expiry">📅 到期日：${c.expiryDate || '無限期'}</div>
+          ${c.minSpend > 0 ? `<div class="coupon-minspend">💰 滿 $${c.minSpend} 元可使用</div>` : ''}
+          ${c.discount > 0 ? `<div class="coupon-discount">🎯 折抵 $${c.discount} 元</div>` : ''}
+          ${c.bonusPoints > 0 ? `<div class="coupon-bonus">⭐ 贈 ${c.bonusPoints} 點</div>` : ''}
+        </div>
+      `;
+    }
+    setElementHTML('coupon-list', couponHtml);
+  } else {
+    setElementHTML('coupon-list', '<p class="no-coupon">目前無可用優惠券</p>');
+  }
+  
+  // 3️⃣ 渲染公告
+  if (data.meta && data.meta.announcement) {
+    setElementText('announcement', data.meta.announcement);
+  }
+  
+  // 4️⃣ 隱藏載入動畫
+  hideLoading();
+  
+  console.log("✅ 頁面渲染完成");
+}
+
+// 🔥 輔助函式：安全設定元素文字
+function setElementText(id, text) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+// 🔥 輔助函式：安全設定元素 HTML
+function setElementHTML(id, html) {
+  var el = document.getElementById(id);
+  if (el) el.innerHTML = html;
+}
+
+// 🔥 輔助函式：顯示/隱藏載入動畫
+function showLoading() {
+  var el = document.getElementById('loading-overlay');
+  if (el) el.style.display = 'flex';
+}
+
+function hideLoading() {
+  var el = document.getElementById('loading-overlay');
+  if (el) el.style.display = 'none';
+}
+/**
+ * 從 LocalStorage 讀取快取資料
+ * @param {string} userId - 會員 ID
+ * @param {number} ttlSeconds - 快取存活時間（秒），預設 300 秒（5 分鐘）
+ * @returns {Object|null} 快取資料，過期或無資料回傳 null
+ */
+function getCachedMember(userId, ttlSeconds) {
+    ttlSeconds = ttlSeconds || 300; // 預設 5 分鐘
+    
+    var key = 'member_data_' + userId;
     var cached = localStorage.getItem(key);
+    
     if (!cached) return null;
     
     try {
         var data = JSON.parse(cached);
         var cacheTime = data._cacheTime || 0;
-        var expiresIn = 5 * 60 * 1000; // 5 分鐘
+        var expiresIn = ttlSeconds * 1000;
         
+        // 檢查是否過期
         if (Date.now() - cacheTime > expiresIn) {
             localStorage.removeItem(key);
+            console.log("⏰ 快取已過期");
             return null;
         }
         
+        console.log("⚡ 讀取快取資料，距今 " + Math.floor((Date.now() - cacheTime) / 1000) + " 秒");
         return data;
     } catch(e) {
+        console.warn("⚠️ 解析快取失敗:", e);
+        localStorage.removeItem(key);
         return null;
     }
 }
 
+/**
+ * 寫入快取
+ * @param {string} userId - 會員 ID
+ * @param {Object} data - 要快取的資料（user + coupons + meta）
+ */
 function setCachedMember(userId, data) {
-    data._cacheTime = Date.now();
-    var key = 'member_' + userId;
-    localStorage.setItem(key, JSON.stringify(data));
+    try {
+        // 加入快取時間
+        data._cacheTime = Date.now();
+        var key = 'member_data_' + userId;
+        localStorage.setItem(key, JSON.stringify(data));
+        console.log("✅ 快取已寫入");
+    } catch(e) {
+        console.warn("⚠️ 寫入快取失敗:", e);
+    }
 }
 
+/**
+ * 清除快取
+ * @param {string} userId - 會員 ID（可選，不傳則清除所有會員快取）
+ */
 function clearCachedMember(userId) {
-    var key = 'member_' + userId;
-    localStorage.removeItem(key);
+    if (userId) {
+        var key = 'member_data_' + userId;
+        localStorage.removeItem(key);
+        console.log("🧹 已清除快取:", userId);
+    } else {
+        // 清除所有 member_data_ 開頭的快取
+        var keys = [];
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key && key.indexOf('member_data_') === 0) {
+                keys.push(key);
+            }
+        }
+        for (var j = 0; j < keys.length; j++) {
+            localStorage.removeItem(keys[j]);
+        }
+        console.log("🧹 已清除所有會員快取，共 " + keys.length + " 筆");
+    }
 }
+
 // ============================================================
 // ✅ 工具函數
 // ============================================================
@@ -751,25 +866,24 @@ function toggleGiftItem(itemId) {
 }
 
 // ============================================================
-// ✅ refreshAll（帶 Token）
+// ✅ refreshAll（改用 getAggregatedData）
 // ============================================================
 async function refreshAll() {
     if (!userId) return;
+    
+    var refreshBtn = document.querySelector('.asset-card button');
+    if (refreshBtn) refreshBtn.disabled = true;
+    
     try {
-        var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        var refreshBtn = document.querySelector('.asset-card button');
-        if (refreshBtn) refreshBtn.disabled = true;
-        var url = GAS_URL + '?action=checkID&userId=' + userId + '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + '&referrerId=' + encodeURIComponent(referrerParam) + '&t=' + Date.now();
+        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + '&t=' + Date.now();
         var res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        var responseText = await res.text();
-        var newUserData;
-        try { newUserData = JSON.parse(responseText); } catch(e) { throw new Error('伺服器回應格式錯誤'); }
-        if (newUserData && newUserData.isMember === true) {
-            var displayPoints = newUserData["目前剩餘點"] || newUserData.points || 0;
-            document.getElementById('pointsDisplay').innerText = displayPoints;
-            userData = newUserData;
-            generateMemberCode();
+        var result = await res.json();
+        
+        if (result.success) {
+            userData = result.data;
+            setCachedMember(userId, result.data);
+            renderAllData(result.data);
             showToast('✅ 資料已更新');
         } else {
             showToast('資料更新失敗，請稍後再試');
@@ -778,58 +892,51 @@ async function refreshAll() {
         console.error('Refresh Error:', e);
         showToast('重新整理失敗，請稍後再試');
     } finally {
-        var refreshBtn = document.querySelector('.asset-card button');
         if (refreshBtn) refreshBtn.disabled = false;
     }
 }
-
 // ============================================================
-// ✅ fetchData（優化版）
+// ✅ fetchData（優化版 - 使用打包 API）
 // ============================================================
 async function fetchData(isReload) {
     if (isReload === undefined) isReload = false;
     
-    // 🔥 1️⃣ 檢查快取（如果有，直接跳過 loading）
+    // 🔥 1️⃣ 檢查快取
     var cachedData = getCachedMember(userId);
     if (cachedData && !isReload) {
         console.log('✅ 從快取載入會員資料');
         userData = cachedData;
         document.getElementById('loading').style.display = 'none';
-        displayMemberUI(cachedData);
-        refreshInBackground();
+        renderAllData(cachedData);  // ← 改用 renderAllData
+        // 背景更新
+        setTimeout(function() { backgroundUpdate(userId); }, 500);
         return;
     }
     
-    // 🔥 2️⃣ 確保 loading 畫面顯示（不要關閉！）
+    // 🔥 2️⃣ 顯示 loading
     document.getElementById('loading').style.display = 'flex';
-    
-    // 🔥 3️⃣ 設定等待詞（從 GAS 讀取或使用預設）
-    var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
+    var loadingText = document.getElementById('loading-text');
     var defaultTexts = currentFrom === 'so' ? 
         ["正在為你的生活，加入一點甜...", "攪拌心意中，請稍候片刻..."] :
         ["老娘正在翻帳本，幫你算驚喜...", "老娘正在火速趕來..."];
-    document.getElementById('loading-text').innerText = defaultTexts[Math.floor(Math.random() * defaultTexts.length)];
+    loadingText.innerText = defaultTexts[Math.floor(Math.random() * defaultTexts.length)];
     
     try {
-        var url = GAS_URL + '?action=checkID&userId=' + userId + 
-                  '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + 
-                  '&referrerId=' + encodeURIComponent(referrerParam) + '&t=' + Date.now();
-        
+        // 🔥 3️⃣ 改用 getAggregatedData（1 次請求）
+        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + '&t=' + Date.now();
         var res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
-        var responseText = await res.text();
-        var data;
-        try { data = JSON.parse(responseText); } catch(e) { throw new Error('伺服器回應格式錯誤'); }
+        var result = await res.json();
         
-        // 🔥 4️⃣ 資料載入完成後，關閉 loading，顯示會員畫面
         document.getElementById('loading').style.display = 'none';
         
-        if (data && data.isMember) {
-            userData = data;
-            setCachedMember(userId, data);
-            displayMemberUI(data);
+        if (result.success) {
+            userData = result.data;
+            setCachedMember(userId, result.data);
+            renderAllData(result.data);  // ← 改用 renderAllData
             if (isReload) showToast('✅ 資料已更新');
         } else {
+            showToast(result.message || '載入失敗');
             document.getElementById('memberUI').style.display = 'none';
             document.getElementById('regUI').style.display = 'none';
             document.getElementById('welcomeUI').style.display = 'flex';
@@ -841,29 +948,25 @@ async function fetchData(isReload) {
     }
 }
 // ============================================================
-// ✅ 背景更新（不阻塞畫面）
+// ✅ 背景更新（改用 getAggregatedData）
 // ============================================================
 async function refreshInBackground() {
     try {
-        var branch = currentFrom === 'so' ? '一點甜' : '老娘鍋';
-        var url = GAS_URL + '?action=checkID&userId=' + userId + 
-                  '&from=' + currentFrom + '&branch=' + encodeURIComponent(branch) + 
-                  '&referrerId=' + encodeURIComponent(referrerParam) + '&t=' + Date.now();
+        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + '&t=' + Date.now();
         var res = await fetch(url);
-        var newData = await res.json();
-        if (newData && newData.isMember) {
-            userData = newData;
-            setCachedMember(userId, newData);
+        var result = await res.json();
+        
+        if (result.success) {
+            var newData = result.data;
+            var oldData = getCachedMember(userId);
+            var oldStr = JSON.stringify(oldData);
+            var newStr = JSON.stringify(newData);
             
-            // 只更新點數（不刷新整個畫面）
-            var newPoints = newData["目前剩餘點"] || newData.points || 0;
-            var currentDisplay = document.getElementById('pointsDisplay').innerText;
-            if (newPoints != currentDisplay && currentDisplay !== '...') {
-                document.getElementById('pointsDisplay').innerText = newPoints;
-            }
-            // 更新歡迎詞
-            if (newData.welcomeQuote) {
-                document.getElementById('welcomeQuote').innerText = newData.welcomeQuote;
+            if (oldStr !== newStr) {
+                userData = newData;
+                setCachedMember(userId, newData);
+                renderAllData(newData);
+                console.log('🔄 背景更新完成');
             }
         }
     } catch(e) {
