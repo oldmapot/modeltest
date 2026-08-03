@@ -450,13 +450,12 @@ function renderAllData(data) {
   console.log("✅ 頁面渲染完成");
 }
 // ============================================================
-//  🔄 背景更新（SWR）- 修正版（使用 fetch）
+//  🔄 背景更新（SWR）- 修正版（加入防禦性檢查）
 // ============================================================
 
 function backgroundUpdate(userId, brandParam) {
     console.log("🔄 背景更新開始，brand:", brandParam);
     
-    // 如果沒有傳入 brand，從 URL 讀取或預設 OMP
     if (!brandParam) {
         var urlParams = new URLSearchParams(window.location.search);
         brandParam = urlParams.get('brand') || 'OMP';
@@ -465,7 +464,6 @@ function backgroundUpdate(userId, brandParam) {
     // 🔥 從快取讀取舊資料（不刪除過期快取）
     var cachedData = getCachedMember(userId, brandParam, 300, true);
     
-    // 🔥 改用 fetch API（取代 google.script.run）
     var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + 
               '&brand=' + brandParam + 
               '&t=' + Date.now() + 
@@ -480,7 +478,31 @@ function backgroundUpdate(userId, brandParam) {
             if (result.success) {
                 var newData = result.data;
                 
-                // 比對是否有變化（_cacheTime 除外）
+                // ============================================================
+                //  🔥🔥🔥 防禦性檢查：確保新資料有效才更新
+                // ============================================================
+                
+                // 檢查 1：user 是否存在且有 displayName
+                var isValidData = newData && 
+                                  newData.user && 
+                                  newData.user.displayName && 
+                                  newData.user.displayName.trim() !== '';
+                
+                if (!isValidData) {
+                    console.warn("⚠️ 背景更新收到無效資料（user 為空），不覆蓋快取");
+                    return;
+                }
+                
+                // 檢查 2：比對 userId 是否一致
+                if (newData.user && newData.user.userId !== userId) {
+                    console.warn("⚠️ 背景更新 userId 不一致，跳過更新");
+                    return;
+                }
+                
+                // ============================================================
+                //  ✅ 資料有效，進行比對和更新
+                // ============================================================
+                
                 var oldDataCopy = Object.assign({}, cachedData);
                 delete oldDataCopy._cacheTime;
                 
@@ -497,6 +519,8 @@ function backgroundUpdate(userId, brandParam) {
                 } else {
                     console.log("✅ 資料無變化");
                 }
+            } else {
+                console.warn("⚠️ 背景更新 API 回傳失敗:", result.message);
             }
         })
         .catch(function(error) {
@@ -1129,16 +1153,49 @@ async function fetchData(isReload, brandParam) {
         document.getElementById('loading').style.display = 'none';
         
         if (result.success) {
-            userData = result.data;
-            setCachedMember(userId, brandParam, result.data);
-            renderAllData(result.data);
-            if (isReload) showToast('✅ 資料已更新');
+    var newData = result.data;
+    
+    // ============================================================
+    //  🔥🔥🔥 防禦性檢查：確保資料有效才更新
+    // ============================================================
+    
+    // 檢查：user 是否存在且有 displayName
+    var isValidData = newData && 
+                      newData.user && 
+                      newData.user.displayName && 
+                      newData.user.displayName.trim() !== '';
+    
+    if (isValidData) {
+        // ✅ 資料有效，正常更新
+        userData = newData;
+        setCachedMember(userId, brandParam, newData);
+        renderAllData(newData);
+        if (isReload) showToast('✅ 資料已更新');
+    } else {
+        // ❌ 資料無效，保留原有快取或顯示錯誤
+        console.warn("⚠️ API 回傳無效資料（user 為空）");
+        
+        // 嘗試從快取讀取
+        var cachedData = getCachedMember(userId, brandParam);
+        if (cachedData) {
+            console.log("📦 使用快取資料");
+            userData = cachedData;
+            renderAllData(cachedData);
+            showToast('⚠️ 資料載入異常，顯示上次快取');
         } else {
-            showToast(result.message || '載入失敗');
+            // 無快取，顯示歡迎頁面
+            showToast(result.message || '載入失敗，請重新整理');
             document.getElementById('memberUI').style.display = 'none';
             document.getElementById('regUI').style.display = 'none';
             document.getElementById('welcomeUI').style.display = 'flex';
         }
+    }
+} else {
+    showToast(result.message || '載入失敗');
+    document.getElementById('memberUI').style.display = 'none';
+    document.getElementById('regUI').style.display = 'none';
+    document.getElementById('welcomeUI').style.display = 'flex';
+}
     } catch(e) {
         console.error('Fetch Error:', e);
         document.getElementById('loading').style.display = 'none';
