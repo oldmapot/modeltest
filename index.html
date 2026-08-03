@@ -1119,27 +1119,26 @@ async function refreshAll() {
 // ============================================================
 async function fetchData(isReload, brandParam) {
     if (isReload === undefined) isReload = false;
-    
-    // 如果沒有傳入 brand，從 URL 讀取或預設 OMP
+
     if (!brandParam) {
         var urlParams = new URLSearchParams(window.location.search);
         brandParam = urlParams.get('brand') || 'OMP';
     }
-    
+
     // ============================================================
     //  🔥 每日首次開啟強制刷新
     // ============================================================
     var lastFetchDateKey = 'last_fetch_date_' + userId + '_' + brandParam;
     var lastFetchDate = localStorage.getItem(lastFetchDateKey);
     var today = new Date().toDateString();
-    
+
     var forceRefresh = false;
     if (lastFetchDate !== today) {
         console.log("📅 每日首次開啟，強制刷新資料");
         forceRefresh = true;
         localStorage.setItem(lastFetchDateKey, today);
     }
-    
+
     // ============================================================
     //  🔥 檢查快取（強制刷新時跳過）
     // ============================================================
@@ -1147,127 +1146,131 @@ async function fetchData(isReload, brandParam) {
     if (!forceRefresh && !isReload) {
         cachedData = getCachedMember(userId, brandParam);
     }
-    
+
     if (cachedData) {
         console.log('✅ 從快取載入會員資料');
         userData = cachedData;
         document.getElementById('loading').style.display = 'none';
         displayMemberUI(cachedData);
-        // 背景更新
-        setTimeout(function() { 
-            backgroundUpdate(userId, brandParam); 
+        setTimeout(function () {
+            backgroundUpdate(userId, brandParam);
         }, 500);
         return;
     }
-    
+
     // ============================================================
     //  🔥 顯示 loading 並從 GAS 讀取
     // ============================================================
     document.getElementById('loading').style.display = 'flex';
     var loadingText = document.getElementById('loading-text');
-    var defaultTexts = currentFrom === 'so' ? 
+    var defaultTexts = currentFrom === 'so' ?
         ["正在為你的生活，加入一點甜...", "攪拌心意中，請稍候片刻..."] :
         ["老娘正在翻帳本，幫你算驚喜...", "老娘正在火速趕來..."];
     loadingText.innerText = defaultTexts[Math.floor(Math.random() * defaultTexts.length)];
-    
+
     try {
         // 🔥 加入多個 cache-busting 參數
-        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + 
-                  '&brand=' + brandParam + 
-                  '&t=' + Date.now() + 
-                  '&_=' + Math.random();
-        var res = await fetch(url);
+        var url = GAS_URL + '?action=getAggregatedData&userId=' + userId +
+            '&brand=' + brandParam +
+            '&t=' + Date.now() +
+            '&_=' + Math.random();
+
+        // ⏱️ 設置超時（避免 GAS 冷啟動導致無限等待）
+        var controller = new AbortController();
+        var timeoutId = setTimeout(function () {
+            controller.abort();
+        }, 10000); // 10 秒超時
+
+        var res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         if (!res.ok) throw new Error('HTTP ' + res.status);
         var result = await res.json();
-        
+
         document.getElementById('loading').style.display = 'none';
-        
+
         if (result.success) {
-    var newData = result.data;
-    // ✅ 先定義 isValidData
-    var isValidData = newData && 
-                      newData.user && 
-                      newData.user.displayName && 
-                      newData.user.displayName.trim() !== '';
-    // ============================================================
-    //  🔥🔥🔥 防禦性檢查：確保資料有效才更新
-    // ============================================================
-    
-    if (isValidData) {
-    // ============================================================
-    //  🔥🔥🔥 轉換資料格式（讓側邊選單函式能正確讀取）
-    // ============================================================
-    
-    var convertedData = {
-        // ✅ 原有巢狀資料（保留給 renderAllData 用）
-        user: newData.user,
-        coupons: newData.coupons,
-        meta: newData.meta,
-        
-// ✅ 扁平欄位（給 displayMemberUI 和側邊選單用）
-isMember: true,
-"目前剩餘點": newData.user?.currentPoints || 0,
-points: newData.user?.currentPoints || 0,
-name: newData.user?.displayName || '',
-welcomeQuote: newData.meta?.announcement || "歡迎光臨！",  // 保留但 displayMemberUI 不再使用
-shopKey: newData.user?.shopKey || '',
-shopCode: newData.meta?.brandCode || 'OMP',
-welcomePhrases: newData.meta?.welcomePhrases || [],  // ✅ 新增這個！
-        
-        // ✅ 補齊 profile（給 openProfile 用）
-        profile: {
-            name: newData.user?.displayName || '',
-            phone: newData.user?.phone || '',
-            birthday: newData.user?.birthday || ''
-        },
-        
-        // ✅ 補齊 coupons（給 openGiftBox 用）
-        coupons: newData.coupons || [],
-        
-        // ✅ 補齊其他欄位（暫時給空值，後續可擴充）
-        myReferrer: '無',
-        myReferrals: [],
-        history: [],
-        shopInfo: [],
-        soEvents: [],
-        ompEvents: [],
-        expiringPoints: 0
-    };
-    
-    // ✅ 儲存轉換後的資料
-    userData = convertedData;
-    setCachedMember(userId, brandParam, convertedData);
-    displayMemberUI(convertedData);
-    if (isReload) showToast('✅ 資料已更新');
-} else {
-        // ❌ 資料無效，保留原有快取或顯示錯誤
-        console.warn("⚠️ API 回傳無效資料（user 為空）");
-        
-        // 嘗試從快取讀取
-        var cachedData = getCachedMember(userId, brandParam);
-        if (cachedData) {
-            console.log("📦 使用快取資料");
-            userData = cachedData;
-            displayMemberUI(cachedData);
-            showToast('⚠️ 資料載入異常，顯示上次快取');
+            var newData = result.data;
+
+            // ✅ 防禦性檢查：確保資料有效
+            var isValidData = newData &&
+                newData.user &&
+                newData.user.displayName &&
+                newData.user.displayName.trim() !== '';
+
+            if (isValidData) {
+                // ✅ 轉換資料格式
+                var convertedData = {
+                    user: newData.user,
+                    coupons: newData.coupons || [],
+                    meta: newData.meta || {},
+                    isMember: true,
+                    "目前剩餘點": newData.user?.currentPoints || 0,
+                    points: newData.user?.currentPoints || 0,
+                    name: newData.user?.displayName || '',
+                    welcomePhrases: newData.meta?.welcomePhrases || [],
+                    shopKey: newData.user?.shopKey || '',
+                    shopCode: newData.meta?.brandCode || 'OMP',
+                    profile: {
+                        name: newData.user?.displayName || '',
+                        phone: newData.user?.phone || '',
+                        birthday: newData.user?.birthday || ''
+                    },
+                    coupons: newData.coupons || [],
+                    myReferrer: newData.myReferrer || '無',
+                    myReferrals: newData.myReferrals || [],
+                    history: newData.history || [],
+                    shopInfo: newData.shopInfo || [],
+                    soEvents: newData.soEvents || [],
+                    ompEvents: newData.ompEvents || [],
+                    expiringPoints: newData.expiringPoints || 0
+                };
+
+                userData = convertedData;
+                setCachedMember(userId, brandParam, convertedData);
+                displayMemberUI(convertedData);
+                if (isReload) showToast('✅ 資料已更新');
+            } else {
+                // ❌ 資料無效，嘗試使用快取
+                console.warn("⚠️ API 回傳無效資料（user 為空）");
+                var cachedDataFallback = getCachedMember(userId, brandParam);
+                if (cachedDataFallback) {
+                    console.log("📦 使用快取資料");
+                    userData = cachedDataFallback;
+                    displayMemberUI(cachedDataFallback);
+                    showToast('⚠️ 資料載入異常，顯示上次快取');
+                } else {
+                    showToast(result.message || '載入失敗，請重新整理');
+                    document.getElementById('memberUI').style.display = 'none';
+                    document.getElementById('regUI').style.display = 'none';
+                    document.getElementById('welcomeUI').style.display = 'flex';
+                }
+            }
         } else {
-            // 無快取，顯示歡迎頁面
-            showToast(result.message || '載入失敗，請重新整理');
+            showToast(result.message || '載入失敗');
             document.getElementById('memberUI').style.display = 'none';
             document.getElementById('regUI').style.display = 'none';
             document.getElementById('welcomeUI').style.display = 'flex';
         }
-    }
-} else {
-    showToast(result.message || '載入失敗');
-    document.getElementById('memberUI').style.display = 'none';
-    document.getElementById('regUI').style.display = 'none';
-    document.getElementById('welcomeUI').style.display = 'flex';
-}
-    } catch(e) {
+    } catch (e) {
+        // 🔥 超時或網路錯誤
         console.error('Fetch Error:', e);
-        document.getElementById('loading').style.display = 'none';
-        showToast('資料載入失敗，請稍後再試');
+
+        // 嘗試使用快取
+        var cachedDataFallback = getCachedMember(userId, brandParam);
+        if (cachedDataFallback) {
+            console.log("📦 使用快取資料（網路錯誤）");
+            userData = cachedDataFallback;
+            document.getElementById('loading').style.display = 'none';
+            displayMemberUI(cachedDataFallback);
+            showToast('⚠️ 網路異常，顯示上次快取');
+        } else {
+            document.getElementById('loading').style.display = 'none';
+            showToast('資料載入失敗，請稍後再試');
+            document.getElementById('memberUI').style.display = 'none';
+            document.getElementById('regUI').style.display = 'none';
+            document.getElementById('welcomeUI').style.display = 'flex';
+        }
     }
 }
 // ============================================================
@@ -1305,24 +1308,27 @@ function displayMemberUI(data) {
     document.getElementById('memberUI').style.display = 'block';
     document.getElementById('welcomeUI').style.display = 'none';
     document.getElementById('regUI').style.display = 'none';
-    
+
+    // 1️⃣ 點數
     var displayPoints = data["目前剩餘點"] || data.points || 0;
     document.getElementById('pointsDisplay').innerText = displayPoints;
-    
+
+    // 2️⃣ 歡迎詞（從文句池隨機選取）
+    var welcomePhrases = data.welcomePhrases || [];
+    var welcomeQuote = "歡迎光臨！";
+    if (welcomePhrases.length > 0) {
+        var randomIndex = Math.floor(Math.random() * welcomePhrases.length);
+        welcomeQuote = welcomePhrases[randomIndex];
+    }
+    document.getElementById('welcomeQuote').innerText = welcomeQuote;
+
+    // 3️⃣ QR Code
     if (data.shopKey) {
         generateMemberCode();
+    } else {
+        console.warn('⚠️ shopKey 為空，無法產生 QR Code');
     }
-    
-   // 🔥 從文句池隨機選取歡迎詞
-var welcomePhrases = data.welcomePhrases || [];
-var welcomeQuote = "歡迎光臨！";  // 預設值
 
-if (welcomePhrases.length > 0) {
-    var randomIndex = Math.floor(Math.random() * welcomePhrases.length);
-    welcomeQuote = welcomePhrases[randomIndex];
-}
-document.getElementById('welcomeQuote').innerText = welcomeQuote;
-    
     console.log('✅ 會員畫面已顯示，點數:', displayPoints);
 }
 // ============================================================
