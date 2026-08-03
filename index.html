@@ -890,17 +890,16 @@ function generateMemberCode() {
 // ============================================================
 // ✅ 心意寶盒（點擊彈出 QR Code）- 修正版
 // ============================================================
+// ============================================================
+// ✅ 心意寶盒（修正版）- 只使用 userData
+// ============================================================
 function openGiftBox() {
-    console.log("📊 userData.coupons:", userData?.coupons);
-    console.log('userData.coupons:', userData?.coupons);
-    console.log('userData.coupons 長度:', userData?.coupons?.length);
-     console.log('newData 是否存在:', typeof newData);
-console.log('newData.coupons:', newData?.coupons);
+    console.log("🎁 開啟心意寶盒");
     
+    // 🔥 只從 userData 讀取，不使用 newData
     var coupons = userData?.coupons || [];
-    console.log("📊 coupons 數量:", coupons.length);
+    console.log("📊 userData.coupons 數量:", coupons.length);
     
-    // ✅ 先檢查 coupons 是否為陣列
     if (!Array.isArray(coupons)) {
         console.error("❌ coupons 不是陣列:", coupons);
         coupons = [];
@@ -913,16 +912,13 @@ console.log('newData.coupons:', newData?.coupons);
     
     var now = new Date();
     var validCoupons = coupons.filter(function(c) {
-        // ✅ 檢查必要欄位
         if (!c || typeof c !== 'object') return false;
         if (c.status !== "未使用") return false;
-        
-        // ✅ 檢查過期日期
         if (c.expiresAt) {
             var expiresAt = new Date(c.expiresAt);
             return now <= expiresAt;
         }
-        return true; // 沒有到期日視為有效
+        return true;
     });
     
     console.log("📊 有效優惠券數量:", validCoupons.length);
@@ -932,7 +928,6 @@ console.log('newData.coupons:', newData?.coupons);
         return;
     }
     
-    // ✅ 顯示優惠券列表
     var html = `
         <style>
             .giftbox-header {
@@ -1024,10 +1019,9 @@ console.log('newData.coupons:', newData?.coupons);
         var expireDate = c.expiresAt ? new Date(c.expiresAt).toLocaleDateString('zh-TW', { year:'numeric', month:'2-digit', day:'2-digit' }) : '無期限';
         var qrString = c.qrString || c.qrContent || "";
         var qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(qrString);
-        var couponName = c.couponName || '優惠券';
+        var couponName = c.couponName || c.title || '優惠券';
         var couponDesc = c.qrContent || c.remark || '';
         
-        // ✅ 點擊後彈出 QR Code 視窗
         html += `
             <div class="gift-item" onclick="showCouponQR('${qrUrl}', '${couponName}', '${expireDate}', '${couponDesc}')">
                 <div class="gift-title">
