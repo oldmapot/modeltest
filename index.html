@@ -483,22 +483,25 @@ function renderAllData(data) {
 //  🔄 背景更新（SWR）- 修正版（加入防禦性檢查）
 // ============================================================
 
+// ============================================================
+//  🔄 背景更新（SWR）- 修正版
+// ============================================================
+
 function backgroundUpdate(userId, brandParam) {
     console.log("🔄 背景更新開始，brand:", brandParam);
-    
+
     if (!brandParam) {
         var urlParams = new URLSearchParams(window.location.search);
         brandParam = urlParams.get('brand') || 'OMP';
     }
-    
-    // 🔥 從快取讀取舊資料（不刪除過期快取）
+
     var cachedData = getCachedMember(userId, brandParam, 300, true);
-    
-    var url = GAS_URL + '?action=getAggregatedData&userId=' + userId + 
-              '&brand=' + brandParam + 
-              '&t=' + Date.now() + 
-              '&_=' + Math.random();
-    
+
+    var url = GAS_URL + '?action=getAggregatedData&userId=' + userId +
+        '&brand=' + brandParam +
+        '&t=' + Date.now() +
+        '&_=' + Math.random();
+
     fetch(url)
         .then(function(response) {
             if (!response.ok) throw new Error('HTTP ' + response.status);
@@ -507,45 +510,60 @@ function backgroundUpdate(userId, brandParam) {
         .then(function(result) {
             if (result.success) {
                 var newData = result.data;
-                
-                // ============================================================
-                //  🔥🔥🔥 防禦性檢查：確保新資料有效才更新
-                // ============================================================
-                
-                // 檢查 1：user 是否存在且有 displayName
-                var isValidData = newData && 
-                                  newData.user && 
-                                  newData.user.displayName && 
-                                  newData.user.displayName.trim() !== '';
-                
+
+                // ✅ 防禦性檢查
+                var isValidData = newData &&
+                    newData.user &&
+                    newData.user.displayName &&
+                    newData.user.displayName.trim() !== '';
+
                 if (!isValidData) {
                     console.warn("⚠️ 背景更新收到無效資料（user 為空），不覆蓋快取");
                     return;
                 }
-                
-                // 檢查 2：比對 userId 是否一致
-                if (newData.user && newData.user.userId !== userId) {
-                    console.warn("⚠️ 背景更新 userId 不一致，跳過更新");
-                    return;
-                }
-                
-                // ============================================================
-                //  ✅ 資料有效，進行比對和更新
-                // ============================================================
-                
+
+                // ✅ 轉換資料格式（和 fetchData 一樣！）
+                var convertedData = {
+                    user: newData.user,
+                    coupons: newData.coupons || [],
+                    meta: newData.meta || {},
+                    isMember: true,
+                    "目前剩餘點": newData.user?.currentPoints || 0,
+                    points: newData.user?.currentPoints || 0,
+                    name: newData.user?.displayName || '',
+                    welcomePhrases: newData.meta?.welcomePhrases || [],
+                    shopKey: newData.user?.shopKey || '',
+                    shopCode: newData.meta?.brandCode || 'OMP',
+                    profile: {
+                        name: newData.user?.displayName || '',
+                        phone: newData.user?.phone || '',
+                        birthday: newData.user?.birthday || ''
+                    },
+                    coupons: newData.coupons || [],
+                    myReferrer: newData.myReferrer || '無',
+                    myReferrals: newData.myReferrals || [],
+                    history: newData.history || [],
+                    shopInfo: newData.shopInfo || [],
+                    soEvents: newData.soEvents || [],
+                    ompEvents: newData.ompEvents || [],
+                    expiringPoints: newData.expiringPoints || 0
+                };
+
+                // ✅ 比對是否有變化
                 var oldDataCopy = Object.assign({}, cachedData);
                 delete oldDataCopy._cacheTime;
-                
-                var newDataCopy = Object.assign({}, newData);
+
+                var newDataCopy = Object.assign({}, convertedData);
                 delete newDataCopy._cacheTime;
-                
+
                 var oldStr = JSON.stringify(oldDataCopy);
                 var newStr = JSON.stringify(newDataCopy);
-                
+
                 if (oldStr !== newStr) {
                     console.log("🔄 資料有變化，更新 UI 和快取");
-                    setCachedMember(userId, brandParam, newData);
-                     displayMemberUI(newData);  // ✅ 改這裡！
+                    userData = convertedData;
+                    setCachedMember(userId, brandParam, convertedData);
+                    displayMemberUI(convertedData);
                 } else {
                     console.log("✅ 資料無變化");
                 }
@@ -855,9 +873,6 @@ function generateMemberCode() {
     startCountdown(60);
 }
 
-    // ============================================================
-// ✅ 心意寶盒（點擊彈出 QR Code）
-// ============================================================
 // ============================================================
 // ✅ 心意寶盒（點擊彈出 QR Code）- 修正版
 // ============================================================
