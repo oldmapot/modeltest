@@ -1189,19 +1189,52 @@ async function fetchData(isReload, brandParam) {
     //  🔥🔥🔥 防禦性檢查：確保資料有效才更新
     // ============================================================
     
-    // 檢查：user 是否存在且有 displayName
-    var isValidData = newData && 
-                      newData.user && 
-                      newData.user.displayName && 
-                      newData.user.displayName.trim() !== '';
-    
     if (isValidData) {
-        // ✅ 資料有效，正常更新
-        userData = newData;
-        setCachedMember(userId, brandParam, newData);
-        renderAllData(newData);
-        if (isReload) showToast('✅ 資料已更新');
-    } else {
+    // ============================================================
+    //  🔥🔥🔥 轉換資料格式（讓側邊選單函式能正確讀取）
+    // ============================================================
+    
+    var convertedData = {
+        // ✅ 原有巢狀資料（保留給 renderAllData 用）
+        user: newData.user,
+        coupons: newData.coupons,
+        meta: newData.meta,
+        
+        // ✅ 扁平欄位（給 displayMemberUI 和側邊選單用）
+        isMember: true,
+        "目前剩餘點": newData.user?.currentPoints || 0,
+        points: newData.user?.currentPoints || 0,
+        name: newData.user?.displayName || '',
+        welcomeQuote: newData.meta?.announcement || "歡迎光臨！",
+        shopKey: newData.user?.shopKey || '',
+        shopCode: newData.meta?.brandCode || 'OMP',
+        
+        // ✅ 補齊 profile（給 openProfile 用）
+        profile: {
+            name: newData.user?.displayName || '',
+            phone: newData.user?.phone || '',
+            birthday: newData.user?.birthday || ''
+        },
+        
+        // ✅ 補齊 coupons（給 openGiftBox 用）
+        coupons: newData.coupons || [],
+        
+        // ✅ 補齊其他欄位（暫時給空值，後續可擴充）
+        myReferrer: '無',
+        myReferrals: [],
+        history: [],
+        shopInfo: [],
+        soEvents: [],
+        ompEvents: [],
+        expiringPoints: 0
+    };
+    
+    // ✅ 儲存轉換後的資料
+    userData = convertedData;
+    setCachedMember(userId, brandParam, convertedData);
+    renderAllData(convertedData);
+    if (isReload) showToast('✅ 資料已更新');
+} else {
         // ❌ 資料無效，保留原有快取或顯示錯誤
         console.warn("⚠️ API 回傳無效資料（user 為空）");
         
