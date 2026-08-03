@@ -491,7 +491,24 @@ function clearCachedMember(userId) {
         console.log("🧹 已清除所有會員快取，共 " + keys.length + " 筆");
     }
 }
-
+/**
+ * 檢查快取是否有效（不解析資料）
+ */
+function hasValidCache(userId, ttlSeconds) {
+    ttlSeconds = ttlSeconds || 300;
+    var key = 'member_data_' + userId;
+    var cached = localStorage.getItem(key);
+    
+    if (!cached) return false;
+    
+    try {
+        var data = JSON.parse(cached);
+        var cacheTime = data._cacheTime || 0;
+        return (Date.now() - cacheTime) <= (ttlSeconds * 1000);
+    } catch(e) {
+        return false;
+    }
+}
 // ============================================================
 // ✅ 工具函數
 // ============================================================
