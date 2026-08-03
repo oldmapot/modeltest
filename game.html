@@ -1245,7 +1245,23 @@ function showStatus(msg) {
 }
 
 function goBack() {
-    window.history.back();
+    // 🔥 檢查是否在 iframe 中
+    if (window.parent !== window) {
+        // 在 iframe 中 → 發送 postMessage 通知主頁面
+        const result = {
+            type: 'GAME_OVER',
+            score: score,
+            isWin: isWin,
+            bonusPoints: isWin ? CONFIG.bonusPoints : 0,
+            success: gameResultData?.success || false,
+            message: gameResultData?.message || ''
+        };
+        console.log('📤 發送 postMessage 到主頁面:', result);
+        window.parent.postMessage(result, '*');
+    } else {
+        // 不在 iframe 中 → 直接返回
+        window.history.back();
+    }
 }
 
 // ==================== 啟動 ====================
