@@ -783,6 +783,7 @@ function init() {
             couponName: couponName,
             couponContent: couponContent
         };
+        window.activeCouponDocId = couponDocId;  // ✅ 加入這行！
         console.log("✅ 優惠券資訊已儲存:", window.activeCoupon);
     }
     
