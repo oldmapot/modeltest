@@ -830,6 +830,36 @@ function init() {
             window.couponDiscountAmount = discountAmount || 0;
             window.couponType = couponType || '';
         }
+        
+        // ============================================================
+        //  🔥🔥🔥 加入：根據優惠券類型決定是否解鎖表單
+        // ============================================================
+        var needAmount = (couponType === '贈點' || couponType === '消費折抵');
+        
+        if (needAmount) {
+            console.log("🎯 優惠券類型 [" + couponType + "] 需要輸入金額，解鎖表單");
+            
+            // 顯示會員 UI
+            var memberUI = document.getElementById('member-ui');
+            if (memberUI) memberUI.style.display = 'block';
+            
+            // 解鎖表單
+            var formUI = document.getElementById('form-ui');
+            if (formUI) formUI.classList.remove('locked');
+            
+            // 解鎖所有輸入欄位
+            var inputs = document.querySelectorAll('#form-ui input');
+            inputs.forEach(function(input) {
+                input.disabled = false;
+                input.readOnly = false;
+            });
+            
+            // 聚焦到總消費金額
+            var totalInput = document.getElementById('totalSpend');
+            if (totalInput) totalInput.focus();
+        } else {
+            console.log("🎯 優惠券類型 [" + couponType + "] 直接兌換，不需輸入金額");
+        }
     }
     
     // ============================================================
