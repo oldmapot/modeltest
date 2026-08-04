@@ -1859,6 +1859,7 @@ function generateTransactionId(customerId) {
 async function submitData() {
     const startTime = Date.now();
     console.log('⏱️ ==== 集點流程開始 ====');
+    console.log('🔍 提交前 customerId:', customerId);  // ← 加入這行
     
     // ---------- 1. 前置檢查 ----------
     if (!isLoggedIn || !staff?.loginId) {
