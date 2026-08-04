@@ -967,7 +967,7 @@ function displayCouponInfo(data) {
     }
 }
 // ============================================================
-//  🔥 載入會員資料（從優惠券跳轉時使用）
+//  🔥 載入會員資料（✅ 使用統一欄位名稱）
 // ============================================================
 async function loadMemberData(userId) {
     showLoading("載入會員資料...");
@@ -980,16 +980,20 @@ async function loadMemberData(userId) {
         if (data.success && data.member) {
             config = data.config || {};
             customerId = data.member.userId;
-            currentPoints = data.member.points || 0;
-            memberLevel = data.member.level || "一般會員";
+            
+            // ✅ 使用統一欄位名稱
+            currentPoints = data.member.currentPoints || data.member.points || 0;
+            memberLevel = data.member.level || data.member.memberLevel || "一般會員";
             levelRate = data.member.levelRate || 1;
             
             document.getElementById('member-ui').style.display = 'block';
             document.getElementById('form-ui').classList.remove('locked');
-            document.getElementById('cus-name').innerText = data.member.name;
+            
+            // ✅ 使用統一欄位名稱
+            document.getElementById('cus-name').innerText = data.member.memberName || data.member.name || '會員';
             document.getElementById('member-level').innerText = memberLevel;
             document.getElementById('cus-pts').innerText = currentPoints;
-            document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
+            document.getElementById('cus-total').innerText = data.member.totalSpend || data.member.totalSpend || 0;
             
             // 🔥 如果有優惠券，顯示優惠券區塊
             if (window.activeCoupon) {
@@ -1483,13 +1487,17 @@ if (scanMode === 'coupon') {
                     config.shopCode = config.shopCode || parsed.shopCode || "OMP";
                     
                     customerId = data.member.userId;
-                    currentPoints = data.member.points || 0;
-                    memberLevel = data.member.level || "一般會員";
+                    
+                    // ✅ 使用統一欄位名稱
+                    currentPoints = data.member.currentPoints || data.member.points || 0;
+                    memberLevel = data.member.level || data.member.memberLevel || "一般會員";
                     levelRate = data.member.levelRate || 1;
                     
                     document.getElementById('member-ui').style.display = 'block';
                     document.getElementById('form-ui').classList.remove('locked');
-                    document.getElementById('cus-name').innerText = data.member.name;
+                    
+                    // ✅ 使用統一欄位名稱
+                    document.getElementById('cus-name').innerText = data.member.memberName || data.member.name || '會員';
                     document.getElementById('member-level').innerText = memberLevel;
                     document.getElementById('cus-pts').innerText = currentPoints;
                     document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
@@ -1957,8 +1965,9 @@ async function submitData() {
             // 🔥 修正點：安全地更新會員資訊
             if (result.member) {
                 try {
-                    currentPoints = result.member.points || 0;
-                    memberLevel = result.member.level || '一般會員';
+                    // ✅ 使用統一欄位名稱
+                    currentPoints = result.member.currentPoints || result.member.points || 0;
+                    memberLevel = result.member.level || result.member.memberLevel || '一般會員';
                     levelRate = result.member.levelRate || 1;
                     
                     // 🔥 修正點：檢查 DOM 元素是否存在再更新
