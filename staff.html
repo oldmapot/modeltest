@@ -1932,14 +1932,18 @@ async function submitData() {
         baseAmount
     } = calcResult;
     
-    // ---------- 3. 檢查優惠券門檻 ----------
+   // ---------- 3. 檢查優惠券門檻 ----------
     const couponMinSpend = window.activeCoupon?.minSpend || 0;
     const couponDocId = window.activeCoupon?.couponDocId || '';
     const couponType = window.activeCoupon?.type || '';
     
+    // ✅ 預設可以使用優惠券
+    let couponEligible = true;
+    
     if (couponType && couponMinSpend > 0 && baseAmount < couponMinSpend) {
-        alert(`⚠️ 此優惠券需消費滿 ${couponMinSpend} 元才可使用\n目前實際消費金額：${baseAmount} 元`);
-        return;
+        // ✅ 未達門檻：提示但繼續結帳（優惠券不使用）
+        showToast(`⚠️ 本次消費未達門檻（需滿 ${couponMinSpend} 元），優惠券未使用，使用期限內可用`);
+        couponEligible = false;  // ← 標記為不使用優惠券
     }
     
     // ---------- 4. UI 鎖定 ----------
@@ -1960,23 +1964,22 @@ async function submitData() {
         totalSpend: totalSpend,
         ticketSpend: ticketSpend,
         redeemAmount: redeem,
-        couponDiscount: couponDiscount,
+        couponDiscount: couponEligible ? couponDiscount : 0,  // ← 不符合門檻則折抵歸零
         earnRate: config?.earnRate || 0.03,
         levelRate: config?.levelRate || 1,
         eventMultiplier: config?.eventMultiplier || 1,
         loginId: staff.loginId || '',
         deviceId: staff.deviceId || '',
         transactionId: transactionId,
-        couponDocId: couponDocId,
+        couponDocId: couponEligible ? couponDocId : '',  // ← 不符合門檻則不傳
         couponMinSpend: couponMinSpend,
-        couponBonus: couponBonus,
-        couponDiscount: couponDiscount,
-        couponType: couponType,
+        couponBonus: couponEligible ? couponBonus : 0,   // ← 不符合門檻則贈點歸零
+        couponDiscount: couponEligible ? couponDiscount : 0,
+        couponType: couponEligible ? couponType : '',     // ← 不符合門檻則不傳
         calculatedPoints: totalNewPoints,
         basePoints: basePoints,
         isTicketMode: isTicketMode
     });
-    
     // ---------- 7. 發送請求 ----------
     try {
         console.log(`📤 提交集點請求，交易ID: ${transactionId}`);
