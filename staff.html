@@ -1000,11 +1000,14 @@ function displayCouponInfo(data) {
 //  🔥 載入會員資料（✅ 使用統一欄位名稱）
 // ============================================================
 async function loadMemberData(userId) {
-    showLoading("載入會員資料...");
+showLoading("載入會員資料...");
     try {
         var url = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(userId)}&branch=${encodeURIComponent(staff.branch)}&t=${Date.now()}`;
         var res = await fetch(url);
         var data = await res.json();
+        
+        console.log("📊 loadMemberData 完整回傳:", JSON.stringify(data));  // ← 加入這行
+        
         hideLoading();
         
         if (data.success && data.member) {
