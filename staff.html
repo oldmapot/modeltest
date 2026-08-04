@@ -1890,6 +1890,13 @@ async function submitData() {
     const startTime = Date.now();
     console.log('⏱️ ==== 集點流程開始 ====');
     console.log('🔍 提交前 customerId:', customerId);  // ← 加入這行
+    if (!customerId) {
+        var urlUserId = new URLSearchParams(window.location.search).get('userId');
+        if (urlUserId) {
+            customerId = urlUserId;
+            console.log('🔄 從 URL 重新讀取 customerId:', customerId);
+        }
+    }
     
     // ---------- 1. 前置檢查 ----------
     if (!isLoggedIn || !staff?.loginId) {
