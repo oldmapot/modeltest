@@ -438,14 +438,14 @@ function renderAllData(data) {
       loading.style.display = 'none';
   }
   
-  // 1️⃣ 渲染會員資訊
+  // 1️⃣ 渲染會員資訊（✅ 使用統一欄位）
   if (data.user) {
     var user = data.user;
-    setElementText('user-name', user.displayName || '會員');
-    setElementText('user-points', user.currentPoints || 0);
-    setElementText('user-level', user.memberLevel || '一般會員');
-    setElementText('user-phone', user.phone || '');
-    setElementText('user-total-spend', user.totalSpend || 0);
+    setElementText('user-name', user.memberName || '會員');           // ✅ displayName → memberName
+    setElementText('user-points', user.currentPoints || 0);          // ✅ 保持不變
+    setElementText('user-level', user.level || '一般會員');           // ✅ memberLevel → level
+    setElementText('user-phone', user.memberPhone || '');            // ✅ phone → memberPhone
+    setElementText('user-total-spend', user.totalSpend || 0);        // ✅ totalSpend 保持不變
   }
   
   // 2️⃣ 渲染優惠券列表
@@ -511,32 +511,40 @@ function backgroundUpdate(userId, brandParam) {
                 // ✅ 防禦性檢查
                 var isValidData = newData &&
                     newData.user &&
-                    newData.user.displayName &&
-                    newData.user.displayName.trim() !== '';
+                    newData.user.memberName &&                    // ✅ displayName → memberName
+                    newData.user.memberName.trim() !== '';
 
                 if (!isValidData) {
                     console.warn("⚠️ 背景更新收到無效資料（user 為空），不覆蓋快取");
                     return;
                 }
 
-                // ✅ 轉換資料格式（和  一樣！）
+                // ✅ 轉換資料格式（使用統一欄位）
                 var convertedData = {
     user: Object.assign({}, newData.user || {}, {
         shopCode: newData.meta?.brandCode || 'OMP',
-        shopKey: newData.user?.shopKey || 'TEMP_' + userId.substring(0, 8)
+        shopKey: newData.user?.shopKey || 'TEMP_' + userId.substring(0, 8),
+        // ✅ 確保欄位統一
+        memberName: newData.user?.memberName || newData.user?.displayName || '',
+        memberPhone: newData.user?.memberPhone || newData.user?.phone || '',
+        currentPoints: newData.user?.currentPoints || 0,
+        totalSpend: newData.user?.totalSpend || 0,
+        level: newData.user?.level || newData.user?.memberLevel || '一般會員',
+        levelRate: newData.user?.levelRate || 0,
+        birthday: newData.user?.birthday || ''
     }),
     coupons: newData.coupons || [],
     meta: newData.meta || {},
     isMember: true,
     "目前剩餘點": newData.user?.currentPoints || 0,
     points: newData.user?.currentPoints || 0,
-    name: newData.user?.displayName || '',
+    name: newData.user?.memberName || newData.user?.displayName || '',
     welcomePhrases: newData.meta?.welcomePhrases || [],
     shopKey: newData.user?.shopKey || '',
     shopCode: newData.meta?.brandCode || 'OMP',
     profile: {
-        name: newData.user?.displayName || '',
-        phone: newData.user?.phone || '',
+        name: newData.user?.memberName || newData.user?.displayName || '',
+        phone: newData.user?.memberPhone || newData.user?.phone || '',
         birthday: newData.user?.birthday || ''
     },
     myReferrer: newData.myReferrer || '無',
@@ -1141,25 +1149,32 @@ async function refreshAll() {
         if (result.success) {
             var newData = result.data;
             
-            // 🔥 轉換成 displayMemberUI 要的格式
+            // 🔥 轉換成 displayMemberUI 要的格式（✅ 使用統一欄位）
             var convertedData = {
                 user: Object.assign({}, newData.user || {}, {
                     shopCode: newData.meta?.brandCode || 'OMP',
-                    shopKey: (newData.user && newData.user.shopKey) || 'TEMP_' + userId.substring(0, 8)
+                    shopKey: (newData.user && newData.user.shopKey) || 'TEMP_' + userId.substring(0, 8),
+                    // ✅ 確保欄位統一
+                    memberName: newData.user?.memberName || newData.user?.displayName || '',
+                    memberPhone: newData.user?.memberPhone || newData.user?.phone || '',
+                    currentPoints: newData.user?.currentPoints || 0,
+                    totalSpend: newData.user?.totalSpend || 0,
+                    level: newData.user?.level || newData.user?.memberLevel || '一般會員',
+                    levelRate: newData.user?.levelRate || 0,
+                    birthday: newData.user?.birthday || ''
                 }),
                 coupons: newData.coupons || [],
                 meta: newData.meta || {},
                 isMember: true,
                 "目前剩餘點": newData.user?.currentPoints || 0,
                 points: newData.user?.currentPoints || 0,
-                name: newData.user?.displayName || '',
+                name: newData.user?.memberName || newData.user?.displayName || '',
                 welcomePhrases: newData.meta?.welcomePhrases || [],
                 profile: {
-                    name: newData.user?.displayName || '',
-                    phone: newData.user?.phone || '',
+                    name: newData.user?.memberName || newData.user?.displayName || '',
+                    phone: newData.user?.memberPhone || newData.user?.phone || '',
                     birthday: newData.user?.birthday || ''
                 },
-                coupons: newData.coupons || [],
                 myReferrer: newData.myReferrer || '無',
                 myReferrals: newData.myReferrals || [],
                 history: newData.history || [],
@@ -1254,35 +1269,39 @@ async function fetchData(isReload, brandParam) {
         if (result.success) {
             var newData = result.data;
 
-            // ✅ 防禦性檢查：確保資料有效
+            // ✅ 防禦性檢查：確保資料有效（✅ 使用 memberName）
             var isValidData = newData &&
                 newData.user &&
-                newData.user.displayName &&
-                newData.user.displayName.trim() !== '';
+                newData.user.memberName &&                    // ✅ displayName → memberName
+                newData.user.memberName.trim() !== '';
 
             if (isValidData) {
-                // ✅ 轉換資料格式
+                // ✅ 轉換資料格式（✅ 使用統一欄位）
                var convertedData = {
-    // ✅ 把 shopCode 和 shopKey 只放在 user 物件裡面
     user: Object.assign({}, newData.user || {}, {
         shopCode: newData.meta?.brandCode || 'OMP',
-        shopKey: (newData.user && newData.user.shopKey) || getRandomKeyFromCache(brandParam) || 'TEMP_' + userId.substring(0, 8)
+        shopKey: (newData.user && newData.user.shopKey) || getRandomKeyFromCache(brandParam) || 'TEMP_' + userId.substring(0, 8),
+        // ✅ 統一欄位
+        memberName: newData.user?.memberName || newData.user?.displayName || '',
+        memberPhone: newData.user?.memberPhone || newData.user?.phone || '',
+        currentPoints: newData.user?.currentPoints || 0,
+        totalSpend: newData.user?.totalSpend || 0,
+        level: newData.user?.level || newData.user?.memberLevel || '一般會員',
+        levelRate: newData.user?.levelRate || 0,
+        birthday: newData.user?.birthday || ''
     }),
     coupons: newData.coupons || [],
     meta: newData.meta || {},
     isMember: true,
     "目前剩餘點": newData.user?.currentPoints || 0,
     points: newData.user?.currentPoints || 0,
-    name: newData.user?.displayName || '',
+    name: newData.user?.memberName || newData.user?.displayName || '',
     welcomePhrases: newData.meta?.welcomePhrases || [],
-    // ❌ 刪除這行：shopCode: newData.meta?.brandCode || brandParam || 'OMP',
-    // ❌ 刪除這行：shopKey: newData.user?.shopKey || '',
     profile: {
-        name: newData.user?.displayName || '',
-        phone: newData.user?.phone || '',
+        name: newData.user?.memberName || newData.user?.displayName || '',
+        phone: newData.user?.memberPhone || newData.user?.phone || '',
         birthday: newData.user?.birthday || ''
     },
-   
     myReferrer: newData.myReferrer || '無',
     myReferrals: newData.myReferrals || [],
     history: newData.history || [],
@@ -1380,35 +1399,43 @@ async function refreshInBackground() {
         if (result.success) {
             var newData = result.data;
 
-            // ✅ 防禦性檢查
+            // ✅ 防禦性檢查（✅ 使用 memberName）
             var isValidData = newData &&
                 newData.user &&
-                newData.user.displayName &&
-                newData.user.displayName.trim() !== '';
+                newData.user.memberName &&                    // ✅ displayName → memberName
+                newData.user.memberName.trim() !== '';
 
             if (!isValidData) {
                 console.warn("⚠️ 背景更新收到無效資料");
                 return;
             }
 
-            // ✅ 轉換資料格式
+            // ✅ 轉換資料格式（✅ 使用統一欄位）
             var convertedData = {
     user: Object.assign({}, newData.user || {}, {
         shopCode: newData.meta?.brandCode || 'OMP',
-        shopKey: newData.user?.shopKey || 'TEMP_' + userId.substring(0, 8)
+        shopKey: newData.user?.shopKey || 'TEMP_' + userId.substring(0, 8),
+        // ✅ 統一欄位
+        memberName: newData.user?.memberName || newData.user?.displayName || '',
+        memberPhone: newData.user?.memberPhone || newData.user?.phone || '',
+        currentPoints: newData.user?.currentPoints || 0,
+        totalSpend: newData.user?.totalSpend || 0,
+        level: newData.user?.level || newData.user?.memberLevel || '一般會員',
+        levelRate: newData.user?.levelRate || 0,
+        birthday: newData.user?.birthday || ''
     }),
     coupons: newData.coupons || [],
     meta: newData.meta || {},
     isMember: true,
     "目前剩餘點": newData.user?.currentPoints || 0,
     points: newData.user?.currentPoints || 0,
-    name: newData.user?.displayName || '',
+    name: newData.user?.memberName || newData.user?.displayName || '',
     welcomePhrases: newData.meta?.welcomePhrases || [],
     shopKey: newData.user?.shopKey || '',
     shopCode: newData.meta?.brandCode || 'OMP',
     profile: {
-        name: newData.user?.displayName || '',
-        phone: newData.user?.phone || '',
+        name: newData.user?.memberName || newData.user?.displayName || '',
+        phone: newData.user?.memberPhone || newData.user?.phone || '',
         birthday: newData.user?.birthday || ''
     },
     myReferrer: newData.myReferrer || '無',
@@ -1786,7 +1813,7 @@ function shareWithTargetPicker() {
     console.log("🔍 開始分享流程");
     console.log("📌 userId:", userId);
     
-    // 🔥🔥🔥 加入這行：取得推薦人姓名
+    // 🔥🔥🔥 加入這行：取得推薦人姓名（✅ 使用 memberName）
     var referrerName = userData?.profile?.name || userData?.name || "好友";
     console.log("📌 推薦人姓名:", referrerName);
     
@@ -2300,7 +2327,6 @@ window.addEventListener('message', function(event) {
 });
 
 initLiff();
-    
 </script>
 </body>
 </html>
