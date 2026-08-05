@@ -1156,36 +1156,58 @@ function showToast(msg) {
 function resetMember() {
     try {
         // ============================================================
-        //  1️⃣ 重置掃描相關的狀態
+        //  1️⃣ 重置掃描與全域狀態
         // ============================================================
         customerId = null;
         currentMemberData = null;
+        window.activeCoupon = null;
+        window.activeCouponDocId = null;
+        window.calcResult = null;
+        window.couponData = null;
         
         // ============================================================
-        //  2️⃣ 清除會員 UI
+        //  2️⃣ 清除會員搜尋欄位與 UI 顯示
         // ============================================================
+        // 若有搜尋/輸入會員的文字框，一併清空
+        const searchInput = document.getElementById('customerSearchInput') || document.getElementById('search-phone');
+        if (searchInput) searchInput.value = '';
+
         const memberInfo = document.getElementById('member-info');
-        if (memberInfo) {
-            memberInfo.style.display = 'none';
-        }
+        if (memberInfo) memberInfo.style.display = 'none';
         
+        const memberUI = document.getElementById('member-ui');
+        if (memberUI) memberUI.style.display = 'none';
+
         const nameEl = document.getElementById('customer-name');
         const phoneEl = document.getElementById('customer-phone');
+        const levelEl = document.getElementById('customer-level');
+        const pointsEl = document.getElementById('customer-points');
+        
         if (nameEl) nameEl.textContent = '';
         if (phoneEl) phoneEl.textContent = '';
-        
+        if (levelEl) levelEl.textContent = '';
+        if (pointsEl) pointsEl.textContent = '';
+
         // ============================================================
-        //  3️⃣ 清除優惠券資訊（🔥 新增）
+        //  3️⃣ 清除優惠券資訊（加上安全防護，防止元素不存在報錯）
         // ============================================================
         const couponInfo = document.getElementById('coupon-info');
-        if (couponInfo) {
-            couponInfo.style.display = 'none';
-        }
-        document.getElementById('coupon-name-display').textContent = '';
-        document.getElementById('coupon-content-display').textContent = '';
-        document.getElementById('coupon-minSpend-display').textContent = '';
-        document.getElementById('coupon-type-display').textContent = '';
-        
+        if (couponInfo) couponInfo.style.display = 'none';
+
+        const couponName = document.getElementById('coupon-name-display');
+        const couponContent = document.getElementById('coupon-content-display');
+        const couponMinSpend = document.getElementById('coupon-minSpend-display');
+        const couponType = document.getElementById('coupon-type-display');
+
+        if (couponName) couponName.textContent = '';
+        if (couponContent) couponContent.textContent = '';
+        if (couponMinSpend) couponMinSpend.textContent = '';
+        if (couponType) couponType.textContent = '';
+
+        // 隱藏的 coupon ID 欄位（若有）
+        const couponDocIdInput = document.getElementById('couponDocId');
+        if (couponDocIdInput) couponDocIdInput.value = '';
+
         // 清除優惠券狀態顯示
         const statusDisplay = document.getElementById('coupon-status-display');
         if (statusDisplay) {
@@ -1193,69 +1215,55 @@ function resetMember() {
             statusDisplay.style.color = '#666';
             statusDisplay.className = 'coupon-status no-coupon';
         }
-        
+
         // ============================================================
-        //  4️⃣ 清除結帳金額輸入（🔥 新增）
+        //  4️⃣ 清除結帳金額輸入欄位
         // ============================================================
         const totalInput = document.getElementById('totalSpend');
         if (totalInput) totalInput.value = '';
-        
+
         const ticketInput = document.getElementById('ticketSpend');
         if (ticketInput) ticketInput.value = '';
-        
+
         const redeemInput = document.getElementById('redeemAmount');
         if (redeemInput) redeemInput.value = '';
-        
+
         const couponDiscountInput = document.getElementById('couponDiscount');
         if (couponDiscountInput) couponDiscountInput.value = '';
-        
+
         // ============================================================
-        //  5️⃣ 清除點數計算顯示（🔥 新增）
+        //  5️⃣ 清除點數計算顯示
         // ============================================================
         const newPtsEl = document.getElementById('new-pts');
         if (newPtsEl) newPtsEl.innerText = '0 點';
-        
+
         const afterPtsEl = document.getElementById('after-pts');
         if (afterPtsEl) afterPtsEl.innerText = '0 點';
-        
+
         const maxHintEl = document.getElementById('max-hint');
         if (maxHintEl) maxHintEl.innerText = '0';
-        
+
         const tipEl = document.getElementById('redeemTip');
         if (tipEl) {
             tipEl.innerText = '';
             tipEl.className = 'redeem-tip';
         }
-        
+
         // ============================================================
-        //  6️⃣ 清除優惠券全域變數（🔥 新增）
-        // ============================================================
-        window.activeCoupon = null;
-        window.activeCouponDocId = null;
-        window.calcResult = null;
-        window.couponData = null;
-        
-        // ============================================================
-        //  7️⃣ 重置按鈕狀態（🔥 新增）
+        //  6️⃣ 重置按鈕狀態
         // ============================================================
         const submitBtn = document.getElementById('submitBtn');
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.textContent = '請先掃描會員';
         }
-        
+
         const scanBtn = document.getElementById('scanBtn');
         if (scanBtn) {
             scanBtn.textContent = '📷 掃描會員';
             scanBtn.disabled = false;
         }
-        
-        // 隱藏會員 UI
-        const memberUI = document.getElementById('member-ui');
-        if (memberUI) {
-            memberUI.style.display = 'none';
-        }
-        
+
         console.log('🔄 會員資料已完整重置');
     } catch (error) {
         console.warn('⚠️ 重置會員資料時發生錯誤:', error);
