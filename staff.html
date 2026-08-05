@@ -601,15 +601,17 @@ function resetIdleTimer() {
 }
 
 function setupIdleDetection() {
-    var events = ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'];
-    events.forEach(function(event) {
-        document.addEventListener(event, function() {
-            resetIdleTimer();
-        });
-    });
-    resetIdleTimer();
+    console.log("⏰ 閒置檢測已關閉（測試用）");
+    // 全部註解掉
+    // var events = ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'];
+    // events.forEach(function(event) {
+    //     document.addEventListener(event, function() {
+    //         resetIdleTimer();
+    //     });
+    // });
+    // resetIdleTimer();
 }
-// ============================================================
+        // ============================================================
         //  🔥 核心：無感靜默驗證
         // ============================================================
         async function verifyStaffSession(loginId) {
