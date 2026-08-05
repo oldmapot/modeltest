@@ -1161,7 +1161,8 @@ function resetMember() {
         // ============================================================
         //  1️⃣ 重置掃描相關的狀態
         // ============================================================
-        customerId = null;
+        customerId = "";
+        window.customerId = undefined;  // ✅ 清理 window 全域
         currentMemberData = null;
         
         // ============================================================
@@ -1177,37 +1178,35 @@ function resetMember() {
         if (nameEl) nameEl.textContent = '';
         if (phoneEl) phoneEl.textContent = '';
         
-// ============================================================
-//  3️⃣ 清除優惠券資訊（🔥 新增）
-// ============================================================
-const couponInfo = document.getElementById('coupon-info');
-if (couponInfo) {
-    couponInfo.style.display = 'none';
-}
-
-// ✅ 檢查元素是否存在再操作
-var el = document.getElementById('coupon-name-display');
-if (el) el.textContent = '';
-
-el = document.getElementById('coupon-content-display');
-if (el) el.textContent = '';
-
-el = document.getElementById('coupon-minSpend-display');
-if (el) el.textContent = '';
-
-el = document.getElementById('coupon-type-display');
-if (el) el.textContent = '';
-
-// 清除優惠券狀態顯示
-const statusDisplay = document.getElementById('coupon-status-display');
-if (statusDisplay) {
-    statusDisplay.innerHTML = '📋 尚未使用優惠券';
-    statusDisplay.style.color = '#666';
-    statusDisplay.className = 'coupon-status no-coupon';
-}
+        // ============================================================
+        //  3️⃣ 清除優惠券資訊
+        // ============================================================
+        const couponInfo = document.getElementById('coupon-info');
+        if (couponInfo) {
+            couponInfo.style.display = 'none';
+        }
+        
+        var el = document.getElementById('coupon-name-display');
+        if (el) el.textContent = '';
+        
+        el = document.getElementById('coupon-content-display');
+        if (el) el.textContent = '';
+        
+        el = document.getElementById('coupon-minSpend-display');
+        if (el) el.textContent = '';
+        
+        el = document.getElementById('coupon-type-display');
+        if (el) el.textContent = '';
+        
+        const statusDisplay = document.getElementById('coupon-status-display');
+        if (statusDisplay) {
+            statusDisplay.innerHTML = '📋 尚未使用優惠券';
+            statusDisplay.style.color = '#666';
+            statusDisplay.className = 'coupon-status no-coupon';
+        }
         
         // ============================================================
-        //  4️⃣ 清除結帳金額輸入（🔥 新增）
+        //  4️⃣ 清除結帳金額輸入
         // ============================================================
         const totalInput = document.getElementById('totalSpend');
         if (totalInput) totalInput.value = '';
@@ -1222,7 +1221,7 @@ if (statusDisplay) {
         if (couponDiscountInput) couponDiscountInput.value = '';
         
         // ============================================================
-        //  5️⃣ 清除點數計算顯示（🔥 新增）
+        //  5️⃣ 清除點數計算顯示
         // ============================================================
         const newPtsEl = document.getElementById('new-pts');
         if (newPtsEl) newPtsEl.innerText = '0 點';
@@ -1240,15 +1239,19 @@ if (statusDisplay) {
         }
         
         // ============================================================
-        //  6️⃣ 清除優惠券全域變數（🔥 新增）
+        //  6️⃣ 清除優惠券全域變數
         // ============================================================
         window.activeCoupon = null;
         window.activeCouponDocId = null;
         window.calcResult = null;
         window.couponData = null;
+        window.couponMinSpend = 0;
+        window.couponBonusPoints = 0;
+        window.couponDiscountAmount = 0;
+        window.couponType = '';
         
         // ============================================================
-        //  7️⃣ 重置按鈕狀態（🔥 新增）
+        //  7️⃣ 重置按鈕狀態
         // ============================================================
         const submitBtn = document.getElementById('submitBtn');
         if (submitBtn) {
@@ -1266,6 +1269,28 @@ if (statusDisplay) {
         const memberUI = document.getElementById('member-ui');
         if (memberUI) {
             memberUI.style.display = 'none';
+        }
+        
+        // ============================================================
+        //  8️⃣ 清理 URL 殘留參數（避免重複疊加）
+        // ============================================================
+        if (window.history && window.history.replaceState) {
+            try {
+                var url = new URL(window.location.href);
+                var paramsToRemove = [
+                    'userId', 'fromCoupon', 'couponDocId', 'minSpend',
+                    'bonusPoints', 'discountAmount', 'couponType',
+                    'couponName', 'couponContent', 'memberName',
+                    'currentPoints', 'memberLevel', 'totalSpend'
+                ];
+                paramsToRemove.forEach(function(param) {
+                    url.searchParams.delete(param);
+                });
+                window.history.replaceState({}, document.title, url.toString());
+                console.log('✅ URL 殘留參數已清除');
+            } catch (err) {
+                console.warn('⚠️ URL 清理時發生非致命例外:', err);
+            }
         }
         
         console.log('🔄 會員資料已完整重置');
