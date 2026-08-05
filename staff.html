@@ -1285,14 +1285,14 @@ function parseScannedCode(scannedText) {
     
     // 🔥 會員 QR：格式 {shopCode}_{key}_{userId}，長度為 3
     if (parts.length === 3) {
-        var shopCode = String(parts[0]).toUpperCase();  // ✅ 強制大寫
+        var shopCode = parts[0];
         var shopKey = parts[1];
         var userId = parts[2];
-        if (shopCode === "OMP" || shopCode === "SWO") {  // ✅ 支援雙品牌
+        if (shopCode === "OMP" || shopCode === "") {
             console.log("✅ 識別為【會員 QR】，memberId:", userId);
             return { 
                 type: "member", 
-                userId: userId,
+                userId: userId,      // ← memberId
                 shopCode: shopCode,
                 shopKey: shopKey
             };
@@ -1301,19 +1301,19 @@ function parseScannedCode(scannedText) {
     
     // 🔥 優惠券 QR：格式 {prefix}_{brandCode}_{couponId}_{memberId}，長度為 4
     if (parts.length === 4) {
-        var brandCode = String(parts[1]).toUpperCase();  // ✅ 強制大寫
+        var brandCode = parts[1];
         var couponId = parts[2];
-        var userId = parts[3];
+        var userId = parts[3];      // ← 這裡就是 memberId
         
         // 確認品牌代號有效
-        if (brandCode === "OMP" || brandCode === "SWO") {  // ✅ 支援雙品牌
+        if (brandCode === "OMP" || brandCode === "") {
             console.log("✅ 識別為【優惠券 QR】");
             console.log("   brandCode:", brandCode);
             console.log("   couponId:", couponId);
             console.log("   memberId (userId):", userId);
             return { 
                 type: "coupon", 
-                userId: userId,
+                userId: userId,      // ← 這裡就是 memberId
                 couponId: couponId,
                 fullData: clean
             };
