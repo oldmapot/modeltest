@@ -2132,36 +2132,48 @@ function showBlockPage(message) {
     `;
 }
 async function initLiff() {
+    console.log('🚀 開始執行 initLiff...');
+    
+    // 💡 建立超時機制，防止 liff.init 永遠轉圈圈 (5秒超時)
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('LIFF 初始化超時 (超過 5 秒)')), 5000)
+    );
+
     try {
-        // 🔥 等待 LIFF 初始化
-        await liff.init({ liffId: LIFF_ID });
+        console.log('⏳ 正在初始化 LIFF...');
+        
+        // 競爭 race：看 liff.init 先完成還是 5 秒超時先到達
+        await Promise.race([
+            liff.init({ liffId: LIFF_ID }),
+            timeoutPromise
+        ]);
+        
         console.log('✅ LIFF 初始化完成');
 
-        // ✅ 防禦 1：檢查使用者是否已登入 LINE
+        // 🔥 防禦檢查：若未登入，引導至 LINE 登入頁
         if (!liff.isLoggedIn()) {
             console.log('⚠️ 使用者未登入，引導至 LINE 登入頁');
             liff.login();
-            return; // 中斷後續執行
-        }
-
-        // ✅ 防禦 2：取得 Profile
-        const profile = await liff.getProfile();
-        userId = profile.userId;
-        console.log('✅ 取得 userId:', userId);
-
-        // ✅ 防禦 3：確認 userId 存在才發送 API
-        if (!userId) {
-            console.error('❌ 無法取得 userId');
-            showToast('載入失敗，請重新整理');
             return;
         }
 
-        // ✅ 所有條件通過，才查會員
-        await fetchData(false, brandParam);
+        console.log('⏳ 正在取得 Profile...');
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+        console.log('✅ 成功取得 userId:', userId);
+
+        if (userId) {
+            console.log('⏳ 發送 fetchData 查詢會員資料...');
+            await fetchData(false, brandParam);
+        } else {
+            console.error('❌ 無法取得有效的 userId');
+            hideLoading(); // 關閉轉圈圈
+        }
 
     } catch (e) {
-        console.error('❌ LIFF 初始化失敗:', e);
-        showToast('載入失敗，請重新整理');
+        console.error('❌ initLiff 發生錯誤:', e);
+        hideLoading(); // 🔥 發生錯誤時一定要關閉轉圈圈！
+        alert('系統載入失敗：' + (e.message || e));
     }
 }
     
