@@ -8,7 +8,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>老娘的一點心意/內測版</title>
-    <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
         :root { --primary: #8b0000; --bg: #fdf5e6; --card-bg: #fff; --text: #333; --light-text: #666; --action-btn: #beb1a8; --brand-btn: #ab545a; --success: #06C755; }
@@ -2132,36 +2132,50 @@ function showBlockPage(message) {
     `;
 }
 async function initLiff() {
-    // ============================================================
-    // ✅ 第一道防線：只能在 LINE App 內使用
-    // ============================================================
-    try {
-        await liff.init({ liffId: LIFF_ID });
-        
-        // 🔥🔥🔥 加入這行：等待 LIFF SDK 完全初始化
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        if (!liff.isInClient()) {
-            console.log('❌ 請在 LINE App 內開啟');
-            showBlockPage('📱 僅支援手機 LINE App 開啟使用');
-            return;
-        }
-        
-        const isMobile = /mobile|android|iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase());
-        if (!isMobile) {
-            console.log('❌ 請使用手機 LINE App');
-            showBlockPage('📱 僅支援手機 LINE App 開啟使用');
-            return;
-        }
-        
-        console.log('✅ 通過檢測：手機 LINE App');
-        
-    } catch(e) {
-        console.error('LIFF init error:', e);
-        showBlockPage('初始化失敗，請在 LINE App 中開啟');
-        return;
-    }
+    console.log('🚀 開始執行 initLiff...');
     
+    // 💡 建立超時機制，防止 liff.init 永遠轉圈圈 (5秒超時)
+    const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('LIFF 初始化超時 (超過 5 秒)')), 5000)
+    );
+
+    try {
+        console.log('⏳ 正在初始化 LIFF...');
+        
+        // 競爭 race：看 liff.init 先完成還是 5 秒超時先到達
+        await Promise.race([
+            liff.init({ liffId: LIFF_ID }),
+            timeoutPromise
+        ]);
+        
+        console.log('✅ LIFF 初始化完成');
+
+        // 🔥 防禦檢查：若未登入，引導至 LINE 登入頁
+        if (!liff.isLoggedIn()) {
+            console.log('⚠️ 使用者未登入，引導至 LINE 登入頁');
+            liff.login();
+            return;
+        }
+
+        console.log('⏳ 正在取得 Profile...');
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+        console.log('✅ 成功取得 userId:', userId);
+
+        if (userId) {
+            console.log('⏳ 發送 fetchData 查詢會員資料...');
+            await fetchData(false, brandParam);
+        } else {
+            console.error('❌ 無法取得有效的 userId');
+            hideLoading(); // 關閉轉圈圈
+        }
+
+    } catch (e) {
+        console.error('❌ initLiff 發生錯誤:', e);
+        hideLoading(); // 🔥 發生錯誤時一定要關閉轉圈圈！
+        alert('系統載入失敗：' + (e.message || e));
+    }
+}
 // ============================================================
 // ✅ 定義 urlParams（從這裡開始使用）
 // ============================================================
