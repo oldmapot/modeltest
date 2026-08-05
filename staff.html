@@ -1487,9 +1487,7 @@ if (scanMode === 'coupon') {
         // ============================================================
         //  🔥 會員處理
         // ============================================================
-       console.log('🔍 data.success =', data.success);
-console.log('🔍 data.member =', data.member);
-console.log('🔍 data.member?.userId =', data.member?.userId);
+      
         if (parsed.type === "member") {
             if (!parsed.userId) {
                 hideLoading();
@@ -1514,6 +1512,9 @@ console.log('🔍 data.member?.userId =', data.member?.userId);
                 console.log("🔍 HTTP 狀態:", res.status);
                 
                 const data = await res.json();
+                 console.log('🔍 data.success =', data.success);
+                 console.log('🔍 data.member =', data.member);
+                 console.log('🔍 data.member?.userId =', data.member?.userId);
                 console.log("📊 getMemberInfo 回傳:", JSON.stringify(data));
                 console.log("⏱️", Date.now() - startTime, "ms - 會員資料解析完成");
                 hideLoading();
