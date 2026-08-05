@@ -1148,7 +1148,7 @@ async function refreshAll() {
             var convertedData = {
                 user: Object.assign({}, newData.user || {}, {
                     shopCode: newData.meta?.brandCode || 'OMP',
-                    shopKey: (newData.user && newData.user.shopKey) || 'TEMP_' + userId.substring(0, 8),
+                    shopKey: (newData.user && newData.user.shopKey) ||'',
                     // ✅ 確保欄位統一
                     memberName: newData.user?.memberName || newData.user?.displayName || '',
                     memberPhone: newData.user?.memberPhone || newData.user?.phone || '',
@@ -1275,7 +1275,7 @@ async function fetchData(isReload, brandParam) {
                var convertedData = {
     user: Object.assign({}, newData.user || {}, {
         shopCode: newData.meta?.brandCode || 'OMP',
-        shopKey: (newData.user && newData.user.shopKey) || getRandomKeyFromCache(brandParam) || 'TEMP_' + userId.substring(0, 8),
+         shopKey: (newData.user && newData.user.shopKey) || '',  // ✅ 改為空字串，不自己產生
         // ✅ 統一欄位
         memberName: newData.user?.memberName || newData.user?.displayName || '',
         memberPhone: newData.user?.memberPhone || newData.user?.phone || '',
@@ -1368,15 +1368,7 @@ async function fetchData(isReload, brandParam) {
         }
     }
 }
-function getRandomKeyFromCache(brandParam) {
-    var cacheKey = 'shopKey_' + brandParam;
-    var cached = localStorage.getItem(cacheKey);
-    if (cached) return cached;
-    
-    var newKey = 'TEMP_' + Date.now().toString(36).toUpperCase();
-    localStorage.setItem(cacheKey, newKey);
-    return newKey;
-}
+
 // ============================================================
 // ✅ 背景更新（不阻塞畫面）- 修正版
 // ============================================================
@@ -1409,7 +1401,7 @@ async function refreshInBackground() {
             var convertedData = {
     user: Object.assign({}, newData.user || {}, {
         shopCode: newData.meta?.brandCode || 'OMP',
-        shopKey: newData.user?.shopKey || 'TEMP_' + userId.substring(0, 8),
+        shopKey: newData.user?.shopKey || '',  // ✅ 改為空字串
         // ✅ 統一欄位
         memberName: newData.user?.memberName || newData.user?.displayName || '',
         memberPhone: newData.user?.memberPhone || newData.user?.phone || '',
