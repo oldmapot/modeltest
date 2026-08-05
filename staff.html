@@ -1487,6 +1487,9 @@ if (scanMode === 'coupon') {
         // ============================================================
         //  🔥 會員處理
         // ============================================================
+       console.log('🔍 data.success =', data.success);
+console.log('🔍 data.member =', data.member);
+console.log('🔍 data.member?.userId =', data.member?.userId);
         if (parsed.type === "member") {
             if (!parsed.userId) {
                 hideLoading();
