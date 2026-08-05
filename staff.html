@@ -1188,31 +1188,19 @@ function resetMember() {
         if (levelEl) levelEl.textContent = '';
         if (pointsEl) pointsEl.textContent = '';
 
-        // ============================================================
+// ============================================================
         //  3️⃣ 清除優惠券資訊（加上安全防護，防止元素不存在報錯）
         // ============================================================
         const couponInfo = document.getElementById('coupon-info');
         if (couponInfo) couponInfo.style.display = 'none';
 
+        // ✅ 先取得元素參考
         const couponName = document.getElementById('coupon-name-display');
         const couponContent = document.getElementById('coupon-content-display');
         const couponMinSpend = document.getElementById('coupon-minSpend-display');
         const couponType = document.getElementById('coupon-type-display');
 
-// ✅ 檢查元素是否存在再操作
-var el = document.getElementById('coupon-name-display');
-if (el) el.textContent = '';
-
-el = document.getElementById('coupon-content-display');
-if (el) el.textContent = '';
-
-el = document.getElementById('coupon-minSpend-display');
-if (el) el.textContent = '';
-
-el = document.getElementById('coupon-type-display');
-if (el) el.textContent = '';
-
-        
+        // ✅ 檢查元素是否存在後再清空文字（乾淨不重複）
         if (couponName) couponName.textContent = '';
         if (couponContent) couponContent.textContent = '';
         if (couponMinSpend) couponMinSpend.textContent = '';
