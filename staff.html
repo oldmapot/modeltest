@@ -1013,8 +1013,8 @@ showLoading("載入會員資料...");
         
         if (data.success && data.member) {
             config = data.config || {};
-            window.customerId = data.member.userId;  // 🔥 強制寫入 window
-            customerId = data.member.userId;
+customerId = data.member.memberId;
+window.customerId = data.member.memberId;
             
             // ✅ 使用統一欄位名稱
             currentPoints = data.member.currentPoints || data.member.points || 0;
@@ -1534,8 +1534,8 @@ if (scanMode === 'coupon') {
                     config.minSpend = Number(config.minSpend) || 0;
                     config.shopCode = config.shopCode || parsed.shopCode || "OMP";
                     
-                    window.customerId = data.member.userId;  // 🔥 強制寫入 window
-                    customerId = data.member.userId;
+ customerId = data.member.memberId;
+window.customerId = data.member.memberId;
                     
                     // ✅ 使用統一欄位名稱
                     currentPoints = data.member.currentPoints || data.member.points || 0;
