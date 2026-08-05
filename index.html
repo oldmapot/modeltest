@@ -523,7 +523,7 @@ function backgroundUpdate(userId, brandParam) {
                 var convertedData = {
     user: Object.assign({}, newData.user || {}, {
         shopCode: newData.meta?.brandCode || 'OMP',
-        shopKey: newData.user?.shopKey || 'TEMP_' + userId.substring(0, 8),
+       shopKey: newData.user?.shopKey || '',
         // ✅ 確保欄位統一
         memberName: newData.user?.memberName || newData.user?.displayName || '',
         memberPhone: newData.user?.memberPhone || newData.user?.phone || '',
@@ -881,17 +881,12 @@ function generateMemberCode() {
     var randomKey = userData?.user?.shopKey || userData?.shopKey || '';
     
     // 🔥 如果 shopKey 是空的，立刻從快取或動態產生一個
-    if (!randomKey) {
-        console.warn('⚠️ shopKey 為空，立即產生臨時金鑰');
-        randomKey = 'TEMP_' + userId.substring(0, 8) + '_' + Date.now().toString(36).toUpperCase();
-        // ✅ 立刻存回 userData，避免下次再掉
-        if (userData) {
-            if (!userData.user) userData.user = {};
-            userData.user.shopKey = randomKey;
-            userData.shopKey = randomKey;
-        }
-    }
-    
+// 🔥 直接刪除這段 fallback 邏輯
+if (!randomKey) {
+    console.error('❌ shopKey 為空，無法產生 QR Code');
+    return;
+}
+
     var qrData = shopCode + '_' + randomKey + '_' + userId;
     var qrImg = document.getElementById('qrcode');
     
