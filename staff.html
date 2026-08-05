@@ -1483,9 +1483,19 @@ if (scanMode === 'coupon') {
     try {
         // 🔥🔥🔥 傳送完整 QR 字串
         const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(fullQr)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
-        const res = await fetch(finalUrl);
+        const res = await fetch(url);
         const text = await res.text();  // ← 先讀成文字
         console.log('📊 原始回應:', text);
+        // ✅ 安全解析
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (parseErr) {
+            console.error('❌ JSON 解析失敗:', text);
+            hideLoading();
+            showModal('❌ 伺服器回應格式錯誤');
+            return;
+        }
 
         const data = safeJsonParse(text);  // ← 安全解析
         if (!data) {
@@ -2081,7 +2091,7 @@ async function submitData() {
         basePoints: basePoints,
         isTicketMode: isTicketMode
     });
-    // ---------- 7. 發送請求 ----------
+// ---------- 7. 發送請求 ----------
     try {
         console.log(`📤 提交集點請求，交易ID: ${transactionId}`);
         console.log(`📊 消費: ${totalSpend} 元 | 折抵: ${redeem} 點 | 獲得: ${totalNewPoints} 點`);
@@ -2090,7 +2100,26 @@ async function submitData() {
         const response = await fetch(`${GAS_URL}?${params.toString()}&t=${Date.now()}`);
         console.log(`⏱️ API 回應: ${Date.now() - fetchStart} ms`);
         
-        const result = await response.json();
+        // ✅ 安全解析 JSON
+        const text = await response.text();
+        console.log('📊 原始回應:', text);
+        
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (parseErr) {
+            console.error('❌ JSON 解析失敗，原始內容:', text);
+            hideLoading();
+            // 如果回應包含成功訊息但 JSON 格式錯誤，仍提示成功（因為可能已入帳）
+            if (text.includes('success') || text.includes('成功')) {
+                showToast('⚠️ 交易可能已成功，請檢查流水帳');
+                resetMember();
+                return;
+            }
+            alert('❌ 伺服器回應格式錯誤，請檢查流水帳確認交易狀態');
+            return;
+        }
+        
         console.log(`⏱️ 總耗時: ${Date.now() - startTime} ms`);
         console.log('📊 完整回傳:', JSON.stringify(result));
         
