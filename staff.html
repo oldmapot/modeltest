@@ -1199,6 +1199,20 @@ function resetMember() {
         const couponMinSpend = document.getElementById('coupon-minSpend-display');
         const couponType = document.getElementById('coupon-type-display');
 
+// ✅ 檢查元素是否存在再操作
+var el = document.getElementById('coupon-name-display');
+if (el) el.textContent = '';
+
+el = document.getElementById('coupon-content-display');
+if (el) el.textContent = '';
+
+el = document.getElementById('coupon-minSpend-display');
+if (el) el.textContent = '';
+
+el = document.getElementById('coupon-type-display');
+if (el) el.textContent = '';
+
+        
         if (couponName) couponName.textContent = '';
         if (couponContent) couponContent.textContent = '';
         if (couponMinSpend) couponMinSpend.textContent = '';
