@@ -1273,14 +1273,34 @@ if (statusDisplay) {
         console.warn('⚠️ 重置會員資料時發生錯誤:', error);
     }
 }
+
+// ✅ 安全的 JSON 解析
+function safeJsonParse(text) {
+    try {
+        return JSON.parse(text);
+    } catch (e) {
+        console.error('❌ JSON 解析失敗，原始內容:', text);
+        return null;
+    }
+}
+
+// ✅ 安全的 decodeURIComponent
+function safeDecodeURIComponent(str) {
+    try {
+        return decodeURIComponent(str);
+    } catch (e) {
+        console.warn('⚠️ decodeURIComponent 失敗:', str);
+        return str;
+    }
+}
 function parseScannedCode(scannedText) {
     let clean = String(scannedText).trim();
     console.log("🔍 parseScannedCode 收到:", clean);
     
-    // 清理 data= 前綴
+    // ✅ 使用安全版本
     if (clean.indexOf("data=") > -1) {
         clean = clean.split("data=")[1].split("&")[0];
-        clean = decodeURIComponent(clean);
+        clean = safeDecodeURIComponent(clean);  // ← 改用安全版本
     }
     if (clean.indexOf("##") === 0) clean = clean.substring(2);
 
@@ -1438,8 +1458,16 @@ if (scanMode === 'coupon') {
     try {
         // 🔥🔥🔥 傳送完整 QR 字串
         const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(fullQr)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
-        const res = await fetch(url);
-        const result = await res.json();
+        const res = await fetch(finalUrl);
+        const text = await res.text();  // ← 先讀成文字
+        console.log('📊 原始回應:', text);
+
+        const data = safeJsonParse(text);  // ← 安全解析
+        if (!data) {
+        hideLoading();
+        showModal('❌ 伺服器回應格式錯誤，請聯繫管理員');
+        return;
+        }
         console.log("📊 優惠券兌換回應:", JSON.stringify(result));
         
         if (result.logout) {
