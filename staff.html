@@ -1902,6 +1902,9 @@ function generateTransactionId(customerId) {
 //  🔥 提交集點（修正版）
 // ============================================================
 async function submitData() {
+    console.log('🔍 1. customerId =', customerId);
+    console.log('🔍 2. typeof customerId =', typeof customerId);
+    console.log('🔍 3. window.customerId =', window.customerId);
     const startTime = Date.now();
     console.log('⏱️ ==== 集點流程開始 ====');
     console.log('🔍 提交前 customerId:', customerId);  // ← 加入這行
