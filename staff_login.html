@@ -229,23 +229,40 @@
         }
 
         // ============================================================
-        //  🔥 預熱機制（Ping GAS）
-        // ============================================================
-        function warmUpGAS() {
-            console.log("🔥 背景預熱 GAS（Ping）...");
-            
-            fetch(`${GAS_URL}?action=ping&t=${Date.now()}`, {
-                method: 'GET',
-                mode: 'no-cors'
-            })
-            .then(() => {
-                console.log("✅ GAS 預熱完成（背景）");
-            })
-            .catch(() => {
-                // 預熱失敗不影響主流程
-                console.log("⚠️ GAS 預熱失敗（背景），不影響登入");
-            });
-        }
+//  🔥 GAS 預熱（只執行 1 次）
+// ============================================================
+let gasWarmedUp = false;
+
+async function warmUpGAS() {
+    if (gasWarmedUp) {
+        console.log("⏭️ GAS 已預熱過，跳過");
+        return;
+    }
+    gasWarmedUp = true;
+    
+    try {
+        console.log("🔥 開始預熱 GAS...");
+        // 不等待回應，不阻塞 UI
+        await fetch(`${GAS_URL}?action=ping&t=${Date.now()}`, { 
+            method: 'GET',
+            mode: 'no-cors'
+        });
+        console.log("✅ GAS 預熱請求已發送");
+    } catch (e) {
+        console.log("⚠️ GAS 預熱失敗，不影響登入");
+    }
+}
+
+// ============================================================
+//  🔥 設定預熱（只綁定 1 次）
+// ============================================================
+function setupWarmUp() {
+    // ✅ 只執行 1 次
+    warmUpGAS();
+    
+    // ❌ 移除輸入框聚焦的預熱（不需要了）
+    // 如果還是想保留，也要加上防重複檢查
+}
 
         // ============================================================
         //  🔥 登入請求（含自動重試 1 次）
@@ -356,24 +373,7 @@
                 loginBtn.innerHTML = '登入系統';
             }
         }
-
-        // ============================================================
-        //  🔥 點擊輸入框時觸發預熱（加上頁面載入預熱）
-        // ============================================================
-        function setupWarmUp() {
-            // 1. 頁面載入時預熱
-            warmUpGAS();
-            
-            // 2. 點擊輸入框時再次預熱（確保 GAS 已喚醒）
-            const inputs = document.querySelectorAll('input');
-            inputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    console.log("📱 輸入框聚焦，再次預熱 GAS");
-                    warmUpGAS();
-                });
-            });
-        }
-
+       
         // ============================================================
         //  🔥 initLiff
         // ============================================================
