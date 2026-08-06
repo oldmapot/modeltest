@@ -1970,21 +1970,22 @@ if (isTicketMode) {
     //  🔥 11. 返回計算結果
     // ============================================================
     const result = {
-        isTicketMode,
-        totalSpend,
-        ticketSpend,
-        couponDiscount: finalCouponDiscount,
-        couponMinSpend,
-        couponName,
-        couponType,
-        redeem,
-        maxRedeem,
-        basePoints,
-        couponBonus,
-        totalNewPoints,
-        baseAmount,
-        afterPoints: (currentPoints || 0) - redeem + totalNewPoints,
-        couponEligible: couponType && couponMinSpend > 0 && (totalSpend - ticketSpend) >= couponMinSpend
+    isTicketMode,
+    totalSpend,
+    ticketSpend,
+    couponDiscount: finalCouponDiscount,
+    couponMinSpend,
+    couponName,
+    couponType,
+    redeem,
+    maxRedeem,
+    basePoints,
+    couponBonus: couponBonus,
+    finalCouponBonus: finalCouponBonus,  // ✅ 加入這行
+    totalNewPoints,
+    baseAmount,
+    afterPoints: (currentPoints || 0) - redeem + totalNewPoints,
+    couponEligible: couponType && couponMinSpend > 0 && (totalSpend - ticketSpend) >= couponMinSpend
     };
     
     window.calcResult = result;
