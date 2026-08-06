@@ -1956,10 +1956,12 @@ if (isTicketMode) {
     }
     
     if (elements.couponBonusDisplay) {
-        if (couponBonus > 0) {
-            elements.couponBonusDisplay.textContent = `🎁 活動贈點 +${couponBonus} 點`;
+        // 🔥 改用 finalCouponBonus (只有達標時才會 > 0)
+        if (finalCouponBonus > 0) {
+            elements.couponBonusDisplay.textContent = `🎁 活動贈點 +${finalCouponBonus} 點`;
             elements.couponBonusDisplay.style.display = 'block';
         } else {
+            // 未達標時隱藏
             elements.couponBonusDisplay.style.display = 'none';
         }
     }
