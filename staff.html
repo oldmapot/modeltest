@@ -877,14 +877,13 @@ function init() {
                 input.readOnly = false;
             });
             
+            // 聚焦到總消費金額
             var totalInput = document.getElementById('totalSpend');
-    if (totalInput) {
-        setTimeout(function() {
-            totalInput.focus();
-            console.log("⌨️ 已聚焦到金額輸入欄位");
-        }, 300);  // 稍微延遲確保 DOM 已完全渲染
+            if (totalInput) totalInput.focus();
+        } else {
+            console.log("🎯 優惠券類型 [" + couponType + "] 直接兌換，不需輸入金額");
+        }
     }
-}
 // ============================================================
 //  🔥 7️⃣ 載入會員資料（背景更新，不阻塞 UI）
 // ============================================================
@@ -1470,8 +1469,10 @@ function setScanMode(mode) {
 }
 async function onScanSuccess(scannedText) {
     const startTime = Date.now();
-    const scanId = 'SCAN_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
-    console.log(`⏱️ [${scanId}] ==== 掃描流程開始 ==== ${new Date().toLocaleTimeString()}`);
+   
+    console.log("⏱️ ==== 掃描流程開始 ====");
+    console.log("⏱️ 0ms - 掃描開始");
+    console.log("📌 當前掃描模式:", scanMode === 'member' ? '🧾 掃描消費' : '🎫 掃描優惠券');
     
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
@@ -1481,127 +1482,196 @@ async function onScanSuccess(scannedText) {
     
     if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
     
-    console.log(`⏱️ [${scanId}] 步驟1: 關閉相機 ${(Date.now() - startTime)}ms`);
+    console.log("⏱️", Date.now() - startTime, "ms - 關閉相機");
     await closeCamera();
     if (navigator.vibrate) navigator.vibrate(200);
     
     resetIdleTimer();
     
     // 🔥 只有「掃描優惠券」模式才需要取得前綴
-    let parsed;
-    if (scanMode === 'coupon') {
-        console.log(`⏱️ [${scanId}] 步驟2: 取得優惠券前綴 ${(Date.now() - startTime)}ms`);
-        await getCouponPrefixes();
-        
-        console.log("📌 cachedPrefixes 內容:", JSON.stringify(cachedPrefixes));
-        
-        parsed = parseScannedCode(scannedText);
-        console.log("📌 解析結果（優惠券模式）:", parsed);
-    } else {
-        console.log(`⏱️ [${scanId}] 步驟2: 跳過優惠券前綴檢查 ${(Date.now() - startTime)}ms`);
-        parsed = parseScannedCode(scannedText);
-        console.log("📌 解析結果（會員模式）:", parsed);
-    }
+let parsed;
+if (scanMode === 'coupon') {
+    console.log("⏱️", Date.now() - startTime, "ms - 取得優惠券前綴");
+    await getCouponPrefixes();
+    
+    console.log("📌 cachedPrefixes 內容:", JSON.stringify(cachedPrefixes));
+    
+    parsed = parseScannedCode(scannedText);
+    console.log("📌 解析結果（優惠券模式）:", parsed);
+} else {
+    console.log("⏱️", Date.now() - startTime, "ms - 跳過優惠券前綴檢查（掃描消費模式）");
+    parsed = parseScannedCode(scannedText);
+    console.log("📌 解析結果（會員模式）:", parsed);
+}
     
     try {
         showLoading("連線中...");
-        console.log(`⏱️ [${scanId}] 步驟3: 顯示載入中 ${(Date.now() - startTime)}ms`);
+        console.log("⏱️", Date.now() - startTime, "ms - 顯示載入中");
         
         // ============================================================
         //  🔥 優惠券處理
         // ============================================================
         if (parsed.type === "coupon") {
-            const realStaffName = staff.name;
-            const realStaffBranch = staff.branch;
-            const clientIp = await getUserIP();
+    const realStaffName = staff.name;
+    const realStaffBranch = staff.branch;
+    const clientIp = await getUserIP();
+    const loginId = staff.loginId || "";
+    const deviceId = staff.deviceId || "";
+    
+    const fullQr = parsed.fullData;
+    console.log("🎯 優惠券掃描，完整 QR:", fullQr);
+    
+    showLoading("🔄 處理優惠券兌換中...");
+    
+    try {
+        const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(fullQr)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
+        const res = await fetch(url);
+        const text = await res.text();
+        console.log('📊 原始回應:', text);
+        
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (parseErr) {
+            console.error('❌ JSON 解析失敗:', text);
+            hideLoading();
+            showModal('❌ 伺服器回應格式錯誤');
+            return;
+        }
+        
+        console.log("📊 優惠券兌換回應:", JSON.stringify(result));
+        
+        if (result.logout) {
+            hideLoading();
+            showToast("⏰ 登入已過期，請重新登入");
+            setTimeout(() => { logout(); }, 2000);
+            return;
+        }
+        
+        // 🔥🔥🔥 檢查是否為「贈點」或「消費折抵」類型
+        if (result.needAmount === true) {
+            hideLoading();
+            console.log("🎯 優惠券需要進入結帳畫面");
+            
+            // ✅ 構建 redirectUrl，包含會員資料（直接從 result.member 讀取）
+            var member = result.member || {};
+            var redirectUrl = 'staff.html?userId=' + encodeURIComponent(result.userId) +
+                '&fromCoupon=true' +
+                '&couponDocId=' + encodeURIComponent(result.couponDocId || '') +
+                '&minSpend=' + encodeURIComponent(result.minSpend || 0) +
+                '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
+                '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
+                '&couponType=' + encodeURIComponent(result.type || '') +
+                '&couponName=' + encodeURIComponent(result.couponName || '優惠券') +
+                '&couponContent=' + encodeURIComponent(result.couponContent || '') +
+                // ✅ 加入會員資料（讓結帳畫面立即顯示）
+                '&memberName=' + encodeURIComponent(member.memberName || '') +
+                '&currentPoints=' + encodeURIComponent(member.currentPoints || 0) +
+                '&memberLevel=' + encodeURIComponent(member.memberLevel || '一般會員') +
+                '&totalSpend=' + encodeURIComponent(member.totalSpend || 0) +
+                '&memberPhone=' + encodeURIComponent(member.memberPhone || '') +
+                '&name=' + encodeURIComponent(staff.name) +
+                '&branch=' + encodeURIComponent(staff.branch) +
+                '&loginId=' + encodeURIComponent(staff.loginId);
+            
+            window.location.href = redirectUrl;
+            return;
+        }
+        
+        if (result.success) {
+            hideLoading();
+            showModal(`🎉 ${result.message || "優惠券兌換成功！"}`);
+        } else {
+            hideLoading();
+            showModal(`❌ 優惠券兌換失敗<br><br>錯誤訊息：${result.error || result.message || "未知錯誤"}`);
+        }
+        
+    } catch (err) {
+        hideLoading();
+        console.error("❌ 優惠券處理錯誤:", err);
+        showModal(`❌ 連線錯誤：${err.message}`);
+    }
+    return;
+}
+        // ============================================================
+        //  🔥 會員處理
+        // ============================================================
+      
+        if (parsed.type === "member") {
+            if (!parsed.userId) {
+                hideLoading();
+                showModal("⚠️ 無效的 QR Code 格式");
+                return;
+            }
+            
+            console.log("🔍 準備呼叫 getMemberInfo");
+            console.log("🔍 userId:", parsed.userId);
+            console.log("🔍 branch:", staff.branch);
             const loginId = staff.loginId || "";
             const deviceId = staff.deviceId || "";
             
-            const fullQr = parsed.fullData;
-            console.log("🎯 優惠券掃描，完整 QR:", fullQr);
+            const finalUrl = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(parsed.userId)}&branch=${encodeURIComponent(staff.branch)}&t=${new Date().getTime()}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}`;
             
-            showLoading("🔄 處理優惠券兌換中...");
+            console.log("⏱️", Date.now() - startTime, "ms - 呼叫 getMemberInfo");
             
             try {
-                const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(fullQr)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
-                
-                console.log(`⏱️ [${scanId}] 步驟4: 發送 verifyScan API ${(Date.now() - startTime)}ms`);
                 const fetchStart = Date.now();
-                const res = await fetch(url);
-                const text = await res.text();
-                console.log(`⏱️ [${scanId}] 步驟4: API 回應 ${(Date.now() - startTime)}ms (耗時 ${(Date.now() - fetchStart)}ms)`);
-                console.log('📊 原始回應:', text);
+                const res = await fetch(finalUrl, { method: "GET", mode: "cors" });
+                console.log("⏱️", Date.now() - fetchStart, "ms - getMemberInfo API 回應");
+                console.log("🔍 HTTP 狀態:", res.status);
                 
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (parseErr) {
-                    console.error('❌ JSON 解析失敗:', text);
-                    hideLoading();
-                    showModal('❌ 伺服器回應格式錯誤');
-                    return;
-                }
+                const data = await res.json();
+                 console.log('🔍 data.success =', data.success);
+                 console.log('🔍 data.member =', data.member);
+                 console.log('🔍 data.member?.memberId =', data.member?.memberId);
+                console.log("📊 getMemberInfo 回傳:", JSON.stringify(data));
+                console.log("⏱️", Date.now() - startTime, "ms - 會員資料解析完成");
+                hideLoading();
                 
-                console.log("📊 優惠券兌換回應:", JSON.stringify(result));
-                
-                if (result.logout) {
-                    hideLoading();
+                if (data.logout) {
                     showToast("⏰ 登入已過期，請重新登入");
                     setTimeout(() => { logout(); }, 2000);
                     return;
                 }
                 
-                // 🔥🔥🔥 檢查是否為「贈點」或「消費折抵」類型
-                if (result.needAmount === true) {
-                    hideLoading();
-                    console.log("🎯 優惠券需要進入結帳畫面");
+                if (data.success && data.member) {
+                    config = data.config || {};
+                    config.eventMultiplier = Number(config.eventMultiplier) || 1;
+                    config.levelRate = Number(config.levelRate) || 1;
+                    config.earnRate = Number(config.earnRate) || 0.03;
+                    config.maxRate = Number(config.maxRate) || 0;
+                    config.minSpend = Number(config.minSpend) || 0;
+                    config.shopCode = config.shopCode || parsed.shopCode || "OMP";
                     
-                    var member = result.member || {};
-                    var redirectUrl = 'staff.html?userId=' + encodeURIComponent(result.userId) +
-                        '&fromCoupon=true' +
-                        '&couponDocId=' + encodeURIComponent(result.couponDocId || '') +
-                        '&minSpend=' + encodeURIComponent(result.minSpend || 0) +
-                        '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
-                        '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
-                        '&couponType=' + encodeURIComponent(result.type || '') +
-                        '&couponName=' + encodeURIComponent(result.couponName || '優惠券') +
-                        '&couponContent=' + encodeURIComponent(result.couponContent || '') +
-                        '&memberName=' + encodeURIComponent(member.memberName || '') +
-                        '&currentPoints=' + encodeURIComponent(member.currentPoints || 0) +
-                        '&memberLevel=' + encodeURIComponent(member.memberLevel || '一般會員') +
-                        '&totalSpend=' + encodeURIComponent(member.totalSpend || 0) +
-                        '&memberPhone=' + encodeURIComponent(member.memberPhone || '') +
-                        '&name=' + encodeURIComponent(staff.name) +
-                        '&branch=' + encodeURIComponent(staff.branch) +
-                        '&loginId=' + encodeURIComponent(staff.loginId);
+                    customerId = data.member.memberId;
+                    window.customerId = data.member.memberId;
                     
-                    console.log(`⏱️ [${scanId}] 步驟5: 跳轉結帳畫面 ${(Date.now() - startTime)}ms`);
-                    console.log(`⏱️ [${scanId}] ==== 掃描流程完成 ==== 總耗時 ${(Date.now() - startTime)}ms (${((Date.now() - startTime)/1000).toFixed(2)}秒)`);
-                    window.location.href = redirectUrl;
-                    return;
-                }
-                
-                if (result.success) {
-                    hideLoading();
-                    showModal(`🎉 ${result.message || "優惠券兌換成功！"}`);
+                    // ✅ 使用統一欄位名稱
+                    currentPoints = data.member.currentPoints || data.member.points || 0;
+                    memberLevel = data.member.level || data.member.memberLevel || "一般會員";
+                    levelRate = data.member.levelRate || 1;
+                    
+                    document.getElementById('member-ui').style.display = 'block';
+                    document.getElementById('form-ui').classList.remove('locked');
+                    
+                    // ✅ 使用統一欄位名稱
+                    document.getElementById('cus-name').innerText = data.member.memberName || data.member.name || '會員';
+                    document.getElementById('member-level').innerText = memberLevel;
+                    document.getElementById('cus-pts').innerText = currentPoints;
+                    document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
+                    document.getElementById('totalSpend').focus();
+                    doCalc();
+                    
+                    console.log("⏱️ ==== 掃描流程完成 ====", Date.now() - startTime, "ms");
                 } else {
-                    hideLoading();
-                    showModal(`❌ 優惠券兌換失敗<br><br>錯誤訊息：${result.error || result.message || "未知錯誤"}`);
+                    showModal(`⚠️ 查無此會員！<br><br>🔍 除錯資訊：<br>userId: ${parsed.userId}<br>回傳: ${JSON.stringify(data)}`);
                 }
-                
             } catch (err) {
+                console.error("❌ fetch 錯誤:", err);
                 hideLoading();
-                console.error("❌ 優惠券處理錯誤:", err);
                 showModal(`❌ 連線錯誤：${err.message}`);
             }
             return;
-        }
-        
-        // ============================================================
-        //  🔥 會員處理
-        // ============================================================
-        if (parsed.type === "member") {
-            // ... 會員處理邏輯（保持原有，加入時間記錄）...
         }
         
         hideLoading();
@@ -1891,8 +1961,9 @@ if (isTicketMode) {
     
     if (elements.newPtsEl) {
         if (couponBonus > 0) {
-            // ✅ 正確：顯示 finalCouponBonus（實際獲得，未達標為 0）
-            elements.newPtsEl.innerHTML = `${basePoints} 點 + 活動贈點 ${finalCouponBonus} 點 = ${totalNewPoints} 點`;
+            elements.newPtsEl.innerHTML = 
+                `${basePoints} 點 + 活動贈點 <b style="color:#ff6b00;">${couponBonus}</b> 點 = ` +
+                `<b style="color:#1a73e8;">${totalNewPoints}</b> 點`;
             
             if (elements.bonusPointsDisplay) {
                 elements.bonusPointsDisplay.style.display = 'inline';
