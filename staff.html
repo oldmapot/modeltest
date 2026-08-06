@@ -1891,9 +1891,8 @@ if (isTicketMode) {
     
     if (elements.newPtsEl) {
         if (couponBonus > 0) {
-            elements.newPtsEl.innerHTML = 
-                `${basePoints} 點 + 活動贈點 <b style="color:#ff6b00;">${couponBonus}</b> 點 = ` +
-                `<b style="color:#1a73e8;">${totalNewPoints}</b> 點`;
+            // ✅ 正確：顯示 finalCouponBonus（實際獲得，未達標為 0）
+            elements.newPtsEl.innerHTML = `${basePoints} 點 + 活動贈點 ${finalCouponBonus} 點 = ${totalNewPoints} 點`;
             
             if (elements.bonusPointsDisplay) {
                 elements.bonusPointsDisplay.style.display = 'inline';
