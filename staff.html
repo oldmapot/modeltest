@@ -1915,10 +1915,15 @@ if (isTicketMode) {
         elements.redeemInput.value = redeem;
     }
     
-    if (elements.newPtsEl) {
-        if (couponBonus > 0) {
-            ✅ 正確（顯示 finalCouponBonus）
-            elements.newPtsEl.innerHTML = `${basePoints} 點 + 活動贈點 ${finalCouponBonus} 點 = ${totalNewPoints} 點`;
+    // ✅ 正確（用 finalCouponBonus）
+    if (finalCouponBonus > 0) {
+       elements.newPtsEl.innerHTML = 
+        `${basePoints} 點 + 活動贈點 <b style="color:#ff6b00;">${finalCouponBonus}</b> 點 = ` +
+        `<b style="color:#1a73e8;">${totalNewPoints}</b> 點`;
+    } else {
+    // 沒有贈點時，只顯示 basePoints
+    elements.newPtsEl.innerText = `${totalNewPoints} 點`;
+    }
             
             if (elements.bonusPointsDisplay) {
                 elements.bonusPointsDisplay.style.display = 'inline';
