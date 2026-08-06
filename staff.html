@@ -1708,7 +1708,8 @@ function toggleMode() {
 }
 
 function doCalc() {
-    var finalCouponBonus = 0;  // ← 在最上方強制宣告
+    let couponDiscountAmount = 0;
+    let finalCouponBonus = 0;
     console.log('🔥🔥🔥 doCalc 已更新（新版本）');
     // ---------- 1. 獲取所有 DOM 元素（統一管理） ----------
     const elements = {
@@ -1855,8 +1856,7 @@ function doCalc() {
         
         // 🔥 優惠券折抵判斷（總額 - 餐券 - 點數折抵）
         const baseForCoupon = totalSpend - ticketSpend - redeem;
-        let couponDiscountAmount = 0;
-        let finalCouponBonus = 0;
+       
         
         if (couponType === '消費折抵' && couponMinSpend > 0) {
             if (baseForCoupon >= couponMinSpend) {
