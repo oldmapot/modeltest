@@ -1743,7 +1743,7 @@ function doCalc() {
     const couponMinSpend = window.activeCoupon?.minSpend || 0;
     const couponType = window.activeCoupon?.type || '';
     const couponName = window.activeCoupon?.couponName || '';
-    const couponDiscountOriginal = window.activeCoupon?.discountAmount || 0;  // 🔥 T 欄原始值
+    const couponDiscountOriginal = window.activeCoupon?.discountAmount || 0;
     
     // ---------- 5. 取得系統配置 ----------
     const cfg = config || {};
@@ -1754,27 +1754,22 @@ function doCalc() {
     const shopCode = cfg.shopCode || 'OMP';
     
     // ---------- 6. 計算實際消費金額 ----------
-    // 實際消費 = 總額 - 餐券 - 活動折抵（優惠券折抵）
     let baseAmount = totalSpend - ticketSpend - couponDiscount;
     
     // ============================================================
-    //  🔥🔥🔥 新增：優惠券折抵金額門檻歸零邏輯
+    //  🔥🔥🔥 優惠券折抵金額門檻歸零邏輯
     // ============================================================
     if (couponType === '消費折抵' && elements.couponDiscountInput) {
-        const actualSpend = totalSpend - ticketSpend;  // 扣除餐券後的實際消費
-        
-        // 檢查是否有優惠券文件 ID（表示已掃描有效券）
+        const actualSpend = totalSpend - ticketSpend;
         const hasValidCoupon = window.activeCouponDocId && window.activeCouponDocId !== '';
         
         if (hasValidCoupon && couponMinSpend > 0) {
             if (actualSpend >= couponMinSpend) {
-                // ✅ 達門檻 → 恢復原始折抵金額
                 if (elements.couponDiscountInput.value != couponDiscountOriginal) {
                     elements.couponDiscountInput.value = couponDiscountOriginal;
                     console.log('✅ 達門檻！折抵金額恢復為:', couponDiscountOriginal);
                 }
             } else {
-                // ❌ 未達門檻 → 強制歸零
                 if (elements.couponDiscountInput.value != 0) {
                     elements.couponDiscountInput.value = 0;
                     console.log('❌ 未達門檻（需滿', couponMinSpend, '，實際', actualSpend, '），折抵歸零');
@@ -1783,10 +1778,7 @@ function doCalc() {
         }
     }
     
-    // 🔥 重新讀取折抵金額（可能已被歸零）
     const finalCouponDiscount = parseFloat(elements.couponDiscountInput?.value) || 0;
-    
-    // 🔥 重新計算 baseAmount（使用歸零後的折抵金額）
     baseAmount = totalSpend - ticketSpend - finalCouponDiscount;
     
     // ---------- 7. 宣告結果變數 ----------
@@ -1798,7 +1790,7 @@ function doCalc() {
     let tipClass = 'redeem-tip tip-normal';
     
     // ============================================================
-    //  🔥 8. 優惠券門檻即時比對（獨立處理，顯示在 UI）
+    //  🔥 8. 優惠券門檻即時比對（顯示在 UI）
     // ============================================================
     if (elements.couponStatusDisplay && couponMinSpend > 0) {
         if (couponType) {
@@ -1823,93 +1815,77 @@ function doCalc() {
         }
     }
     
-// ============================================================
-//  🔥 9. 點數計算邏輯（最終完整修正版）
-// ============================================================
-if (isTicketMode) {
-    basePoints = Math.floor(buyTicketAmount * earnRate * levelRate * eventMultiplier);
-    totalNewPoints = basePoints + couponBonus;
-    tipMessage = '🍽️ 餐券模式：僅計算餐券購買點數';
-    tipClass = 'redeem-tip tip-ticket-mode';
-    maxRedeem = 0;
-    redeem = 0;
-    console.log(`🍽️ 餐券模式: 購買 ${buyTicketAmount} 元 → ${basePoints} 點 + 活動贈點 ${couponBonus} 點`);
-} else {
-    // ===== 一般消費模式 =====
-    
-    // 🔥 第一步：計算點數折抵門檻（總額 - 餐券 - 消費折抵，還不知道消費折抵多少，先用 0）
-    // 注意：這裡的消費折抵指的是優惠券折抵金額
-    const baseForRedeem = totalSpend - ticketSpend - couponDiscount;  // couponDiscount 目前是 0（尚未決定優惠券是否可使用）
-    const minSpendThreshold = shopCode === 'SWO' ? 500 : 1500;
-    
-    if (maxRate <= 0) {
+    // ============================================================
+    //  🔥 9. 點數計算邏輯
+    // ============================================================
+    if (isTicketMode) {
+        basePoints = Math.floor(buyTicketAmount * earnRate * levelRate * eventMultiplier);
+        totalNewPoints = basePoints + couponBonus;
+        tipMessage = '🍽️ 餐券模式：僅計算餐券購買點數';
+        tipClass = 'redeem-tip tip-ticket-mode';
         maxRedeem = 0;
-        tipMessage = '🚫 今日活動暫停折抵';
-        tipClass = 'redeem-tip tip-no-redeem';
-    } else if (baseForRedeem < minSpendThreshold) {
-        maxRedeem = 0;
-        tipMessage = `⚠️ 未達低消門檻 ${minSpendThreshold} 元，無法折抵點數`;
-        tipClass = 'redeem-tip tip-no-redeem';
+        redeem = 0;
+        console.log(`🍽️ 餐券模式: 購買 ${buyTicketAmount} 元 → ${basePoints} 點 + 活動贈點 ${couponBonus} 點`);
     } else {
-        // ✅ 點數折抵上限
-        maxRedeem = Math.min(
-            currentPoints || 0,
-            Math.floor(baseForRedeem * maxRate)
-        );
-        tipMessage = `✅ 已達低消 ${minSpendThreshold} 元，可折抵 ${maxRedeem} 點`;
-        tipClass = 'redeem-tip tip-normal';
-    }
-    
-    // 🔥 第二步：使用者輸入要折抵多少點數
-    redeem = Math.min(redeemAmount, maxRedeem);
-    
-    // 🔥 第三步：優惠券折抵判斷（總額 - 餐券 - 點數折抵）
-    const baseForCoupon = totalSpend - ticketSpend - redeem;
-    let couponDiscountAmount = 0;
-    let finalCouponBonus = 0; // 預設歸零
-    
-    if (couponType === '消費折抵' && couponMinSpend > 0) {
-        if (baseForCoupon >= couponMinSpend) {
-            couponDiscountAmount = couponDiscount;
-            console.log(`✅ 折抵券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，折抵 ${couponDiscount} 元`);
+        // ===== 一般消費模式 =====
+        const baseForRedeem = totalSpend - ticketSpend - couponDiscount;
+        const minSpendThreshold = shopCode === 'SWO' ? 500 : 1500;
+        
+        if (maxRate <= 0) {
+            maxRedeem = 0;
+            tipMessage = '🚫 今日活動暫停折抵';
+            tipClass = 'redeem-tip tip-no-redeem';
+        } else if (baseForRedeem < minSpendThreshold) {
+            maxRedeem = 0;
+            tipMessage = `⚠️ 未達低消門檻 ${minSpendThreshold} 元，無法折抵點數`;
+            tipClass = 'redeem-tip tip-no-redeem';
         } else {
-            console.log(`❌ 折抵券未達標（${baseForCoupon} 元 < ${couponMinSpend} 元）`);
+            maxRedeem = Math.min(
+                currentPoints || 0,
+                Math.floor(baseForRedeem * maxRate)
+            );
+            tipMessage = `✅ 已達低消 ${minSpendThreshold} 元，可折抵 ${maxRedeem} 點`;
+            tipClass = 'redeem-tip tip-normal';
         }
-    } else if (couponType === '贈點' && couponMinSpend > 0) {
-        if (baseForCoupon >= couponMinSpend) {
-            finalCouponBonus = couponBonus;
-            console.log(`✅ 贈點券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，贈送 ${couponBonus} 點`);
-        } else {
-            // 未達標時，finalCouponBonus 保留為 0
-            console.log(`❌ 贈點券未達標（${baseForCoupon} 元 < ${couponMinSpend} 元）`);
+        
+        redeem = Math.min(redeemAmount, maxRedeem);
+        
+        // 🔥 優惠券折抵判斷（總額 - 餐券 - 點數折抵）
+        const baseForCoupon = totalSpend - ticketSpend - redeem;
+        let couponDiscountAmount = 0;
+        let finalCouponBonus = 0;
+        
+        if (couponType === '消費折抵' && couponMinSpend > 0) {
+            if (baseForCoupon >= couponMinSpend) {
+                couponDiscountAmount = couponDiscount;
+                console.log(`✅ 折抵券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，折抵 ${couponDiscount} 元`);
+            } else {
+                console.log(`❌ 折抵券未達標（${baseForCoupon} 元 < ${couponMinSpend} 元）`);
+            }
+        } else if (couponType === '贈點' && couponMinSpend > 0) {
+            if (baseForCoupon >= couponMinSpend) {
+                finalCouponBonus = couponBonus;
+                console.log(`✅ 贈點券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，贈送 ${couponBonus} 點`);
+            } else {
+                console.log(`❌ 贈點券未達標（${baseForCoupon} 元 < ${couponMinSpend} 元）`);
+            }
         }
+        
+        // 🔥 更新活動折抵欄位
+        if (elements.couponDiscountInput) {
+            elements.couponDiscountInput.value = couponDiscountAmount;
+        }
+        
+        // 🔥 計算最終實際付款金額
+        const finalActual = totalSpend - ticketSpend - redeem - couponDiscountAmount;
+        
+        // 🔥 計算獲得點數
+        basePoints = Math.floor(Math.max(0, finalActual) * earnRate * levelRate * eventMultiplier);
+        totalNewPoints = basePoints + finalCouponBonus;
+        
+        console.log(`💳 一般模式: 總額 ${totalSpend} - 餐券 ${ticketSpend} - 點數 ${redeem} - 優惠券 ${couponDiscountAmount} = 實付 ${finalActual} 元 → ${basePoints} 點 + 贈點 ${finalCouponBonus} 點 = ${totalNewPoints} 點`);
     }
     
-    // 🔥 第四步：更新 UI 中的活動折抵欄位
-    if (elements.couponDiscountInput) {
-        elements.couponDiscountInput.value = couponDiscountAmount;
-    }
-    
-    // 🔥 第五步：計算最終實際付款金額（總額 - 餐券 - 點數折抵 - 優惠券折抵）
-    const finalActual = totalSpend - ticketSpend - redeem - couponDiscountAmount;
-    
-    // 🔥 第六步：計算獲得點數（用最終實際付款金額計算）
-    basePoints = Math.floor(Math.max(0, finalActual) * earnRate * levelRate * eventMultiplier);
-    totalNewPoints = basePoints + finalCouponBonus;
-    
-    console.log(`💳 一般模式: 總額 ${totalSpend} - 餐券 ${ticketSpend} - 點數 ${redeem} - 優惠券 ${couponDiscountAmount} = 實付 ${finalActual} 元 → ${basePoints} 點 + 贈點 ${finalCouponBonus} 點 = ${totalNewPoints} 點`);
-
-    // 🔥【重點補上】第七步：更新畫面顯示 (確保 UI 拿的是計算後的 finalCouponBonus)
-    if (elements.newPtsEl) {
-        if (finalCouponBonus > 0) {
-            elements.newPtsEl.innerHTML = 
-                `${basePoints} 點 + 活動贈點 <b style="color:#ff6b00;">${finalCouponBonus}</b> 點 = ` +
-                `<b style="color:#1a73e8;">${totalNewPoints}</b> 點`;
-        } else {
-            elements.newPtsEl.innerText = `${totalNewPoints} 點`;
-        }
-    }
-}
     // ============================================================
     //  🔥 10. 更新 UI（統一處理）
     // ============================================================
@@ -1927,25 +1903,23 @@ if (isTicketMode) {
         elements.redeemInput.value = redeem;
     }
     
-    // ✅ 正確（用 finalCouponBonus）
-    if (finalCouponBonus > 0) {
-       elements.newPtsEl.innerHTML = 
-        `${basePoints} 點 + 活動贈點 <b style="color:#ff6b00;">${finalCouponBonus}</b> 點 = ` +
-        `<b style="color:#1a73e8;">${totalNewPoints}</b> 點`;
-    } else {
-    // 沒有贈點時，只顯示 basePoints
-    elements.newPtsEl.innerText = `${totalNewPoints} 點`;
-    }
-            
-            if (elements.bonusPointsDisplay) {
-                elements.bonusPointsDisplay.style.display = 'inline';
-            }
+    // 🔥 更新 newPtsEl
+    if (elements.newPtsEl) {
+        if (finalCouponBonus > 0) {
+            elements.newPtsEl.innerHTML = 
+                `${basePoints} 點 + 活動贈點 <b style="color:#ff6b00;">${finalCouponBonus}</b> 點 = ` +
+                `<b style="color:#1a73e8;">${totalNewPoints}</b> 點`;
         } else {
             elements.newPtsEl.innerText = `${totalNewPoints} 點`;
-            
-            if (elements.bonusPointsDisplay) {
-                elements.bonusPointsDisplay.style.display = 'none';
-            }
+        }
+    }
+    
+    // 🔥 更新 bonusPointsDisplay
+    if (elements.bonusPointsDisplay) {
+        if (finalCouponBonus > 0) {
+            elements.bonusPointsDisplay.style.display = 'inline';
+        } else {
+            elements.bonusPointsDisplay.style.display = 'none';
         }
     }
     
@@ -1955,13 +1929,12 @@ if (isTicketMode) {
         elements.afterPtsEl.innerText = `${afterPoints} 點`;
     }
     
+    // 🔥 更新 couponBonusDisplay
     if (elements.couponBonusDisplay) {
-        // 🔥 改用 finalCouponBonus (只有達標時才會 > 0)
         if (finalCouponBonus > 0) {
             elements.couponBonusDisplay.textContent = `🎁 活動贈點 +${finalCouponBonus} 點`;
             elements.couponBonusDisplay.style.display = 'block';
         } else {
-            // 未達標時隱藏
             elements.couponBonusDisplay.style.display = 'none';
         }
     }
@@ -1970,22 +1943,22 @@ if (isTicketMode) {
     //  🔥 11. 返回計算結果
     // ============================================================
     const result = {
-    isTicketMode,
-    totalSpend,
-    ticketSpend,
-    couponDiscount: finalCouponDiscount,
-    couponMinSpend,
-    couponName,
-    couponType,
-    redeem,
-    maxRedeem,
-    basePoints,
-    couponBonus: couponBonus,
-    finalCouponBonus: finalCouponBonus,  // ✅ 加入這行
-    totalNewPoints,
-    baseAmount,
-    afterPoints: (currentPoints || 0) - redeem + totalNewPoints,
-    couponEligible: couponType && couponMinSpend > 0 && (totalSpend - ticketSpend) >= couponMinSpend
+        isTicketMode,
+        totalSpend,
+        ticketSpend,
+        couponDiscount: finalCouponDiscount,
+        couponMinSpend,
+        couponName,
+        couponType,
+        redeem,
+        maxRedeem,
+        basePoints,
+        couponBonus: couponBonus,
+        finalCouponBonus: finalCouponBonus,
+        totalNewPoints,
+        baseAmount,
+        afterPoints: (currentPoints || 0) - redeem + totalNewPoints,
+        couponEligible: couponType && couponMinSpend > 0 && (totalSpend - ticketSpend) >= couponMinSpend
     };
     
     window.calcResult = result;
