@@ -319,7 +319,7 @@
         border: 5px solid #f3f3f3; 
         border-top: 5px solid #00b900; 
         border-radius: 50%; 
-        animation: spin 1s linear infinite; 
+        animation: spin 1s linear infe; 
     }
     
     @keyframes spin { 
@@ -884,23 +884,19 @@ function init() {
             console.log("🎯 優惠券類型 [" + couponType + "] 直接兌換，不需輸入金額");
         }
     }
-    
-    // ============================================================
-    //  🔥 7️⃣ 載入會員資料（背景更新，不阻塞 UI）
-    // ============================================================
-    if (userId) {
-        // ✅ 如果已經從 URL 顯示了會員資料，延遲 100ms 背景更新
-        if (fromCoupon && memberName) {
-            console.log("🔄 背景更新會員資料（不阻塞 UI）");
-            setTimeout(function() {
-                loadMemberData(userId);
-            }, 100);
-        } else {
-            // 非優惠券模式（如掃描會員 QR），正常載入
-            loadMemberData(userId);
-        }
+// ============================================================
+//  🔥 7️⃣ 載入會員資料（背景更新，不阻塞 UI）
+// ============================================================
+if (userId) {
+    if (fromCoupon && memberName) {
+        console.log("🔄 背景更新會員資料（不阻塞 UI，失敗不顯示錯誤）");
+        setTimeout(function() {
+            loadMemberData(userId, true);  // ← silent = true
+        }, 100);
+    } else {
+        loadMemberData(userId, false);  // ← 正常模式
     }
-    
+}
     // ============================================================
     //  🔥 8️⃣ 設定店員資訊（從 URL 或 localStorage）
     // ============================================================
@@ -1031,21 +1027,31 @@ function displayCouponInfo(data) {
 // ============================================================
 //  🔥 載入會員資料（✅ 使用統一欄位名稱）
 // ============================================================
-async function loadMemberData(userId) {
-showLoading("載入會員資料...");
+async function loadMemberData(userId, silent) {
+    if (silent === undefined) silent = false;
+    
+    // 只有非靜默模式才顯示 loading
+    if (!silent) {
+        showLoading("載入會員資料...");
+    }
+    
     try {
         var url = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(userId)}&branch=${encodeURIComponent(staff.branch)}&t=${Date.now()}`;
         var res = await fetch(url);
         var data = await res.json();
         
-        console.log("📊 loadMemberData 完整回傳:", JSON.stringify(data));  // ← 加入這行
+        if (!silent) {
+            console.log("📊 loadMemberData 完整回傳:", JSON.stringify(data));
+        }
         
-        hideLoading();
+        if (!silent) {
+            hideLoading();
+        }
         
         if (data.success && data.member) {
             config = data.config || {};
-customerId = data.member.memberId;
-window.customerId = data.member.memberId;
+            customerId = data.member.memberId;
+            window.customerId = data.member.memberId;
             
             // ✅ 使用統一欄位名稱
             currentPoints = data.member.currentPoints || data.member.points || 0;
@@ -1061,19 +1067,30 @@ window.customerId = data.member.memberId;
             document.getElementById('cus-pts').innerText = currentPoints;
             document.getElementById('cus-total').innerText = data.member.totalSpend || data.member.totalSpend || 0;
             
-            // 🔥 如果有優惠券，顯示優惠券區塊
+            // 🔥 如果有優惠券，顯示優惠券區塊（保留原有邏輯）
             if (window.activeCoupon) {
                 document.getElementById('coupon-info').style.display = 'block';
             }
             
             document.getElementById('totalSpend').focus();
             doCalc();
+            
         } else {
-            showModal(`⚠️ 查無此會員！`);
+            if (!silent) {
+                showModal(`⚠️ 查無此會員！`);
+            } else {
+                // ✅ 靜默模式：只留 Console，不驚動店員
+                console.warn('⚠️ 背景載入會員失敗（查無會員），但 UI 已有 URL 資料');
+            }
         }
     } catch (err) {
-        hideLoading();
-        showModal(`❌ 載入會員失敗：${err.message}`);
+        if (!silent) {
+            hideLoading();
+            showModal(`❌ 載入會員失敗：${err.message}`);
+        } else {
+            // ✅ 靜默模式：捕獲錯誤，靜默處理
+            console.warn('⚠️ 背景載入會員異常，靜默跳過:', err.message);
+        }
     }
 }
 
