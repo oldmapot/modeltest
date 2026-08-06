@@ -319,7 +319,7 @@
         border: 5px solid #f3f3f3; 
         border-top: 5px solid #00b900; 
         border-radius: 50%; 
-        animation: spin 1s linear infe; 
+        animation: spin 1s linear infinite; 
     }
     
     @keyframes spin { 
@@ -749,7 +749,7 @@ function init() {
     }
     
     // ============================================================
-    //  🔥 4️⃣ 讀取 URL 參數（優惠券相關 + 會員資料）
+    //  🔥 4️⃣ 讀取 URL 參數（優惠券相關）
     // ============================================================
     var fromCoupon = getUrlParam('fromCoupon') === 'true';
     var userId = getUrlParam('userId') || '';
@@ -761,13 +761,6 @@ function init() {
     var couponName = getUrlParam('couponName') || '';
     var couponContent = getUrlParam('couponContent') || '';
     
-    // ✅ 從 URL 讀取會員資料（解決延遲問題）
-    var memberName = getUrlParam('memberName') || '';
-    var currentPoints = Number(getUrlParam('currentPoints')) || 0;
-    var memberLevel = getUrlParam('memberLevel') || '一般會員';
-    var totalSpend = Number(getUrlParam('totalSpend')) || 0;
-    var memberPhone = getUrlParam('memberPhone') || '';
-    
     console.log("📌 優惠券參數:");
     console.log("   fromCoupon:", fromCoupon);
     console.log("   userId:", userId);
@@ -778,19 +771,6 @@ function init() {
     console.log("   bonusPoints:", bonusPoints);
     console.log("   discountAmount:", discountAmount);
     console.log("   couponType:", couponType);
-    
-    // ✅ 如果有會員資料，立即顯示（不用等 API）
-    if (fromCoupon && userId && memberName) {
-        console.log("🎯 從 URL 讀取會員資料，立即顯示:", memberName);
-        customerId = userId;
-        document.getElementById('member-ui').style.display = 'block';
-        document.getElementById('cus-name').innerText = memberName;
-        document.getElementById('cus-pts').innerText = currentPoints || 0;
-        document.getElementById('member-level').innerText = memberLevel || '一般會員';
-        document.getElementById('cus-total').innerText = totalSpend || 0;
-        // 如果有電話，也顯示（可選）
-        // document.getElementById('cus-phone').innerText = memberPhone || '';
-    }
     
     // ============================================================
     //  🔥 5️⃣ 儲存優惠券資訊（如果有）
@@ -805,7 +785,7 @@ function init() {
             couponName: couponName,
             couponContent: couponContent
         };
-        window.activeCouponDocId = couponDocId;
+        window.activeCouponDocId = couponDocId;  // ✅ 加入這行！
         console.log("✅ 優惠券資訊已儲存:", window.activeCoupon);
     }
     
@@ -862,7 +842,7 @@ function init() {
         if (needAmount) {
             console.log("🎯 優惠券類型 [" + couponType + "] 需要輸入金額，解鎖表單");
             
-            // 顯示會員 UI（如果尚未顯示）
+            // 顯示會員 UI
             var memberUI = document.getElementById('member-ui');
             if (memberUI) memberUI.style.display = 'block';
             
@@ -884,19 +864,14 @@ function init() {
             console.log("🎯 優惠券類型 [" + couponType + "] 直接兌換，不需輸入金額");
         }
     }
-// ============================================================
-//  🔥 7️⃣ 載入會員資料（背景更新，不阻塞 UI）
-// ============================================================
-if (userId) {
-    if (fromCoupon && memberName) {
-        console.log("🔄 背景更新會員資料（不阻塞 UI，失敗不顯示錯誤）");
-        setTimeout(function() {
-            loadMemberData(userId, true);  // ← silent = true
-        }, 100);
-    } else {
-        loadMemberData(userId, false);  // ← 正常模式
+    
+    // ============================================================
+    //  🔥 7️⃣ 載入會員資料（如果有 userId）
+    // ============================================================
+    if (userId) {
+        loadMemberData(userId);
     }
-}
+    
     // ============================================================
     //  🔥 8️⃣ 設定店員資訊（從 URL 或 localStorage）
     // ============================================================
@@ -1027,31 +1002,21 @@ function displayCouponInfo(data) {
 // ============================================================
 //  🔥 載入會員資料（✅ 使用統一欄位名稱）
 // ============================================================
-async function loadMemberData(userId, silent) {
-    if (silent === undefined) silent = false;
-    
-    // 只有非靜默模式才顯示 loading
-    if (!silent) {
-        showLoading("載入會員資料...");
-    }
-    
+async function loadMemberData(userId) {
+showLoading("載入會員資料...");
     try {
         var url = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(userId)}&branch=${encodeURIComponent(staff.branch)}&t=${Date.now()}`;
         var res = await fetch(url);
         var data = await res.json();
         
-        if (!silent) {
-            console.log("📊 loadMemberData 完整回傳:", JSON.stringify(data));
-        }
+        console.log("📊 loadMemberData 完整回傳:", JSON.stringify(data));  // ← 加入這行
         
-        if (!silent) {
-            hideLoading();
-        }
+        hideLoading();
         
         if (data.success && data.member) {
             config = data.config || {};
-            customerId = data.member.memberId;
-            window.customerId = data.member.memberId;
+customerId = data.member.memberId;
+window.customerId = data.member.memberId;
             
             // ✅ 使用統一欄位名稱
             currentPoints = data.member.currentPoints || data.member.points || 0;
@@ -1067,30 +1032,19 @@ async function loadMemberData(userId, silent) {
             document.getElementById('cus-pts').innerText = currentPoints;
             document.getElementById('cus-total').innerText = data.member.totalSpend || data.member.totalSpend || 0;
             
-            // 🔥 如果有優惠券，顯示優惠券區塊（保留原有邏輯）
+            // 🔥 如果有優惠券，顯示優惠券區塊
             if (window.activeCoupon) {
                 document.getElementById('coupon-info').style.display = 'block';
             }
             
             document.getElementById('totalSpend').focus();
             doCalc();
-            
         } else {
-            if (!silent) {
-                showModal(`⚠️ 查無此會員！`);
-            } else {
-                // ✅ 靜默模式：只留 Console，不驚動店員
-                console.warn('⚠️ 背景載入會員失敗（查無會員），但 UI 已有 URL 資料');
-            }
+            showModal(`⚠️ 查無此會員！`);
         }
     } catch (err) {
-        if (!silent) {
-            hideLoading();
-            showModal(`❌ 載入會員失敗：${err.message}`);
-        } else {
-            // ✅ 靜默模式：捕獲錯誤，靜默處理
-            console.warn('⚠️ 背景載入會員異常，靜默跳過:', err.message);
-        }
+        hideLoading();
+        showModal(`❌ 載入會員失敗：${err.message}`);
     }
 }
 
@@ -1494,11 +1448,13 @@ if (scanMode === 'coupon') {
     console.log("⏱️", Date.now() - startTime, "ms - 取得優惠券前綴");
     await getCouponPrefixes();
     
+    // 🔥 加入這行，查看 cachedPrefixes 內容
     console.log("📌 cachedPrefixes 內容:", JSON.stringify(cachedPrefixes));
     
     parsed = parseScannedCode(scannedText);
     console.log("📌 解析結果（優惠券模式）:", parsed);
 } else {
+    // 掃描消費模式：直接視為會員 QR Code
     console.log("⏱️", Date.now() - startTime, "ms - 跳過優惠券前綴檢查（掃描消費模式）");
     parsed = parseScannedCode(scannedText);
     console.log("📌 解析結果（會員模式）:", parsed);
@@ -1518,17 +1474,19 @@ if (scanMode === 'coupon') {
     const loginId = staff.loginId || "";
     const deviceId = staff.deviceId || "";
     
-    const fullQr = parsed.fullData;
+    // 🔥 傳送完整 QR 字串
+    const fullQr = parsed.fullData;  // ANN_OMP_pt01_U590...
     console.log("🎯 優惠券掃描，完整 QR:", fullQr);
     
     showLoading("🔄 處理優惠券兌換中...");
     
     try {
+        // 🔥🔥🔥 傳送完整 QR 字串
         const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(fullQr)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
         const res = await fetch(url);
-        const text = await res.text();
+        const text = await res.text();  // ← 先讀成文字
         console.log('📊 原始回應:', text);
-        
+        // ✅ 安全解析
         let result;
         try {
             result = JSON.parse(text);
@@ -1538,7 +1496,13 @@ if (scanMode === 'coupon') {
             showModal('❌ 伺服器回應格式錯誤');
             return;
         }
-        
+
+        const data = safeJsonParse(text);  // ← 安全解析
+        if (!data) {
+        hideLoading();
+        showModal('❌ 伺服器回應格式錯誤，請聯繫管理員');
+        return;
+        }
         console.log("📊 優惠券兌換回應:", JSON.stringify(result));
         
         if (result.logout) {
@@ -1553,26 +1517,18 @@ if (scanMode === 'coupon') {
             hideLoading();
             console.log("🎯 優惠券需要進入結帳畫面");
             
-            // ✅ 構建 redirectUrl，包含會員資料（直接從 result.member 讀取）
-            var member = result.member || {};
             var redirectUrl = 'staff.html?userId=' + encodeURIComponent(result.userId) +
-                '&fromCoupon=true' +
-                '&couponDocId=' + encodeURIComponent(result.couponDocId || '') +
-                '&minSpend=' + encodeURIComponent(result.minSpend || 0) +
-                '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
-                '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
-                '&couponType=' + encodeURIComponent(result.type || '') +
-                '&couponName=' + encodeURIComponent(result.couponName || '優惠券') +
-                '&couponContent=' + encodeURIComponent(result.couponContent || '') +
-                // ✅ 加入會員資料（讓結帳畫面立即顯示）
-                '&memberName=' + encodeURIComponent(member.memberName || '') +
-                '&currentPoints=' + encodeURIComponent(member.currentPoints || 0) +
-                '&memberLevel=' + encodeURIComponent(member.memberLevel || '一般會員') +
-                '&totalSpend=' + encodeURIComponent(member.totalSpend || 0) +
-                '&memberPhone=' + encodeURIComponent(member.memberPhone || '') +
-                '&name=' + encodeURIComponent(staff.name) +
-                '&branch=' + encodeURIComponent(staff.branch) +
-                '&loginId=' + encodeURIComponent(staff.loginId);
+      '&fromCoupon=true' +
+      '&couponDocId=' + encodeURIComponent(result.couponDocId) +
+      '&minSpend=' + encodeURIComponent(result.minSpend) +
+      '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
+      '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
+      '&couponType=' + encodeURIComponent(result.type || '') +
+      '&couponName=' + encodeURIComponent(result.couponName || '優惠券') +
+      '&couponContent=' + encodeURIComponent(result.couponContent || '') +  // 🔥🔥🔥 加入這行
+      '&name=' + encodeURIComponent(staff.name) +
+      '&branch=' + encodeURIComponent(staff.branch) +
+      '&loginId=' + encodeURIComponent(staff.loginId);
             
             window.location.href = redirectUrl;
             return;
@@ -1623,7 +1579,7 @@ if (scanMode === 'coupon') {
                 const data = await res.json();
                  console.log('🔍 data.success =', data.success);
                  console.log('🔍 data.member =', data.member);
-                 console.log('🔍 data.member?.memberId =', data.member?.memberId);
+                 console.log('🔍 data.member?.userId =', data.member?.userId);
                 console.log("📊 getMemberInfo 回傳:", JSON.stringify(data));
                 console.log("⏱️", Date.now() - startTime, "ms - 會員資料解析完成");
                 hideLoading();
@@ -1643,8 +1599,8 @@ if (scanMode === 'coupon') {
                     config.minSpend = Number(config.minSpend) || 0;
                     config.shopCode = config.shopCode || parsed.shopCode || "OMP";
                     
-                    customerId = data.member.memberId;
-                    window.customerId = data.member.memberId;
+ customerId = data.member.memberId;
+window.customerId = data.member.memberId;
                     
                     // ✅ 使用統一欄位名稱
                     currentPoints = data.member.currentPoints || data.member.points || 0;
