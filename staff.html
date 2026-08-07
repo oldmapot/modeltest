@@ -461,61 +461,21 @@
             <span id="role-text" class="role-badge">夥伴</span>：<span id="staff-name">-</span>
         </div>
     </div>
-    <!-- ============================================================
-     🔒 鎖屏遮罩（預設隱藏）
-     ============================================================ -->
-<div id="lockScreen" style="
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    z-index: 99999;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    padding: 30px 20px;
-">
-    <div style="
-        background: #fff;
-        border-radius: 16px;
-        padding: 30px 24px;
-        max-width: 360px;
-        width: 100%;
-        text-align: center;
-    ">
-        <div style="font-size: 48px; margin-bottom: 8px;">🔒</div>
-        <h3 style="color: #333; margin-bottom: 4px;">畫面已鎖定</h3>
-        <p style="color: #999; font-size: 14px; margin-bottom: 16px;">請選擇帳號並輸入密碼解鎖</p>
-        
-        <!-- 帳號下拉選單 -->
-        <select id="lockStaffSelect" style="
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 12px;
-        ">
-            <option value="">-- 請選擇帳號 --</option>
-        </select>
-        
-        <!-- 密碼輸入 -->
-        <input type="password" id="lockPassword" placeholder="輸入密碼" style="
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 12px;
-        ">
-        
-        <!-- 解鎖按鈕 -->
-        <button onclick="unlockSession()" style="
-            width: 100%; padding: 14px; background: #00b900; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
-        ">🔓 解鎖</button>
-        
-        <button onclick="forceLogout()" style="
-            width: 100%; padding: 12px; background: #ff4444; color: white; border: none; border-radius: 8px; font-size: 14px; cursor: pointer; margin-top: 8px;
-        ">🚪 登出</button>
-    </div>
-</div>
+
     <input type="text" id="hiddenIdInput" placeholder="掃碼槍輸入區">
     
     <div class="button-row">
         <button class="btn btn-scan" id="scanBtn" onclick="openCamera()">📷 開啟相機 / 準備掃碼槍</button>
         <button class="btn-reset" onclick="resetMember()">重新整理</button>
     </div>
+<div class="scan-mode-selector" style="display:flex; gap:10px; margin:10px 0; justify-content:center;">
+    <button id="scanMemberBtn" class="mode-btn active" onclick="setScanMode('member')" style="padding:8px 16px; border-radius:20px; border:2px solid #00b900; background:#00b900; color:white; font-weight:bold;">
+        🧾 掃描消費
+    </button>
+    <button id="scanCouponBtn" class="mode-btn" onclick="setScanMode('coupon')" style="padding:8px 16px; border-radius:20px; border:2px solid #ff9800; background:white; color:#ff9800; font-weight:bold;">
+        🎫 掃描優惠券
+    </button>
+</div>
     <div class="member-info" id="member-ui">
         顧客：<b id="cus-name">-</b> <span id="member-level" class="member-level"></span><br>
         現有資產：<b id="cus-pts" style="color:red;">0</b> 點<br>
@@ -596,144 +556,7 @@ let scanInterval = null;
 let cachedPrefixes = null;
 let idleTimer = null;
 const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 分鐘
-// ============================================================
-//  🔒 鎖屏與切換帳號
-// ============================================================
 
-let isScreenLocked = false;
-let lockTimer = null;
-const LOCK_TIMEOUT = 5 * 60 * 1000; // 5 分鐘
-
-// 重置閒置計時器
-function resetLockTimer() {
-    if (!isLoggedIn) return;
-    clearTimeout(lockTimer);
-    lockTimer = setTimeout(function() {
-        lockScreen();
-    }, LOCK_TIMEOUT);
-}
-
-// 鎖定畫面
-function lockScreen() {
-    if (isScreenLocked) return;
-    if (!isLoggedIn) return;
-    
-    console.log('🔒 畫面已鎖定（閒置 5 分鐘）');
-    isScreenLocked = true;
-    
-    populateLockStaffList();
-    document.getElementById('lockPassword').value = '';
-    document.getElementById('lockScreen').style.display = 'flex';
-}
-
-// 填充帳號下拉選單
-async function populateLockStaffList() {
-    try {
-        var select = document.getElementById('lockStaffSelect');
-        var staffList = await getAllStaffFromAPI();
-        
-        select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
-        staffList.forEach(function(s) {
-            var option = document.createElement('option');
-            option.value = s.id;
-            option.textContent = s.name + ' (' + s.id + ')';
-            select.appendChild(option);
-        });
-    } catch (e) {
-        console.error('載入店員列表失敗:', e);
-    }
-}
-
-// 從 GAS 取得所有店員
-async function getAllStaffFromAPI() {
-    try {
-        var url = GAS_URL + '?action=getAllStaff&t=' + Date.now();
-        var res = await fetch(url);
-        var data = await res.json();
-        return data.success && data.staff ? data.staff : [];
-    } catch (e) {
-        console.error('取得店員列表失敗:', e);
-        return [];
-    }
-}
-
-// 解鎖（切換帳號）
-async function unlockSession() {
-    var select = document.getElementById('lockStaffSelect');
-    var password = document.getElementById('lockPassword').value.trim();
-    var staffId = select.value;
-    
-    if (!staffId) {
-        showToast('請選擇帳號');
-        return;
-    }
-    if (!password) {
-        showToast('請輸入密碼');
-        return;
-    }
-    
-    try {
-        var result = await verifyStaffPassword(staffId, password);
-        if (result.success) {
-            // ✅ 切換成功
-            staff.name = result.name;
-            staff.role = result.role || '夥伴';
-            staff.loginId = staffId;
-            
-            document.getElementById('staff-name').innerText = staff.name;
-            document.getElementById('role-text').innerText = staff.role;
-            
-            document.getElementById('lockScreen').style.display = 'none';
-            isScreenLocked = false;
-            
-            showToast('✅ 已切換帳號：' + staff.name);
-            console.log('✅ 帳號切換成功:', staff.name);
-            
-            resetLockTimer();
-        } else {
-            showToast('❌ 密碼錯誤，請重新輸入');
-            document.getElementById('lockPassword').value = '';
-        }
-    } catch (e) {
-        console.error('解鎖失敗:', e);
-        showToast('⚠️ 解鎖失敗，請稍後再試');
-    }
-}
-
-// 驗證店員密碼（不綁定 LINE UID / IP）
-async function verifyStaffPassword(loginId, keyword) {
-    var url = GAS_URL + '?action=verifyStaffPassword' +
-        '&loginId=' + encodeURIComponent(loginId) +
-        '&keyword=' + encodeURIComponent(keyword) +
-        '&t=' + Date.now();
-    
-    var res = await fetch(url);
-    var result = await res.json();
-    return result;
-}
-
-// 強制登出
-function forceLogout() {
-    if (confirm('確定要登出嗎？')) {
-        logout();
-    }
-}
-
-// 檢查營業時間（00:00~10:00 強制登出）
-function checkBusinessHours() {
-    var now = new Date();
-    var hours = now.getHours();
-    
-    if (hours >= 0 && hours < 10) {
-        if (isLoggedIn) {
-            console.log('⏰ 非營業時間（' + hours + ':00），強制登出');
-            showToast('⏰ 非營業時間，已自動登出');
-            logout();
-        }
-        return true;
-    }
-    return false;
-}
 function getUrlParam(name) {
     const url = new URLSearchParams(window.location.search);
     return url.get(name);
@@ -777,8 +600,8 @@ function resetIdleTimer() {
     }, IDLE_TIMEOUT);
 }
 
-//function setupIdleDetection() {
-    //console.log("⏰ 閒置檢測已關閉（測試用）");
+function setupIdleDetection() {
+    console.log("⏰ 閒置檢測已關閉（測試用）");
     // 全部註解掉
     // var events = ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'];
     // events.forEach(function(event) {
@@ -866,13 +689,6 @@ function init() {
     console.log("📌 name:", getUrlParam('name'));
     console.log("📌 branch:", getUrlParam('branch'));
     console.log("📌 loginId:", getUrlParam('loginId'));
-
-    // ============================================================
-    //  🔥 檢查營業時間（強制登出）
-    // ============================================================
-    if (checkBusinessHours()) {
-        return;
-    }
     
     // ============================================================
     //  🔥 1️⃣ 預設禁用結帳按鈕，顯示載入中
@@ -1074,7 +890,7 @@ function init() {
     if (roleTextEl) roleTextEl.innerText = staff.role || '夥伴';
     
     console.log("✅ 店員資料設定完成:", staff.name);
- 
+    
     // ============================================================
     //  🔥 9️⃣ 啟用結帳按鈕（非優惠券模式直接啟用，優惠券模式需等資料載入）
     // ============================================================
@@ -1089,22 +905,7 @@ function init() {
     getCouponPrefixes();
     hideLoading();
     setupScannerListener();
-    // setupIdleDetection();  // ← 註解掉，改用 resetLockTimer（已在上方設定）
-
-    // ============================================================
-    //  🔥 1️⃣1️⃣ 設定鎖屏計時器（放在最後，確保 isLoggedIn = true）
-    // ============================================================
-    resetLockTimer();
-    
-    // 監聽使用者操作
-    var events = ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'];
-    events.forEach(function(event) {
-        document.addEventListener(event, function() {
-            if (!isScreenLocked && isLoggedIn) {
-                resetLockTimer();
-            }
-        });
-    });
+    setupIdleDetection();
     
     console.log("✅ staff.html init 完成");
     console.log('🔥 doCalc 版本檢查:', doCalc.toString().includes('finalCouponBonus'));
