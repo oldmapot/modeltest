@@ -164,7 +164,7 @@
                     <button type="button" class="toggle-password" onclick="togglePassword()">👁️</button>
                 </div>
             </div>
-            <button type="submit" class="login-btn" id="loginBtn">登入系統</button>
+            <button type="submit" class="login-btn" id="loginBtn" disabled>⏳ 驗證 LINE 身份中...</button>
         </form>
         
         <div id="errorMsg" class="error-message"></div>
@@ -229,40 +229,32 @@
         }
 
         // ============================================================
-//  🔥 GAS 預熱（只執行 1 次）
-// ============================================================
-let gasWarmedUp = false;
+        //  🔥 GAS 預熱（只執行 1 次）
+        // ============================================================
+        let gasWarmedUp = false;
 
-async function warmUpGAS() {
-    if (gasWarmedUp) {
-        console.log("⏭️ GAS 已預熱過，跳過");
-        return;
-    }
-    gasWarmedUp = true;
-    
-    try {
-        console.log("🔥 開始預熱 GAS...");
-        // 不等待回應，不阻塞 UI
-        await fetch(`${GAS_URL}?action=ping&t=${Date.now()}`, { 
-            method: 'GET',
-            mode: 'no-cors'
-        });
-        console.log("✅ GAS 預熱請求已發送");
-    } catch (e) {
-        console.log("⚠️ GAS 預熱失敗，不影響登入");
-    }
-}
+        async function warmUpGAS() {
+            if (gasWarmedUp) {
+                console.log("⏭️ GAS 已預熱過，跳過");
+                return;
+            }
+            gasWarmedUp = true;
+            
+            try {
+                console.log("🔥 開始預熱 GAS...");
+                fetch(`${GAS_URL}?action=ping&t=${Date.now()}`, { 
+                    method: 'GET',
+                    mode: 'no-cors'
+                });
+                console.log("✅ GAS 預熱請求已發送");
+            } catch (e) {
+                console.log("⚠️ GAS 預熱失敗，不影響登入");
+            }
+        }
 
-// ============================================================
-//  🔥 設定預熱（只綁定 1 次）
-// ============================================================
-function setupWarmUp() {
-    // ✅ 只執行 1 次
-    warmUpGAS();
-    
-    // ❌ 移除輸入框聚焦的預熱（不需要了）
-    // 如果還是想保留，也要加上防重複檢查
-}
+        function setupWarmUp() {
+            warmUpGAS();
+        }
 
         // ============================================================
         //  🔥 登入請求（含自動重試 1 次）
@@ -270,7 +262,6 @@ function setupWarmUp() {
         async function loginWithRetry(verifyUrl) {
             let lastError = null;
             
-            // 最多嘗試 2 次（第 1 次 + 1 次重試）
             for (let attempt = 1; attempt <= 2; attempt++) {
                 try {
                     console.log(`📤 登入嘗試 ${attempt}/2`);
@@ -292,7 +283,6 @@ function setupWarmUp() {
                     lastError = error;
                     console.warn(`⚠️ 登入嘗試 ${attempt} 失敗:`, error.message);
                     
-                    // 如果是第一次失敗，重試 1 次（等待 1 秒）
                     if (attempt === 1) {
                         console.log("⏳ 1 秒後重試...");
                         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -300,7 +290,6 @@ function setupWarmUp() {
                 }
             }
             
-            // 兩次都失敗
             throw lastError || new Error('所有登入嘗試皆失敗');
         }
 
@@ -309,6 +298,12 @@ function setupWarmUp() {
         // ============================================================
         async function handleLogin(event) {
             event.preventDefault();
+            
+            // ✅ 檢查 LINE UID 是否已取得
+            if (!_lineUid) {
+                showError('⏳ 正在驗證 LINE 身份，請稍後再試');
+                return;
+            }
             
             const userId = document.getElementById('userId').value.trim();
             const keyword = document.getElementById('keyword').value.trim();
@@ -319,48 +314,44 @@ function setupWarmUp() {
                 return;
             }
             
-            // 🔥 隱藏舊錯誤
             hideError();
             
             loginBtn.disabled = true;
             loginBtn.innerHTML = '<span class="spinner"></span> 驗證中...';
             
             try {
-                // 取得 IP
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
                 const clientIp = ipData.ip;
 
                 const deviceId = getDeviceId();
                 const deviceName = getDeviceName();
-                const lineUid = _lineUid || '';
+                const lineUid = _lineUid;
 
-                // 組裝登入 URL
                 const verifyUrl = `${GAS_URL}?action=staffLogin&userId=${encodeURIComponent(userId)}&keyword=${encodeURIComponent(keyword)}&lineUid=${encodeURIComponent(lineUid)}&deviceId=${encodeURIComponent(deviceId)}&deviceName=${encodeURIComponent(deviceName)}&clientIp=${encodeURIComponent(clientIp)}&skipLog=true&t=${Date.now()}`;
                 
                 console.log("📌 登入請求 URL:", verifyUrl);
                 
-                // 🔥 使用含重試機制的登入函數
                 const result = await loginWithRetry(verifyUrl);
                 
                 console.log("📌 後端回傳:", JSON.stringify(result));
                 
                 if (result.success) {
-  // 🔥 寫入 localStorage（備份）
-  localStorage.setItem('staffData', JSON.stringify({
-    name: result.name,
-    role: result.role || "夥伴",
-    loginId: result.loginId || userId,
-    branch: '老娘鍋河堤店'
-  }));
-  
-  // 🔥 跳轉到 staff.html（帶 URL 參數）
-  var targetUrl = 'staff.html?name=' + encodeURIComponent(result.name) +
-                  '&branch=' + encodeURIComponent('老娘鍋河堤店') +
-                  '&loginId=' + encodeURIComponent(result.loginId || userId) +
-                  '&role=' + encodeURIComponent(result.role || '');
-  window.location.href = targetUrl;
-} else {
+                    // ✅ 寫入 localStorage（備份）
+                    localStorage.setItem('staffData', JSON.stringify({
+                        name: result.name,
+                        role: result.role || "夥伴",
+                        loginId: result.loginId || userId,
+                        branch: '老娘鍋河堤店'
+                    }));
+                    
+                    // ✅ 跳轉到 staff.html
+                    var targetUrl = 'staff.html?name=' + encodeURIComponent(result.name) +
+                                    '&branch=' + encodeURIComponent('老娘鍋河堤店') +
+                                    '&loginId=' + encodeURIComponent(result.loginId || userId) +
+                                    '&role=' + encodeURIComponent(result.role || '');
+                    window.location.href = targetUrl;
+                } else {
                     showError(result.message || '帳號或密碼錯誤，請重新輸入');
                     loginBtn.disabled = false;
                     loginBtn.innerHTML = '登入系統';
@@ -401,6 +392,14 @@ function setupWarmUp() {
                 _lineUid = profile.userId;
                 console.log("✅ LINE UID 取得成功:", _lineUid);
                 
+                // ✅ 取得 LINE UID 後，啟用登入按鈕
+                const loginBtn = document.getElementById('loginBtn');
+                if (loginBtn) {
+                    loginBtn.disabled = false;
+                    loginBtn.innerHTML = '登入系統';
+                    console.log("✅ 登入按鈕已啟用");
+                }
+                
             } catch(e) {
                 console.error('LIFF 初始化失敗:', e);
                 showError('初始化失敗，請在 LINE App 中開啟');
@@ -410,7 +409,6 @@ function setupWarmUp() {
         // ============================================================
         //  ✅ 啟動
         // ============================================================
-        // 頁面載入完成後，設定預熱 + 啟動 LIFF
         document.addEventListener('DOMContentLoaded', function() {
             setupWarmUp();
             initLiff();
