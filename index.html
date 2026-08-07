@@ -1197,6 +1197,10 @@ async function refreshAll() {
 // ✅ fetchData（完整修正版 - 解決 DOMException 和註冊畫面問題）
 // ============================================================
 async function fetchData(isReload, brandParam) {
+    // 🔥 開始計時
+    var fetchStartTime = Date.now();
+    console.log('⏱️ [fetchData] 開始載入，時間:', new Date().toLocaleTimeString());
+    
     if (isReload === undefined) isReload = false;
 
     if (!brandParam) {
@@ -1228,7 +1232,8 @@ async function fetchData(isReload, brandParam) {
 
     // ✅ 如果有快取，直接顯示（不管是否過期）
     if (cachedData) {
-        console.log('✅ 從快取載入會員資料');
+        var elapsed = (Date.now() - fetchStartTime) / 1000;
+        console.log('⏱️ [fetchData] ✅ 從快取秒開，耗時:', elapsed.toFixed(2), '秒');
         userData = cachedData;
         document.getElementById('loading').style.display = 'none';
         displayMemberUI(cachedData);
@@ -1264,54 +1269,57 @@ async function fetchData(isReload, brandParam) {
         if (result.success) {
             var newData = result.data;
 
-            // ✅ 防禦性檢查：確保資料有效（✅ 使用 memberName）
+            // ✅ 防禦性檢查：確保資料有效
             var isValidData = newData &&
                 newData.user &&
-                newData.user.memberName &&                    // ✅ displayName → memberName
+                newData.user.memberName &&
                 newData.user.memberName.trim() !== '';
 
             if (isValidData) {
-                // ✅ 轉換資料格式（✅ 使用統一欄位）
-               var convertedData = {
-    user: Object.assign({}, newData.user || {}, {
-        shopCode: newData.meta?.brandCode || 'OMP',
-         shopKey: (newData.user && newData.user.shopKey) || '',  // ✅ 改為空字串，不自己產生
-        // ✅ 統一欄位
-        memberName: newData.user?.memberName || newData.user?.displayName || '',
-        memberPhone: newData.user?.memberPhone || newData.user?.phone || '',
-        currentPoints: newData.user?.currentPoints || 0,
-        totalSpend: newData.user?.totalSpend || 0,
-        level: newData.user?.level || newData.user?.memberLevel || '一般會員',
-        levelRate: newData.user?.levelRate || 0,
-        birthday: newData.user?.birthday || ''
-    }),
-    coupons: newData.coupons || [],
-    meta: newData.meta || {},
-    isMember: true,
-    "目前剩餘點": newData.user?.currentPoints || 0,
-    points: newData.user?.currentPoints || 0,
-    name: newData.user?.memberName || newData.user?.displayName || '',
-    welcomePhrases: newData.meta?.welcomePhrases || [],
-    profile: {
-        name: newData.user?.memberName || newData.user?.displayName || '',
-        phone: newData.user?.memberPhone || newData.user?.phone || '',
-        birthday: newData.user?.birthday || ''
-    },
-    myReferrer: newData.myReferrer || '無',
-    myReferrals: newData.myReferrals || [],
-    history: newData.history || [],
-    shopInfo: newData.shopInfo || [],
-    soEvents: newData.soEvents || [],
-    ompEvents: newData.ompEvents || [],
-    expiringPoints: newData.expiringPoints || 0
-};
+                // ✅ 轉換資料格式
+                var convertedData = {
+                    user: Object.assign({}, newData.user || {}, {
+                        shopCode: newData.meta?.brandCode || 'OMP',
+                        shopKey: (newData.user && newData.user.shopKey) || '',
+                        memberName: newData.user?.memberName || newData.user?.displayName || '',
+                        memberPhone: newData.user?.memberPhone || newData.user?.phone || '',
+                        currentPoints: newData.user?.currentPoints || 0,
+                        totalSpend: newData.user?.totalSpend || 0,
+                        level: newData.user?.level || newData.user?.memberLevel || '一般會員',
+                        levelRate: newData.user?.levelRate || 0,
+                        birthday: newData.user?.birthday || ''
+                    }),
+                    coupons: newData.coupons || [],
+                    meta: newData.meta || {},
+                    isMember: true,
+                    "目前剩餘點": newData.user?.currentPoints || 0,
+                    points: newData.user?.currentPoints || 0,
+                    name: newData.user?.memberName || newData.user?.displayName || '',
+                    welcomePhrases: newData.meta?.welcomePhrases || [],
+                    profile: {
+                        name: newData.user?.memberName || newData.user?.displayName || '',
+                        phone: newData.user?.memberPhone || newData.user?.phone || '',
+                        birthday: newData.user?.birthday || ''
+                    },
+                    myReferrer: newData.myReferrer || '無',
+                    myReferrals: newData.myReferrals || [],
+                    history: newData.history || [],
+                    shopInfo: newData.shopInfo || [],
+                    soEvents: newData.soEvents || [],
+                    ompEvents: newData.ompEvents || [],
+                    expiringPoints: newData.expiringPoints || 0
+                };
 
                 userData = convertedData;
                 setCachedMember(userId, brandParam, convertedData);
+                
+                // ⏱️ API 載入完成計時
+                var elapsed = (Date.now() - fetchStartTime) / 1000;
+                console.log('⏱️ [fetchData] ✅ API 載入完成，耗時:', elapsed.toFixed(2), '秒');
+                
                 displayMemberUI(convertedData);
                 if (isReload) showToast('✅ 資料已更新');
             } else {
-                // ❌ 資料無效，嘗試使用快取
                 console.warn("⚠️ API 回傳無效資料（user 為空）");
                 var cachedDataFallback = getCachedMember(userId, brandParam);
                 if (cachedDataFallback) {
@@ -1320,7 +1328,6 @@ async function fetchData(isReload, brandParam) {
                     displayMemberUI(cachedDataFallback);
                     showToast('⚠️ 資料載入異常，顯示上次快取');
                 } else {
-                    // ✅ 沒有快取，顯示註冊頁面（但保留 loading 已關閉）
                     document.getElementById('loading').style.display = 'none';
                     showToast('請先註冊會員');
                     document.getElementById('memberUI').style.display = 'none';
@@ -1329,7 +1336,6 @@ async function fetchData(isReload, brandParam) {
                 }
             }
         } else {
-            // ✅ API 回傳失敗，嘗試使用快取
             console.warn("⚠️ API 回傳失敗:", result.message);
             var cachedDataFallback = getCachedMember(userId, brandParam);
             if (cachedDataFallback) {
@@ -1347,10 +1353,8 @@ async function fetchData(isReload, brandParam) {
             }
         }
     } catch (e) {
-        // 🔥 DOMException 或網路錯誤
         console.error('Fetch Error:', e);
 
-        // ✅ 優先使用快取
         var cachedDataFallback = getCachedMember(userId, brandParam);
         if (cachedDataFallback) {
             console.log("📦 使用快取資料（網路錯誤）");
@@ -1359,7 +1363,6 @@ async function fetchData(isReload, brandParam) {
             displayMemberUI(cachedDataFallback);
             showToast('⚠️ 網路異常，顯示上次快取');
         } else {
-            // ✅ 沒有快取，顯示歡迎頁面
             document.getElementById('loading').style.display = 'none';
             showToast('無法連線伺服器，請檢查網路');
             document.getElementById('memberUI').style.display = 'none';
@@ -1368,7 +1371,6 @@ async function fetchData(isReload, brandParam) {
         }
     }
 }
-
 // ============================================================
 // ✅ 背景更新（不阻塞畫面）- 修正版
 // ============================================================
@@ -1453,6 +1455,10 @@ async function refreshInBackground() {
 // ✅ 顯示會員畫面
 // ============================================================
 function displayMemberUI(data) {
+    // ⏱️ 開始計時
+    var renderStart = Date.now();
+    console.log('⏱️ [displayMemberUI] 開始渲染，時間:', new Date().toLocaleTimeString());
+    
     document.getElementById('loading').style.display = 'none';
     document.getElementById('memberUI').style.display = 'block';
     document.getElementById('welcomeUI').style.display = 'none';
@@ -1472,6 +1478,9 @@ function displayMemberUI(data) {
     // ✅ 強制產生 QR Code（不管 data.shopKey 是否存在）
     generateMemberCode();
 
+    // ⏱️ 結束計時
+    var renderElapsed = (Date.now() - renderStart) / 1000;
+    console.log('⏱️ [displayMemberUI] ✅ 渲染完成，耗時:', renderElapsed.toFixed(2), '秒');
     console.log('✅ 會員畫面已顯示，點數:', displayPoints);
 }
 // ============================================================
