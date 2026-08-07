@@ -639,17 +639,30 @@ function showSwitchAccount() {
     document.getElementById('lockScreen').style.display = 'flex';
     console.log('🔄 切換帳號介面已開啟');
 }
-// 填充帳號下拉選單
+// 從 GAS 取得可切換的店員（根據當前 loginId）
+async function getSwitchableStaff() {
+    try {
+        var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(staff.loginId) + '&t=' + Date.now();
+        var res = await fetch(url);
+        var data = await res.json();
+        return data.success && data.staff ? data.staff : [];
+    } catch (e) {
+        console.error('取得可切換店員失敗:', e);
+        return [];
+    }
+}
+
+// 填充下拉選單
 async function populateLockStaffList() {
     try {
         var select = document.getElementById('lockStaffSelect');
-        var staffList = await getAllStaffFromAPI();
+        var staffList = await getSwitchableStaff();  // ← 換成這個
         
         select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
         staffList.forEach(function(s) {
             var option = document.createElement('option');
             option.value = s.id;
-            option.textContent = s.name + ' (' + s.id + ')';
+            option.textContent = s.name;  // ✅ 只顯示名字
             select.appendChild(option);
         });
     } catch (e) {
