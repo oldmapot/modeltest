@@ -319,7 +319,7 @@
         border: 5px solid #f3f3f3; 
         border-top: 5px solid #00b900; 
         border-radius: 50%; 
-        animation: spin 1s linear infe; 
+        animation: spin 1s linear infinite; 
     }
     
     @keyframes spin { 
@@ -645,15 +645,20 @@ function showSwitchAccount() {
 // 從 GAS 取得可切換的店員（嚴格帶入當前登入者的 loginId）
 async function getSwitchableStaff() {
     try {
-        // ✅ 優先從 localStorage 讀取 loginId
-        var currentLoginId = localStorage.getItem('staffLoginId') || '';
-        
-        if (!currentLoginId && staff && staff.loginId) {
+        // 嚴格確保抓到當前登入的 loginId
+        var currentLoginId = '';
+        if (typeof staff !== 'undefined' && staff.loginId) {
             currentLoginId = staff.loginId;
+        } else {
+            var localData = localStorage.getItem('staffData');
+            if (localData) {
+                var parsed = JSON.parse(localData);
+                currentLoginId = parsed.loginId || parsed.id || '';
+            }
         }
 
         if (!currentLoginId) {
-            console.error('⚠️ 無法取得 loginId');
+            console.error('⚠️ 錯誤：無法取得當前登入者的 loginId，拒絕查詢');
             return [];
         }
 
@@ -661,49 +666,41 @@ async function getSwitchableStaff() {
         var res = await fetch(url);
         var data = await res.json();
         
+        console.log('🔒 驗證 LINE UID 過濾結果:', data);
+        
         return data.success && data.staff ? data.staff : [];
     } catch (e) {
         console.error('取得可切換店員失敗:', e);
         return [];
     }
 }
-// 填充下拉選單
 async function populateLockStaffList() {
     try {
         var select = document.getElementById('lockStaffSelect');
+        select.innerHTML = '<option value="">載入中...</option>';
         
-        // ✅ 如果已經有預載資料，直接用
-        if (window._cachedStaffList && window._cachedStaffList.length > 0) {
-            renderStaffSelect(select, window._cachedStaffList);
-            return;
+        var staffList = await getSwitchableStaff(); // ✅ 確實等待非同步回傳
+        
+        select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
+        
+        if (staffList && staffList.length > 0) {
+            staffList.forEach(function(s) {
+                var option = document.createElement('option');
+                option.value = s.id;
+                option.textContent = s.name; // ✅ 只顯示名字
+                select.appendChild(option);
+            });
+        } else {
+            var option = document.createElement('option');
+            option.value = "";
+            option.textContent = "-- 找不到關聯帳號 --";
+            select.appendChild(option);
         }
-        
-        // ❌ 沒有快取才呼叫 API
-        var staffList = await getSwitchableStaff();
-        window._cachedStaffList = staffList || [];
-        renderStaffSelect(select, window._cachedStaffList);
-        
     } catch (e) {
         console.error('載入店員列表失敗:', e);
     }
 }
 
-function renderStaffSelect(select, staffList) {
-    select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
-    if (staffList && staffList.length > 0) {
-        staffList.forEach(function(s) {
-            var option = document.createElement('option');
-            option.value = s.id;
-            option.textContent = s.name;
-            select.appendChild(option);
-        });
-    } else {
-        var option = document.createElement('option');
-        option.value = "";
-        option.textContent = "-- 找不到關聯帳號 --";
-        select.appendChild(option);
-    }
-}
 // 從 GAS 取得所有店員
 async function getAllStaffFromAPI() {
     try {
@@ -1156,12 +1153,6 @@ function init() {
     staff.deviceId = getDeviceId();
     isLoggedIn = true;
     
-    // ✅ 同時寫入 localStorage，供切換帳號使用
-    if (staff.loginId) {
-        localStorage.setItem('staffLoginId', staff.loginId);
-        console.log('✅ 已儲存 staffLoginId 到 localStorage:', staff.loginId);
-    }
-    
     var staffNameEl = document.getElementById('staff-name');
     var shopNameEl = document.getElementById('shop-name');
     var roleTextEl = document.getElementById('role-text');
@@ -1170,6 +1161,7 @@ function init() {
     if (roleTextEl) roleTextEl.innerText = staff.role || '夥伴';
     
     console.log("✅ 店員資料設定完成:", staff.name);
+    
     // ============================================================
     //  🔥 9️⃣ 啟用結帳按鈕（非優惠券模式直接啟用，優惠券模式需等資料載入）
     // ============================================================
@@ -1192,23 +1184,10 @@ function init() {
 setTimeout(function() {
     startLockTimer();
 }, 2000);
-
-console.log("✅ staff.html init 完成");
-console.log('🔥 doCalc 版本檢查:', doCalc.toString().includes('finalCouponBonus'));
-
-// ============================================================
-//  🔥 背景預載切換帳號清單（完全獨立，不影響 init）
-// ============================================================
-setTimeout(function() {
-    console.log('⏳ 開始預載切換帳號清單...');
-    getSwitchableStaff().then(function(list) {
-        window._cachedStaffList = list;
-        console.log('✅ 切換帳號清單已預載:', list ? list.length : 0);
-    }).catch(function(err) {
-        console.warn('⚠️ 預載失敗:', err);
-    });
-}, 5000);
     
+    console.log("✅ staff.html init 完成");
+    console.log('🔥 doCalc 版本檢查:', doCalc.toString().includes('finalCouponBonus'));
+}
 // ============================================================
 //  🔥 載入優惠券細節（從 GAS 讀取）
 // ============================================================
