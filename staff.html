@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html>   
+<html> 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>老娘領地_內測版</title>
+    <title>老娘領地</title>
    <style>
     /* ===== 全域設定 ===== */
     body { 
@@ -639,47 +639,17 @@ function showSwitchAccount() {
     document.getElementById('lockScreen').style.display = 'flex';
     console.log('🔄 切換帳號介面已開啟');
 }
-// 從 GAS 取得可切換的店員（改為直接讀取 localStorage 保證有值）
-async function getSwitchableStaff() {
-    try {
-        // ✅ 從 localStorage 讀取 loginId（確保有值）
-        var localData = localStorage.getItem('staffData');
-        var currentLoginId = '';
-        if (localData) {
-            var parsed = JSON.parse(localData);
-            currentLoginId = parsed.loginId || parsed.id || '';
-        }
-        if (!currentLoginId && staff && staff.loginId) {
-            currentLoginId = staff.loginId;
-        }
-        
-        console.log('🔍 傳送 loginId:', currentLoginId);
-        
-        if (!currentLoginId) {
-            console.error('⚠️ 找不到 loginId');
-            return [];
-        }
-        
-        var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&t=' + Date.now();
-        var res = await fetch(url);
-        var data = await res.json();
-        return data.success && data.staff ? data.staff : [];
-    } catch (e) {
-        console.error('取得可切換店員失敗:', e);
-        return [];
-    }
-}
-// 填充下拉選單
+// 填充帳號下拉選單
 async function populateLockStaffList() {
     try {
         var select = document.getElementById('lockStaffSelect');
-        var staffList = await getSwitchableStaff();  // ← 換成這個
+        var staffList = await getAllStaffFromAPI();
         
         select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
         staffList.forEach(function(s) {
             var option = document.createElement('option');
             option.value = s.id;
-            option.textContent = s.name;  // ✅ 只顯示名字
+            option.textContent = s.name + ' (' + s.id + ')';
             select.appendChild(option);
         });
     } catch (e) {
