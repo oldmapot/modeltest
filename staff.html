@@ -645,28 +645,21 @@ function showSwitchAccount() {
 // 從 GAS 取得可切換的店員（嚴格帶入當前登入者的 loginId）
 async function getSwitchableStaff() {
     try {
-        // 嚴格確保抓到當前登入的 loginId
-        var currentLoginId = '';
-        if (typeof staff !== 'undefined' && staff.loginId) {
+        // ✅ 優先從 localStorage 讀取 loginId
+        var currentLoginId = localStorage.getItem('staffLoginId') || '';
+        
+        if (!currentLoginId && staff && staff.loginId) {
             currentLoginId = staff.loginId;
-        } else {
-            var localData = localStorage.getItem('staffData');
-            if (localData) {
-                var parsed = JSON.parse(localData);
-                currentLoginId = parsed.loginId || parsed.id || '';
-            }
         }
 
         if (!currentLoginId) {
-            console.error('⚠️ 錯誤：無法取得當前登入者的 loginId，拒絕查詢');
+            console.error('⚠️ 無法取得 loginId');
             return [];
         }
 
         var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&t=' + Date.now();
         var res = await fetch(url);
         var data = await res.json();
-        
-        console.log('🔒 驗證 LINE UID 過濾結果:', data);
         
         return data.success && data.staff ? data.staff : [];
     } catch (e) {
@@ -1153,6 +1146,12 @@ function init() {
     staff.deviceId = getDeviceId();
     isLoggedIn = true;
     
+    // ✅ 同時寫入 localStorage，供切換帳號使用
+    if (staff.loginId) {
+        localStorage.setItem('staffLoginId', staff.loginId);
+        console.log('✅ 已儲存 staffLoginId 到 localStorage:', staff.loginId);
+    }
+    
     var staffNameEl = document.getElementById('staff-name');
     var shopNameEl = document.getElementById('shop-name');
     var roleTextEl = document.getElementById('role-text');
@@ -1161,7 +1160,6 @@ function init() {
     if (roleTextEl) roleTextEl.innerText = staff.role || '夥伴';
     
     console.log("✅ 店員資料設定完成:", staff.name);
-    
     // ============================================================
     //  🔥 9️⃣ 啟用結帳按鈕（非優惠券模式直接啟用，優惠券模式需等資料載入）
     // ============================================================
