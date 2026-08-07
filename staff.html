@@ -615,7 +615,6 @@ function resetLockTimer() {
     }, LOCK_TIMEOUT);
 }
 
-// 鎖定畫面
 function lockScreen() {
     if (isScreenLocked) return;
     if (!isLoggedIn) return;
@@ -623,24 +622,22 @@ function lockScreen() {
     console.log('🔒 畫面已鎖定（閒置 5 分鐘）');
     isScreenLocked = true;
     
-    populateLockStaffList();
+    populateLockStaffListInstant();  // ✅ 換成秒開版
     document.getElementById('lockPassword').value = '';
     document.getElementById('lockScreen').style.display = 'flex';
 }
-// 顯示切換帳號介面（主動觸發）
+
 function showSwitchAccount() {
     if (!isLoggedIn) {
         showToast('⚠️ 請先登入');
         return;
     }
-    // 填充下拉選單
-    populateLockStaffList();
+    
+    populateLockStaffListInstant();  // ✅ 換成秒開版
     document.getElementById('lockPassword').value = '';
     document.getElementById('lockScreen').style.display = 'flex';
     console.log('🔄 切換帳號介面已開啟');
 }
-// 填充帳號下拉選單
-// 填充下拉選單（確保 await 運作正常）
 
 // 從 GAS 取得可切換的店員（嚴格帶入當前登入者的 loginId）
 async function getSwitchableStaff() {
@@ -677,30 +674,40 @@ async function getSwitchableStaff() {
 // 用來暫存可切換店員的變數（避免每次都重新發請求）
 let cachedSwitchableStaff = null;
 
-// 填充下拉選單（秒開優化版）
-async function populateLockStaffList() {
+// 背景預載函數
+async function preloadSwitchableStaff() {
+    try {
+        console.log('⏳ 背景預載切換帳號清單...');
+        var staffList = await getSwitchableStaff();
+        if (staffList && staffList.length > 0) {
+            cachedSwitchableStaff = staffList;
+            console.log('⚡ 可切換店員名單已在背景預先載入完成！', staffList.length);
+        }
+    } catch (e) {
+        console.error('預先載入失敗:', e);
+    }
+}
+
+async function populateLockStaffListInstant() {
     var select = document.getElementById('lockStaffSelect');
     
-    // 1️⃣ 如果記憶體裡已經有快取名單，直接秒填！完全不用等網路
+    // 如果背景已經預先載入了，直接秒畫！
     if (cachedSwitchableStaff && cachedSwitchableStaff.length > 0) {
         renderStaffOptions(cachedSwitchableStaff);
         return;
     }
     
-    // 2️⃣ 如果沒有快取，才顯示預設選項去跟後端拿
-    select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
-    
+    // 萬一背景還沒載完，顯示載入中
+    select.innerHTML = '<option value="">載入中...</option>';
     var staffList = await getSwitchableStaff();
-    
     if (staffList && staffList.length > 0) {
-        cachedSwitchableStaff = staffList; // 存入快取
+        cachedSwitchableStaff = staffList;
         renderStaffOptions(staffList);
     } else {
         select.innerHTML = '<option value="">-- 找不到關聯帳號 --</option>';
     }
 }
 
-// 渲染選項的共用小幫手
 function renderStaffOptions(staffList) {
     var select = document.getElementById('lockStaffSelect');
     select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
@@ -711,6 +718,7 @@ function renderStaffOptions(staffList) {
         select.appendChild(option);
     });
 }
+    
 // 從 GAS 取得所有店員
 async function getAllStaffFromAPI() {
     try {
@@ -1195,8 +1203,11 @@ setTimeout(function() {
     startLockTimer();
 }, 2000);
     
-    console.log("✅ staff.html init 完成");
+   console.log("✅ staff.html init 完成");
     console.log('🔥 doCalc 版本檢查:', doCalc.toString().includes('finalCouponBonus'));
+    
+    // ✅ 加入這行，背景預載切換帳號清單
+    preloadSwitchableStaff();
 }
 // ============================================================
 //  🔥 載入優惠券細節（從 GAS 讀取）
