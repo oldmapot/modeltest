@@ -642,29 +642,26 @@ function showSwitchAccount() {
 // 從 GAS 取得可切換的店員（嚴格帶入當前登入者的 loginId）
 async function getSwitchableStaff() {
     try {
-        // 嚴格確保抓到當前登入的 loginId
-        var currentLoginId = '';
-        if (typeof staff !== 'undefined' && staff.loginId) {
+        var currentLoginId = localStorage.getItem('staffLoginId') || '';
+        if (!currentLoginId && staff && staff.loginId) {
             currentLoginId = staff.loginId;
-        } else {
-            var localData = localStorage.getItem('staffData');
-            if (localData) {
-                var parsed = JSON.parse(localData);
-                currentLoginId = parsed.loginId || parsed.id || '';
-            }
         }
-
         if (!currentLoginId) {
-            console.error('⚠️ 錯誤：無法取得當前登入者的 loginId，拒絕查詢');
+            console.error('⚠️ 無法取得 loginId');
             return [];
         }
-
-        var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&t=' + Date.now();
+        
+        // 🔥 取得當前手機的 LINE_UserID
+        var lineUid = '';
+        var localData = localStorage.getItem('staffData');
+        if (localData) {
+            var parsed = JSON.parse(localData);
+            lineUid = parsed.lineUid || '';
+        }
+        
+        var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&lineUid=' + encodeURIComponent(lineUid) + '&t=' + Date.now();
         var res = await fetch(url);
         var data = await res.json();
-        
-        console.log('🔒 驗證 LINE UID 過濾結果:', data);
-        
         return data.success && data.staff ? data.staff : [];
     } catch (e) {
         console.error('取得可切換店員失敗:', e);
