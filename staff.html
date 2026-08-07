@@ -639,19 +639,21 @@ function showSwitchAccount() {
     document.getElementById('lockScreen').style.display = 'flex';
     console.log('🔄 切換帳號介面已開啟');
 }
-// 從 GAS 取得可切換的店員（根據當前 loginId）
+// 從 GAS 取得可切換的店員（改為直接讀取 localStorage 保證有值）
 async function getSwitchableStaff() {
     try {
-        var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(staff.loginId) + '&t=' + Date.now();
-        var res = await fetch(url);
-        var data = await res.json();
-        return data.success && data.staff ? data.staff : [];
-    } catch (e) {
-        console.error('取得可切換店員失敗:', e);
-        return [];
-    }
-}
-
+        // 1️⃣ 確保一定能抓到當前的 loginId
+        var currentLoginId = '';
+        if (typeof staff !== 'undefined' && staff.loginId) {
+            currentLoginId = staff.loginId;
+        } else {
+            // 從 localStorage 備援讀取
+            var localData = localStorage.getItem('staffData');
+            if (localData) {
+                var parsed = JSON.parse(localData);
+                currentLoginId = parsed.loginId || parsed.id || '';
+            }
+        }
 // 填充下拉選單
 async function populateLockStaffList() {
     try {
