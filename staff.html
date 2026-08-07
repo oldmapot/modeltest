@@ -705,7 +705,25 @@ async function unlockSession() {
     try {
         var result = await verifyStaffPassword(staffId, password);
         if (result.success) {
-            // ✅ 切換成功
+            // ✅ 切換成功後，檢查 LINE_UserID 是否匹配
+            var allStaff = await getAllStaffFromAPI();
+            var selectedStaff = allStaff.find(function(s) { return s.id === staffId; });
+            
+            // 從 localStorage 讀取當前的 LINE_UserID
+            var localData = localStorage.getItem('staffData');
+            var currentLineUid = '';
+            if (localData) {
+                var parsed = JSON.parse(localData);
+                currentLineUid = parsed.lineUid || '';
+            }
+            
+            // 如果選中的店員 LINE_UserID 與當前不匹配，拒絕切換
+            if (selectedStaff && selectedStaff.lineUid && currentLineUid && selectedStaff.lineUid !== currentLineUid) {
+                showToast('⚠️ 此帳號與目前 LINE 帳號不匹配');
+                return;
+            }
+            
+            // 切換成功
             staff.name = result.name;
             staff.role = result.role || '夥伴';
             staff.loginId = staffId;
