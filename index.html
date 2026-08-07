@@ -492,7 +492,7 @@ function backgroundUpdate(userId, brandParam) {
         brandParam = urlParams.get('brand') || 'OMP';
     }
 
-    var cachedData = getCachedMember(userId, brandParam, 300, true);
+    var cachedData = getCachedMember(userId, brandParam, 30, true);
 
     var url = GAS_URL + '?action=getAggregatedData&userId=' + userId +
         '&brand=' + brandParam +
@@ -619,18 +619,19 @@ function getCacheKey(userId, brandParam) {
 }
 
 /**
- * 讀取快取
+ * 讀取快取（滾動式續期 30 天）
  * @param {string} userId - 會員 ID
- * @param {string} brandParam - 品牌代號 (OMP / SWO)
- * @param {number} ttlSeconds - 快取存活時間（秒），預設 300 秒（5 分鐘）
+ * @param {string} brandParam - 品牌代號
+ * @param {number} maxAgeDays - 最大有效天數（預設 30 天）
  * @param {boolean} keepExpired - 過期時是否保留（背景更新比對用）
  * @returns {Object|null} 快取資料
  */
-function getCachedMember(userId, brandParam, ttlSeconds, keepExpired) {
-    ttlSeconds = ttlSeconds || 300;
+function getCachedMember(userId, brandParam, maxAgeDays, keepExpired) {
+    // ✅ 預設 30 天（改為天數）
+    maxAgeDays = maxAgeDays || 30;
     keepExpired = keepExpired || false;
     
-    var key = getCacheKey(userId, brandParam);  // ✅ 使用 getCacheKey
+    var key = getCacheKey(userId, brandParam);
     var cached = localStorage.getItem(key);
     
     if (!cached) return null;
@@ -638,22 +639,28 @@ function getCachedMember(userId, brandParam, ttlSeconds, keepExpired) {
     try {
         var data = JSON.parse(cached);
         var cacheTime = data._cacheTime || 0;
-        var expiresIn = ttlSeconds * 1000;
+        var now = Date.now();
+        var elapsedDays = (now - cacheTime) / (1000 * 60 * 60 * 24);
         
-        // 檢查是否過期
-        if (Date.now() - cacheTime > expiresIn) {
-            // keepExpired = true 時不刪除，回傳資料（背景更新比對用）
-            if (keepExpired) {
-                console.log("⏰ 快取已過期，但保留用於比對");
-                return data;
-            }
-            localStorage.removeItem(key);
-            console.log("⏰ 快取已過期並清除");
-            return null;
+        // ✅ 快取有效 → 滾動續期（延長 30 天）
+        if (elapsedDays < maxAgeDays) {
+            // ✅ 更新快取時間（滾動續期）
+            data._cacheTime = now;
+            localStorage.setItem(key, JSON.stringify(data));
+            console.log("⚡ 從快取讀取會員資料（滾動續期，剩餘 " + Math.round(maxAgeDays - elapsedDays) + " 天）");
+            return data;
         }
         
-        console.log("⚡ 讀取快取資料，距今 " + Math.floor((Date.now() - cacheTime) / 1000) + " 秒");
-        return data;
+        // ❌ 過期 → 刪除快取（除非 keepExpired = true）
+        if (keepExpired) {
+            console.log("⏰ 快取已過期（超過 " + maxAgeDays + " 天），但保留用於比對");
+            return data;
+        }
+        
+        localStorage.removeItem(key);
+        console.log("⏰ 快取已過期並清除（超過 " + maxAgeDays + " 天未使用）");
+        return null;
+        
     } catch(e) {
         console.warn("⚠️ 解析快取失敗:", e);
         localStorage.removeItem(key);
@@ -662,17 +669,14 @@ function getCachedMember(userId, brandParam, ttlSeconds, keepExpired) {
 }
 
 /**
- * 寫入快取
- * @param {string} userId - 會員 ID
- * @param {string} brandParam - 品牌代號 (OMP / SWO)
- * @param {Object} data - 要快取的資料（user + coupons + meta）
+ * 寫入快取（30 天）
  */
 function setCachedMember(userId, brandParam, data) {
     try {
         data._cacheTime = Date.now();
-        var key = getCacheKey(userId, brandParam);  // ✅ 使用 getCacheKey
+        var key = getCacheKey(userId, brandParam);
         localStorage.setItem(key, JSON.stringify(data));
-        console.log("✅ 快取已寫入:", key);
+        console.log("✅ 快取已寫入（有效期 30 天，滾動續期）");
     } catch(e) {
         console.warn("⚠️ 寫入快取失敗:", e);
     }
@@ -685,12 +689,10 @@ function setCachedMember(userId, brandParam, data) {
  */
 function clearCachedMember(userId, brandParam) {
     if (userId && brandParam) {
-        // ✅ 清除特定品牌快取
         var key = getCacheKey(userId, brandParam);
         localStorage.removeItem(key);
         console.log("🧹 已清除快取:", key);
     } else if (userId) {
-        // ✅ 清除該用戶所有品牌快取
         var keys = [];
         for (var i = 0; i < localStorage.length; i++) {
             var key = localStorage.key(i);
@@ -703,7 +705,6 @@ function clearCachedMember(userId, brandParam) {
         }
         console.log("🧹 已清除該用戶所有品牌快取，共 " + keys.length + " 筆");
     } else {
-        // ✅ 清除所有會員快取
         var keys = [];
         for (var i = 0; i < localStorage.length; i++) {
             var key = localStorage.key(i);
@@ -717,7 +718,6 @@ function clearCachedMember(userId, brandParam) {
         console.log("🧹 已清除所有會員快取，共 " + keys.length + " 筆");
     }
 }
-
 /**
  * 檢查快取是否有效（不解析資料）
  */
