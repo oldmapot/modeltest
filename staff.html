@@ -1074,21 +1074,7 @@ function init() {
     if (roleTextEl) roleTextEl.innerText = staff.role || '夥伴';
     
     console.log("✅ 店員資料設定完成:", staff.name);
-    // ============================================================
-    //  🔥 設定閒置計時器（5 分鐘鎖屏）
-    // ============================================================
-    resetLockTimer();
-    // ============================================================
-    //  🔥 監聽使用者操作（重置閒置計時器）
-    // ============================================================
-    var events = ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'];
-    events.forEach(function(event) {
-        document.addEventListener(event, function() {
-            if (!isScreenLocked && isLoggedIn) {
-                resetLockTimer();
-            }
-        });
-    });
+ 
     // ============================================================
     //  🔥 9️⃣ 啟用結帳按鈕（非優惠券模式直接啟用，優惠券模式需等資料載入）
     // ============================================================
@@ -1105,8 +1091,24 @@ function init() {
     setupScannerListener();
     // setupIdleDetection();  // ← 註解掉，改用 resetLockTimer（已在上方設定）
 
+    // ============================================================
+    //  🔥 1️⃣1️⃣ 設定鎖屏計時器（放在最後，確保 isLoggedIn = true）
+    // ============================================================
+    resetLockTimer();
+    
+    // 監聽使用者操作
+    var events = ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'];
+    events.forEach(function(event) {
+        document.addEventListener(event, function() {
+            if (!isScreenLocked && isLoggedIn) {
+                resetLockTimer();
+            }
+        });
+    });
+    
     console.log("✅ staff.html init 完成");
     console.log('🔥 doCalc 版本檢查:', doCalc.toString().includes('finalCouponBonus'));
+}
 // ============================================================
 //  🔥 載入優惠券細節（從 GAS 讀取）
 // ============================================================
