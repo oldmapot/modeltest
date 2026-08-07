@@ -654,6 +654,26 @@ async function getSwitchableStaff() {
                 currentLoginId = parsed.loginId || parsed.id || '';
             }
         }
+
+        console.log('🔍 目前查詢可切換清單的 loginId:', currentLoginId);
+
+        if (!currentLoginId) {
+            console.error('⚠️ 找不到當前登入者的 loginId');
+            return [];
+        }
+
+        var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&t=' + Date.now();
+        var res = await fetch(url);
+        var data = await res.json();
+        
+        console.log('📦 後端回傳的可切換店員:', data);
+        
+        return data.success && data.staff ? data.staff : [];
+    } catch (e) {
+        console.error('取得可切換店員失敗:', e);
+        return [];
+    }
+}
 // 填充下拉選單
 async function populateLockStaffList() {
     try {
