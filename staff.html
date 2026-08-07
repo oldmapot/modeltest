@@ -1196,7 +1196,19 @@ setTimeout(function() {
 console.log("✅ staff.html init 完成");
 console.log('🔥 doCalc 版本檢查:', doCalc.toString().includes('finalCouponBonus'));
 
-
+// ============================================================
+//  🔥 背景預載切換帳號清單（完全獨立，不影響 init）
+// ============================================================
+setTimeout(function() {
+    console.log('⏳ 開始預載切換帳號清單...');
+    getSwitchableStaff().then(function(list) {
+        window._cachedStaffList = list;
+        console.log('✅ 切換帳號清單已預載:', list ? list.length : 0);
+    }).catch(function(err) {
+        console.warn('⚠️ 預載失敗:', err);
+    });
+}, 5000);
+    
 // ============================================================
 //  🔥 載入優惠券細節（從 GAS 讀取）
 // ============================================================
