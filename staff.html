@@ -623,7 +623,7 @@ function lockScreen() {
     console.log('🔒 畫面已鎖定（閒置 5 分鐘）');
     isScreenLocked = true;
     
-    populateLockStaffList();
+    ();
     document.getElementById('lockPassword').value = '';
     document.getElementById('lockScreen').style.display = 'flex';
 }
@@ -634,7 +634,7 @@ function showSwitchAccount() {
         return;
     }
     // 填充下拉選單
-    populateLockStaffList();
+    ();
     document.getElementById('lockPassword').value = '';
     document.getElementById('lockScreen').style.display = 'flex';
     console.log('🔄 切換帳號介面已開啟');
@@ -674,31 +674,42 @@ async function getSwitchableStaff() {
         return [];
     }
 }
+// 用來暫存可切換店員的變數（避免每次都重新發請求）
+let cachedSwitchableStaff = null;
+
+// 填充下拉選單（秒開優化版）
 async function populateLockStaffList() {
-    try {
-        var select = document.getElementById('lockStaffSelect');
-        select.innerHTML = '<option value="">載入中...</option>';
-        
-        var staffList = await getSwitchableStaff(); // ✅ 確實等待非同步回傳
-        
-        select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
-        
-        if (staffList && staffList.length > 0) {
-            staffList.forEach(function(s) {
-                var option = document.createElement('option');
-                option.value = s.id;
-                option.textContent = s.name; // ✅ 只顯示名字
-                select.appendChild(option);
-            });
-        } else {
-            var option = document.createElement('option');
-            option.value = "";
-            option.textContent = "-- 找不到關聯帳號 --";
-            select.appendChild(option);
-        }
-    } catch (e) {
-        console.error('載入店員列表失敗:', e);
+    var select = document.getElementById('lockStaffSelect');
+    
+    // 1️⃣ 如果記憶體裡已經有快取名單，直接秒填！完全不用等網路
+    if (cachedSwitchableStaff && cachedSwitchableStaff.length > 0) {
+        renderStaffOptions(cachedSwitchableStaff);
+        return;
     }
+    
+    // 2️⃣ 如果沒有快取，才顯示預設選項去跟後端拿
+    select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
+    
+    var staffList = await getSwitchableStaff();
+    
+    if (staffList && staffList.length > 0) {
+        cachedSwitchableStaff = staffList; // 存入快取
+        renderStaffOptions(staffList);
+    } else {
+        select.innerHTML = '<option value="">-- 找不到關聯帳號 --</option>';
+    }
+}
+
+// 渲染選項的共用小幫手
+function renderStaffOptions(staffList) {
+    var select = document.getElementById('lockStaffSelect');
+    select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
+    staffList.forEach(function(s) {
+        var option = document.createElement('option');
+        option.value = s.id;
+        option.textContent = s.name;
+        select.appendChild(option);
+    });
 }
 
 // 從 GAS 取得所有店員
