@@ -782,7 +782,6 @@ async function unlockSession() {
     const errorEl = document.getElementById('lockPasswordError');
     const inputEl = document.getElementById('lockPassword');
     
-    // 清空舊錯誤
     errorEl.style.display = 'none';
     inputEl.style.borderColor = '';
     inputEl.style.backgroundColor = '';
@@ -808,15 +807,47 @@ async function unlockSession() {
         const result = await verifyStaffPassword(staffId, password);
         
         if (result.success) {
+            // ✅ 成功：直接更新 staff 資料（複用 init 的邏輯）
+            const staffList = await getSwitchableStaff();
+            const selectedStaff = staffList.find(s => s.id === staffId || s.loginId === staffId);
+            
+            if (!selectedStaff) {
+                throw new Error('找不到該店員資料');
+            }
+            
+            // ✅ 更新 staff 物件（跟 init 一樣）
+            staff.name = selectedStaff.name || '';
+            staff.branch = selectedStaff.branch || staff.branch;
+            staff.role = selectedStaff.role || '夥伴';
+            staff.loginId = selectedStaff.loginId || selectedStaff.id;
+            isLoggedIn = true;
+            
+            // ✅ 儲存到 localStorage
+            localStorage.setItem('staffLoginId', staff.loginId);
+            localStorage.setItem('staffName', staff.name);
+            localStorage.setItem('staffRole', staff.role);
+            localStorage.setItem('staffBranch', staff.branch);
+            
+            // ✅ 更新 UI（跟 init 一樣）
+            document.getElementById('staff-name').innerText = staff.name;
+            document.getElementById('role-text').innerText = staff.role;
+            document.getElementById('shop-name').innerText = staff.branch || '老娘領地';
+            
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '確認過卡';
+            }
+            
+            // ✅ 關閉鎖屏
             errorEl.style.display = 'none';
             inputEl.style.borderColor = '';
             inputEl.style.backgroundColor = '';
-            await doSwitchStaff(staffId);
             document.getElementById('lockScreen').style.display = 'none';
             isScreenLocked = false;
             showToast('✅ 切換成功');
+            
         } else {
-            // ❌ 密碼錯誤
             errorEl.textContent = '❌ 密碼錯誤';
             errorEl.style.display = 'block';
             inputEl.value = '';
@@ -824,23 +855,13 @@ async function unlockSession() {
             inputEl.style.backgroundColor = '#fff5f5';
             inputEl.focus();
         }
-   } catch (error) {
-    // ✅ 顯示真正的錯誤訊息
-    errorEl.textContent = '⚠️ ' + error.message;
-    errorEl.style.display = 'block';
-    console.error('❌ unlockSession 錯誤:', error);
-}
+    } catch (error) {
+        errorEl.textContent = '⚠️ ' + error.message;
+        errorEl.style.display = 'block';
+        console.error('❌ unlockSession 錯誤:', error);
+    }
 }
 
-// ✅ 輸入時自動隱藏錯誤
-document.getElementById('lockPassword')?.addEventListener('input', function() {
-    const errorEl = document.getElementById('lockPasswordError');
-    errorEl.style.display = 'none';
-    this.style.borderColor = '';
-    this.style.backgroundColor = '';
-});
-
-// 驗證店員密碼（不綁定 LINE UID / IP）
 // 驗證店員密碼（不綁定 LINE UID / IP）
 async function verifyStaffPassword(loginId, keyword) {
     var url = GAS_URL + '?action=verifyStaffPassword' +
