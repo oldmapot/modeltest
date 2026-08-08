@@ -824,11 +824,12 @@ async function unlockSession() {
             inputEl.style.backgroundColor = '#fff5f5';
             inputEl.focus();
         }
-    } catch (error) {
-        errorEl.textContent = '⚠️ 系統異常';
-        errorEl.style.display = 'block';
-        console.error('unlockSession error:', error);
-    }
+   } catch (error) {
+    // ✅ 顯示真正的錯誤訊息
+    errorEl.textContent = '⚠️ ' + error.message;
+    errorEl.style.display = 'block';
+    console.error('❌ unlockSession 錯誤:', error);
+}
 }
 
 // ✅ 輸入時自動隱藏錯誤
