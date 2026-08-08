@@ -488,7 +488,7 @@
         background: #fff;
         border-radius: 16px;
         padding: 30px 24px;
-        max-width: 360px;
+        max-width: 300px;  /* ✅ 從 360px 改為 300px，寬度縮小 */
         width: 100%;
         text-align: center;
     ">
@@ -503,22 +503,39 @@
             <option value="">-- 請選擇帳號 --</option>
         </select>
         
-        <!-- 密碼輸入 -->
-        <input type="password" id="lockPassword" placeholder="輸入密碼" style="
-            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 12px;
+        <!-- ✅ 密碼輸入 + 錯誤訊息 橫向並排 -->
+        <div style="
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 12px;
         ">
-        <!-- ✅ 加入這裡：錯誤訊息區塊 -->
-        <div id="lockPasswordError" style="
-         display: none;
-         color: #ff4444;
-        font-size: 14px;
-        margin-top: -8px;
-        margin-bottom: 12px;
-        font-weight: 500;
-        text-align: left;
-        padding-left: 4px;
-        ">
-        ❌ 密碼錯誤，請重新輸入
+            <!-- 密碼輸入 -->
+            <input type="password" id="lockPassword" placeholder="輸入密碼" style="
+                flex: 1;
+                padding: 12px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                font-size: 16px;
+                min-width: 0;
+                transition: all 0.3s ease;
+            ">
+            
+            <!-- 錯誤訊息（密碼框右側） -->
+            <div id="lockPasswordError" style="
+                display: none;
+                color: #ff4444;
+                font-size: 13px;
+                font-weight: 600;
+                white-space: nowrap;
+                background: #fff0f0;
+                padding: 6px 10px;
+                border-radius: 6px;
+                border: 1px solid #ff4444;
+                flex-shrink: 0;
+            ">
+                ❌ 錯誤
+            </div>
         </div>
         
         <!-- 解鎖按鈕 -->
@@ -742,66 +759,68 @@ async function getAllStaffFromAPI() {
     }
 }
 
-// 解鎖（切換帳號）
 async function unlockSession() {
-    var select = document.getElementById('lockStaffSelect');
-    var password = document.getElementById('lockPassword').value.trim();
-    var staffId = select.value;
+    const staffId = document.getElementById('lockStaffSelect').value;
+    const password = document.getElementById('lockPassword').value;
+    const errorEl = document.getElementById('lockPasswordError');
+    const inputEl = document.getElementById('lockPassword');
+    
+    // 清空舊錯誤
+    errorEl.style.display = 'none';
+    inputEl.style.borderColor = '';
+    inputEl.style.backgroundColor = '';
     
     if (!staffId) {
-        showToast('請選擇帳號');
+        errorEl.textContent = '⚠️ 選帳號';
+        errorEl.style.display = 'block';
+        inputEl.style.borderColor = '#ff4444';
+        inputEl.style.backgroundColor = '#fff5f5';
         return;
     }
+    
     if (!password) {
-        showToast('請輸入密碼');
+        errorEl.textContent = '⚠️ 輸密碼';
+        errorEl.style.display = 'block';
+        inputEl.style.borderColor = '#ff4444';
+        inputEl.style.backgroundColor = '#fff5f5';
+        inputEl.focus();
         return;
     }
     
     try {
-        var result = await verifyStaffPassword(staffId, password);
+        const result = await verifyStaffPassword(staffId, password);
+        
         if (result.success) {
-            // ✅ 切換成功後，檢查 LINE_UserID 是否匹配
-            var allStaff = await getAllStaffFromAPI();
-            var selectedStaff = allStaff.find(function(s) { return s.id === staffId; });
-            
-            // 從 localStorage 讀取當前的 LINE_UserID
-            var localData = localStorage.getItem('staffData');
-            var currentLineUid = '';
-            if (localData) {
-                var parsed = JSON.parse(localData);
-                currentLineUid = parsed.lineUid || '';
-            }
-            
-            // 如果選中的店員 LINE_UserID 與當前不匹配，拒絕切換
-            if (selectedStaff && selectedStaff.lineUid && currentLineUid && selectedStaff.lineUid !== currentLineUid) {
-                showToast('⚠️ 此帳號與目前 LINE 帳號不匹配');
-                return;
-            }
-            
-            // 切換成功
-            staff.name = result.name;
-            staff.role = result.role || '夥伴';
-            staff.loginId = staffId;
-            
-            document.getElementById('staff-name').innerText = staff.name;
-            document.getElementById('role-text').innerText = staff.role;
-            
+            errorEl.style.display = 'none';
+            inputEl.style.borderColor = '';
+            inputEl.style.backgroundColor = '';
+            await doSwitchStaff(staffId);
             document.getElementById('lockScreen').style.display = 'none';
             isScreenLocked = false;
-            
-            showToast('✅ 已切換帳號：' + staff.name);
-            console.log('✅ 帳號切換成功:', staff.name);
-            
-            resetLockTimer();
+            showToast('✅ 切換成功');
         } else {
-            showToast('❌ 密碼錯誤，請重新輸入');
-            document.getElementById('lockPassword').value = '';
+            // ❌ 密碼錯誤
+            errorEl.textContent = '❌ 密碼錯誤';
+            errorEl.style.display = 'block';
+            inputEl.value = '';
+            inputEl.style.borderColor = '#ff4444';
+            inputEl.style.backgroundColor = '#fff5f5';
+            inputEl.focus();
         }
-    } catch (e) {
-        console.error('解鎖失敗:', e);
-        showToast('⚠️ 解鎖失敗，請稍後再試');
+    } catch (error) {
+        errorEl.textContent = '⚠️ 系統異常';
+        errorEl.style.display = 'block';
+        console.error('unlockSession error:', error);
     }
 }
+
+// ✅ 輸入時自動隱藏錯誤
+document.getElementById('lockPassword')?.addEventListener('input', function() {
+    const errorEl = document.getElementById('lockPasswordError');
+    errorEl.style.display = 'none';
+    this.style.borderColor = '';
+    this.style.backgroundColor = '';
+});
 
 // 驗證店員密碼（不綁定 LINE UID / IP）
 async function verifyStaffPassword(loginId, keyword) {
