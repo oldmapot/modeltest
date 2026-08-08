@@ -823,17 +823,30 @@ document.getElementById('lockPassword')?.addEventListener('input', function() {
 });
 
 // 驗證店員密碼（不綁定 LINE UID / IP）
+// 驗證店員密碼（不綁定 LINE UID / IP）
 async function verifyStaffPassword(loginId, keyword) {
     var url = GAS_URL + '?action=verifyStaffPassword' +
         '&loginId=' + encodeURIComponent(loginId) +
         '&keyword=' + encodeURIComponent(keyword) +
         '&t=' + Date.now();
     
-    var res = await fetch(url);
-    var result = await res.json();
-    return result;
+    try {
+        var res = await fetch(url);
+        
+        // ✅ 檢查 HTTP 狀態
+        if (!res.ok) {
+            console.error('HTTP 錯誤:', res.status, res.statusText);
+            return { success: false, message: '伺服器連線失敗' };
+        }
+        
+        var result = await res.json();
+        console.log('verifyStaffPassword 回傳:', result);  // ✅ 加 log 方便除錯
+        return result;
+    } catch (error) {
+        console.error('verifyStaffPassword 例外:', error);
+        return { success: false, message: '連線異常' };
+    }
 }
-
 // 強制登出
 function forceLogout() {
     if (confirm('確定要登出嗎？')) {
