@@ -377,6 +377,7 @@
     <button class="header-btn" onclick="showSwitchAccount()" style="background:#ff9800; color:#fff;">🔄 切換帳號</button>
     <button class="header-btn btn-logout" onclick="logout()">登出</button>
     </div>
+    
         <h2 style="margin:0;"><span id="shop-name">老娘領地</span></h2>
         <div style="font-size:14px; color:#666; margin-top:5px;">
             <span id="role-text" class="role-badge">夥伴</span>：<span id="staff-name">-</span>
@@ -389,7 +390,64 @@
         <button class="btn btn-scan" id="scanBtn" onclick="openCamera()">📷 開啟相機 / 準備掃碼槍</button>
         <button class="btn-reset" onclick="resetMember()">重新整理</button>
     </div>
-
+<!-- ============================================================
+     🔒 鎖屏遮罩（電腦版）
+     ============================================================ -->
+<div id="lockScreen" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 99999;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    padding: 30px 20px;
+">
+    <div style="
+        background: #fff;
+        border-radius: 16px;
+        padding: 30px 24px;
+        max-width: 300px;
+        width: 100%;
+        text-align: center;
+    ">
+        <div style="font-size: 48px; margin-bottom: 8px;">🔒</div>
+        <h3 style="color: #333; margin-bottom: 4px;">畫面已鎖定</h3>
+        <p style="color: #999; font-size: 14px; margin-bottom: 16px;">請選擇帳號並輸入密碼解鎖</p>
+        
+        <!-- 帳號下拉選單 -->
+        <select id="lockStaffSelect" style="
+            width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; margin-bottom: 12px;
+        ">
+            <option value="">-- 請選擇帳號 --</option>
+        </select>
+        
+        <!-- 密碼輸入 + 錯誤訊息 -->
+        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+            <input type="password" id="lockPassword" placeholder="輸入密碼" style="
+                flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; min-width: 0;
+            ">
+            <div id="lockPasswordError" style="
+                display: none; color: #ff4444; font-size: 13px; font-weight: 600; white-space: nowrap;
+                background: #fff0f0; padding: 6px 10px; border-radius: 6px; border: 1px solid #ff4444;
+            ">
+                ❌ 錯誤
+            </div>
+        </div>
+        
+        <button onclick="unlockSession()" style="
+            width: 100%; padding: 14px; background: #00b900; color: white; border: none; border-radius: 8px;
+            font-size: 16px; font-weight: bold; cursor: pointer;
+        ">🔓 解鎖</button>
+        
+        <button onclick="forceLogout()" style="
+            width: 100%; padding: 12px; background: #ff4444; color: white; border: none; border-radius: 8px;
+            font-size: 14px; cursor: pointer; margin-top: 8px;
+        ">🚪 登出</button>
+    </div>
+</div>
     <div class="member-info" id="member-ui">
         顧客：<b id="cus-name">-</b> <span id="member-level" class="member-level"></span><br>
         現有資產：<b id="cus-pts" style="color:red;">0</b> 點<br>
@@ -586,96 +644,87 @@
         }
     }
 
-    async function unlockSession() {
-        const staffId = document.getElementById('lockStaffSelect').value;
-        const password = document.getElementById('lockPassword').value;
-        const errorEl = document.getElementById('lockPasswordError');
-        const inputEl = document.getElementById('lockPassword');
+async function unlockSession() {
+    const staffId = document.getElementById('lockStaffSelect').value;
+    const password = document.getElementById('lockPassword').value;
+    const errorEl = document.getElementById('lockPasswordError');
+    const inputEl = document.getElementById('lockPassword');
+    
+    errorEl.style.display = 'none';
+    inputEl.style.borderColor = '';
+    inputEl.style.backgroundColor = '';
+    
+    if (!staffId) {
+        errorEl.textContent = '⚠️ 選帳號';
+        errorEl.style.display = 'block';
+        inputEl.style.borderColor = '#ff4444';
+        inputEl.style.backgroundColor = '#fff5f5';
+        return;
+    }
+    
+    if (!password) {
+        errorEl.textContent = '⚠️ 輸密碼';
+        errorEl.style.display = 'block';
+        inputEl.style.borderColor = '#ff4444';
+        inputEl.style.backgroundColor = '#fff5f5';
+        inputEl.focus();
+        return;
+    }
+    
+    try {
+        const result = await verifyStaffPassword(staffId, password);
         
-        errorEl.style.display = 'none';
-        inputEl.style.borderColor = '';
-        inputEl.style.backgroundColor = '';
-        
-        if (!staffId) {
-            errorEl.textContent = '⚠️ 選帳號';
+        if (result.success) {
+            // 切換帳號邏輯
+            const staffList = await getSwitchableStaff();
+            const selectedStaff = staffList.find(s => s.id === staffId || s.loginId === staffId);
+            
+            if (!selectedStaff) {
+                throw new Error('找不到該店員資料');
+            }
+            
+            staff.name = selectedStaff.name || '';
+            staff.branch = selectedStaff.branch || staff.branch;
+            staff.role = selectedStaff.role || '夥伴';
+            staff.loginId = selectedStaff.loginId || selectedStaff.id;
+            isLoggedIn = true;
+            
+            localStorage.setItem('staffLoginId', staff.loginId);
+            localStorage.setItem('staffName', staff.name);
+            localStorage.setItem('staffRole', staff.role);
+            localStorage.setItem('staffBranch', staff.branch);
+            
+            document.getElementById('staff-name').innerText = staff.name;
+            document.getElementById('role-text').innerText = staff.role;
+            document.getElementById('shop-name').innerText = staff.branch || '老娘領地';
+            
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '確認過卡';
+            }
+            
+            errorEl.style.display = 'none';
+            inputEl.style.borderColor = '';
+            inputEl.style.backgroundColor = '';
+            document.getElementById('lockScreen').style.display = 'none';
+            isScreenLocked = false;
+            showToast('✅ 切換成功');
+            
+        } else {
+            errorEl.textContent = '❌ 密碼錯誤';
             errorEl.style.display = 'block';
-            inputEl.style.borderColor = '#ff4444';
-            inputEl.style.backgroundColor = '#fff5f5';
-            return;
-        }
-        
-        if (!password) {
-            errorEl.textContent = '⚠️ 輸密碼';
-            errorEl.style.display = 'block';
+            inputEl.value = '';
             inputEl.style.borderColor = '#ff4444';
             inputEl.style.backgroundColor = '#fff5f5';
             inputEl.focus();
-            return;
         }
-        
-        try {
-            const result = await verifyStaffPassword(staffId, password);
-            
-            if (result.success) {
-                // 切換帳號
-                const staffList = await getSwitchableStaff();
-                const selectedStaff = staffList.find(s => s.id === staffId || s.loginId === staffId);
-                
-                if (!selectedStaff) {
-                    throw new Error('找不到該店員資料');
-                }
-                
-                staff.name = selectedStaff.name || '';
-                staff.branch = selectedStaff.branch || staff.branch;
-                staff.role = selectedStaff.role || '夥伴';
-                staff.loginId = selectedStaff.loginId || selectedStaff.id;
-                isLoggedIn = true;
-                
-                localStorage.setItem('staffLoginId', staff.loginId);
-                localStorage.setItem('staffName', staff.name);
-                localStorage.setItem('staffRole', staff.role);
-                localStorage.setItem('staffBranch', staff.branch);
-                
-                document.getElementById('staff-name').innerText = staff.name;
-                document.getElementById('role-text').innerText = staff.role;
-                document.getElementById('shop-name').innerText = staff.branch || '老娘領地';
-                
-                const submitBtn = document.getElementById('submitBtn');
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '確認過卡';
-                }
-                
-                errorEl.style.display = 'none';
-                inputEl.style.borderColor = '';
-                inputEl.style.backgroundColor = '';
-                document.getElementById('lockScreen').style.display = 'none';
-                isScreenLocked = false;
-                showToast('✅ 切換成功');
-                
-            } else {
-                errorEl.textContent = '❌ 密碼錯誤';
-                errorEl.style.display = 'block';
-                inputEl.value = '';
-                inputEl.style.borderColor = '#ff4444';
-                inputEl.style.backgroundColor = '#fff5f5';
-                inputEl.focus();
-            }
-        } catch (error) {
-            errorEl.textContent = '⚠️ ' + error.message;
-            errorEl.style.display = 'block';
-            console.error('❌ unlockSession 錯誤:', error);
-        }
+    } catch (error) {
+        errorEl.textContent = '⚠️ ' + error.message;
+        errorEl.style.display = 'block';
+        console.error('❌ unlockSession 錯誤:', error);
     }
-
-    // 輸入時自動隱藏錯誤
-    document.getElementById('lockPassword')?.addEventListener('input', function() {
-        const errorEl = document.getElementById('lockPasswordError');
-        errorEl.style.display = 'none';
-        this.style.borderColor = '';
-        this.style.backgroundColor = '';
-    });
-
+}
     // 強制登出
     function forceLogout() {
         if (confirm('確定要登出嗎？')) {
