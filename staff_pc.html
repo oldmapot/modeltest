@@ -556,30 +556,29 @@
     }
 
     // 從 GAS 取得可切換的店員
-    async function getSwitchableStaff() {
-        try {
-            var currentLoginId = localStorage.getItem('staffLoginId') || '';
-            if (!currentLoginId && staff && staff.loginId) {
-                currentLoginId = staff.loginId;
-            }
-            if (!currentLoginId) {
-                console.error('⚠️ 無法取得 loginId');
-                return [];
-            }
-            
-            // 電腦版：傳送 deviceId 作為識別
-            var deviceId = localStorage.getItem('pc_device_id') || getDeviceId();
-            
-            var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&deviceId=' + encodeURIComponent(deviceId) + '&t=' + Date.now();
-            var res = await fetch(url);
-            var data = await res.json();
-            return data.success && data.staff ? data.staff : [];
-        } catch (e) {
-            console.error('取得可切換店員失敗:', e);
+ async function getSwitchableStaff() {
+    try {
+        var currentLoginId = localStorage.getItem('staffLoginId') || '';
+        if (!currentLoginId && staff && staff.loginId) {
+            currentLoginId = staff.loginId;
+        }
+        if (!currentLoginId) {
+            console.error('⚠️ 無法取得 loginId');
             return [];
         }
-    }
 
+        var deviceId = localStorage.getItem('pc_device_id') || getDeviceId();
+
+        // ✅ 加入 platform=pc 參數
+        var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&deviceId=' + encodeURIComponent(deviceId) + '&platform=pc&t=' + Date.now();
+        var res = await fetch(url);
+        var data = await res.json();
+        return data.success && data.staff ? data.staff : [];
+    } catch (e) {
+        console.error('取得可切換店員失敗:', e);
+        return [];
+    }
+}
     let cachedSwitchableStaff = null;
 
     async function preloadSwitchableStaff() {
