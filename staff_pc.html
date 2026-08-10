@@ -585,7 +585,9 @@
     let isScreenLocked = false;
     let cachedSwitchableStaff = null;
     let isProcessing = false;  // 🔥 新增：標記是否正在處理掃描
-
+    // 閒置計時器
+    let idleTimer = null;
+    const IDLE_TIMEOUT = 5 * 60 * 1000; // 5分鐘
 
 // ============================================================
 //  掃碼槍監聽（不搶焦點版）
@@ -759,7 +761,29 @@ function showScanning() {
         document.getElementById('lockScreen').style.display = 'flex';
         console.log('🔄 切換帳號介面已開啟');
     }
+// ============================================================
+//  閒置計時器
+// ============================================================
 
+function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(function() {
+        console.log('⏰ 閒置5分鐘，自動鎖屏');
+        showIdleLockScreen();
+    }, IDLE_TIMEOUT);
+}
+
+function showIdleLockScreen() {
+    if (!isLoggedIn) return;
+    console.log('🔒 閒置鎖屏');
+    populateLockStaffListInstant();
+    document.getElementById('lockPassword').value = '';
+    document.getElementById('lockScreen').style.display = 'flex';
+}
+
+function clearIdleTimer() {
+    clearTimeout(idleTimer);
+}
 async function getSwitchableStaff() {
     try {
         var currentLoginId = localStorage.getItem('staffLoginId') || '';
@@ -908,6 +932,8 @@ async function getSwitchableStaff() {
                 inputEl.style.backgroundColor = '';
                 document.getElementById('lockScreen').style.display = 'none';
                 isScreenLocked = false;
+
+                resetIdleTimer();
                 showToast('✅ 切換成功');
             } else {
                 errorEl.textContent = '❌ 密碼錯誤';
@@ -2154,6 +2180,7 @@ function forceReset() {
     console.log('🔄 強制重置完成');
 }
     function logout() {
+        clearIdleTimer();
         showToast("正在登出...");
         localStorage.removeItem('staffLoginId');
         localStorage.removeItem('staffName');
@@ -2263,17 +2290,26 @@ function init() {
             } catch (err) {}
         }
         
-        // 🔥 跳過後續背景 API，直接返回
-        hideLoading();
-        return;
+// 🔥 跳過後續背景 API，直接返回
+hideLoading();
+// 啟動閒置計時器
+resetIdleTimer();
+
+// 🔥 監聽操作重置計時器
+document.addEventListener('mousemove', resetIdleTimer);
+document.addEventListener('mousedown', resetIdleTimer);
+document.addEventListener('keydown', resetIdleTimer);
+document.addEventListener('scroll', resetIdleTimer);
+document.addEventListener('click', resetIdleTimer);
+
+// 🔥 自動聚焦（移到 return 前面）
+setTimeout(function() {
+    if (document.getElementById('scanInput')) {
+        document.getElementById('scanInput').focus();
     }
-    // 自動聚焦掃描輸入框
-    setTimeout(function() {
-        if (document.getElementById('scanInput')) {
-            document.getElementById('scanInput').focus();
-        }
-    }, 500);
-}
+}, 500);
+
+return;  // ← 最後才 return
     // ============================================================
     //  啟動
     // ============================================================
