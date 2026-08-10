@@ -913,13 +913,15 @@
 			console.error('❌ unlockSession 錯誤:', error);
 		}
 	}
-	document.getElementById('lockPassword') ? .addEventListener('input', function() {
-		const errorEl = document.getElementById('lockPasswordError');
-		errorEl.style.display = 'none';
-		this.style.borderColor = '';
-		this.style.backgroundColor = '';
-	});
-
+var lockPassword = document.getElementById('lockPassword');
+if (lockPassword) {
+    lockPassword.addEventListener('input', function() {
+        var errorEl = document.getElementById('lockPasswordError');
+        errorEl.style.display = 'none';
+        this.style.borderColor = '';
+        this.style.backgroundColor = '';
+    });
+}
 	function forceLogout() {
 		if(confirm('確定要登出嗎？')) {
 			logout();
