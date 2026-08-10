@@ -440,49 +440,59 @@
             <span id="role-text" class="role-badge">夥伴</span>：<span id="staff-name">-</span>
         </div>
     </div>
-
-    <!-- ✅ 掃描輸入框（取代原本的「開啟相機」按鈕） -->
-    <div style="
-        background: #f8f9fa;
-        border-radius: 10px;
-        border: 2px solid #e0e0e0;
-        padding: 10px 14px;
-        margin-bottom: 15px;
-    ">
-       <input type="text" id="scanInput" placeholder="對準 QR Code 掃描" readonly style="
-    width: 100%;
-    padding: 10px 12px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    font-family: 'Courier New', monospace;
-    box-sizing: border-box;
-    background: #f5f5f5;
-    outline: none;
-    transition: border-color 0.3s ease;
-    cursor: default;
-    user-select: none;
+<!-- ============================================================
+     📷 掃描狀態區塊（電腦版 - 不可手動輸入）
+     ============================================================ -->
+<div id="scanStatusBar" style="
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    padding: 10px 14px;
+    margin-bottom: 15px;
+    position: relative;
 ">
+    <!-- 🔥 隱藏輸入框：專門接收掃碼槍輸入 -->
+    <input type="text" id="hiddenScanInput" style="
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+    ">
+    
+    <!-- 可見的掃描狀態顯示區 -->
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 16px;">📷</span>
+        <span id="scanStatusDot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #28a745;"></span>
+        <span id="scanStatusText" style="font-size: 13px; color: #28a745; font-weight: 500;">就緒</span>
         
-        <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
-            <span style="font-size: 14px;">📷</span>
-            <span id="scanStatusDot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #28a745;"></span>
-            <span id="scanStatusText" style="font-size: 13px; color: #28a745; font-weight: 500;">就緒</span>
-            
-            <div id="scanErrorMessage" style="
-                display: none;
-                margin-left: auto;
-                padding: 4px 10px;
-                border-radius: 4px;
-                font-size: 12px;
-                background: #ffe5e5;
-                border: 1px solid #ff4444;
-                color: #cc0000;
-            ">
-                ❌ <span id="scanErrorText">錯誤訊息</span>
-            </div>
+        <div id="scanErrorMessage" style="
+            display: none;
+            margin-left: auto;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            background: #ffe5e5;
+            border: 1px solid #ff4444;
+            color: #cc0000;
+        ">
+            ❌ <span id="scanErrorText">錯誤訊息</span>
         </div>
     </div>
+    
+    <!-- 掃描提示 -->
+    <div style="
+        margin-top: 6px;
+        font-size: 12px;
+        color: #999;
+        text-align: center;
+        border-top: 1px dashed #ddd;
+        padding-top: 6px;
+    ">
+        💡 請將 QR Code 對準掃碼槍，系統會自動偵測
+    </div>
+</div>
 
     <!-- ✅ 重新整理按鈕 -->
     <div style="display: flex; gap: 12px; margin-bottom: 15px;">
@@ -586,95 +596,145 @@
     // ============================================================
     //  掃描狀態控制
     // ============================================================
-    var scanInput = document.getElementById('scanInput');
+// ============================================================
+//  掃描器輸入監聽（隱藏輸入框版）
+// ============================================================
+
+// 🔥 取得隱藏輸入框
+var hiddenScanInput = document.getElementById('hiddenScanInput');
+var scanStatusDot = document.getElementById('scanStatusDot');
+var scanStatusText = document.getElementById('scanStatusText');
+var scanErrorMessage = document.getElementById('scanErrorMessage');
+var scanErrorText = document.getElementById('scanErrorText');
+
+// 🔥 自動聚焦隱藏輸入框
+function focusHiddenInput() {
+    if (hiddenScanInput) {
+        hiddenScanInput.focus();
+        console.log('📌 隱藏輸入框已聚焦');
+    }
+}
+
+// 🔥 頁面載入後自動聚焦
+setTimeout(function() {
+    focusHiddenInput();
+}, 300);
+
+// 🔥 點擊頁面時重新聚焦隱藏輸入框
+document.addEventListener('click', function(e) {
+    var target = e.target;
+    if (target.tagName !== 'INPUT' || target.id === 'hiddenScanInput') {
+        setTimeout(focusHiddenInput, 100);
+    }
+});
+
+// 🔥 隱藏輸入框監聽掃描
+hiddenScanInput.addEventListener('focus', function() {
+    console.log('📌 隱藏輸入框獲得焦點');
+});
+
+hiddenScanInput.addEventListener('blur', function() {
+    setTimeout(focusHiddenInput, 50);
+});
+
+// 🔥 監聽輸入（掃碼槍打字進來）
+hiddenScanInput.addEventListener('input', function(e) {
+    var val = this.value;
+    if (/[^\x00-\x7F]/.test(val)) {
+        showScanError('請切換到英文輸入法再掃描');
+        this.value = '';
+        return;
+    }
+});
+
+// 🔥 監聽 Enter（掃碼槍輸入完成）
+hiddenScanInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        var val = this.value.trim();
+        console.log('📌 掃描輸入:', val);
+        
+        if (val.length > 5) {
+            showScanning();
+            try {
+                this.value = '';
+                onScanSuccess(val);
+                hideScanError();
+                scanStatusDot.style.background = '#28a745';
+                scanStatusText.textContent = '成功 ✅';
+                scanStatusText.style.color = '#28a745';
+                setTimeout(function() {
+                    scanStatusText.textContent = '就緒';
+                    focusHiddenInput();
+                }, 1500);
+            } catch(err) {
+                console.error('掃描錯誤:', err);
+                showScanError('掃描處理失敗，請重新掃描');
+                this.value = '';
+                focusHiddenInput();
+            }
+        } else if (val.length > 0 && val.length <= 5) {
+            showScanError('QR Code 內容太短，請確認');
+            this.value = '';
+            focusHiddenInput();
+        }
+    }
+});
+
+// 🔥 防止隱藏輸入框被 Tab 選中
+hiddenScanInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        setTimeout(focusHiddenInput, 10);
+    }
+});
+
+// 🔥 中文輸入法處理
+hiddenScanInput.addEventListener('compositionstart', function() {
+    this.dataset.composing = 'true';
+});
+
+hiddenScanInput.addEventListener('compositionend', function() {
+    this.dataset.composing = 'false';
+    var val = this.value.trim();
+    if (val.length > 5) {
+        var event = new KeyboardEvent('keydown', { key: 'Enter' });
+        this.dispatchEvent(event);
+    }
+});
+    
     var scanStatusDot = document.getElementById('scanStatusDot');
     var scanStatusText = document.getElementById('scanStatusText');
     var scanErrorMessage = document.getElementById('scanErrorMessage');
     var scanErrorText = document.getElementById('scanErrorText');
 
-    function showScanError(message) {
-        scanErrorText.textContent = message;
-        scanErrorMessage.style.display = 'block';
-        scanStatusDot.style.background = '#dc3545';
-        scanStatusText.textContent = '錯誤';
-        scanStatusText.style.color = '#dc3545';
-        scanInput.style.borderColor = '#ff4444';
-        clearTimeout(window.scanErrorTimer);
-        window.scanErrorTimer = setTimeout(function() {
-            hideScanError();
-        }, 3000);
-    }
+// ============================================================
+//  掃描狀態輔助函數
+// ============================================================
 
-    function hideScanError() {
-        scanErrorMessage.style.display = 'none';
-        scanStatusDot.style.background = '#28a745';
-        scanStatusText.textContent = '就緒';
-        scanStatusText.style.color = '#28a745';
-        scanInput.style.borderColor = '#ddd';
-    }
+function showScanError(message) {
+    scanErrorText.textContent = message;
+    scanErrorMessage.style.display = 'block';
+    scanStatusDot.style.background = '#dc3545';
+    scanStatusText.textContent = '錯誤';
+    scanStatusText.style.color = '#dc3545';
+    clearTimeout(window.scanErrorTimer);
+    window.scanErrorTimer = setTimeout(function() {
+        hideScanError();
+    }, 3000);
+}
 
-    function showScanning() {
-        scanStatusDot.style.background = '#ffc107';
-        scanStatusText.textContent = '掃描中...';
-        scanStatusText.style.color = '#ffc107';
-        scanInput.style.borderColor = '#ffc107';
-    }
+function hideScanError() {
+    scanErrorMessage.style.display = 'none';
+    scanStatusDot.style.background = '#28a745';
+    scanStatusText.textContent = '就緒';
+    scanStatusText.style.color = '#28a745';
+}
 
-    // 檢查輸入法
-    scanInput.addEventListener('input', function(e) {
-        var val = this.value;
-        if (/[^\x00-\x7F]/.test(val)) {
-            showScanError('請切換到英文輸入法再掃描');
-            this.value = '';
-        }
-    });
-
-    // 掃描器輸入監聽
-    scanInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            var val = this.value.trim();
-            if (val.length > 5) {
-                showScanning();
-                try {
-                    this.value = '';
-                    onScanSuccess(val);
-                    hideScanError();
-                    scanStatusDot.style.background = '#28a745';
-                    scanStatusText.textContent = '成功 ✅';
-                    scanStatusText.style.color = '#28a745';
-                    setTimeout(function() {
-                        scanStatusText.textContent = '就緒';
-                    }, 1500);
-                } catch(err) {
-                    console.error('掃描錯誤:', err);
-                    showScanError('掃描處理失敗，請重新掃描');
-                    this.value = '';
-                }
-            } else if (val.length > 0 && val.length <= 5) {
-                showScanError('QR Code 內容太短，請確認');
-                this.value = '';
-            }
-        }
-    });
-
-    scanInput.addEventListener('focus', function() {
-    // ✅ 掃描框不能手動輸入，聚焦後立即失焦
-    this.blur();
-    hideScanError();
-    });
-
-    // 自動聚焦
-    setTimeout(function() {
-        scanInput.focus();
-    }, 500);
-
-    document.addEventListener('click', function(e) {
-        var target = e.target;
-        if (target.id !== 'scanInput' && !target.closest('#scanStatusBar') && !target.closest('.header')) {
-            scanInput.focus();
-        }
-    });
-
+function showScanning() {
+    scanStatusDot.style.background = '#ffc107';
+    scanStatusText.textContent = '掃描中...';
+    scanStatusText.style.color = '#ffc107';
+}
     // ============================================================
     //  工具函數
     // ============================================================
