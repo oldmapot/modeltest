@@ -515,7 +515,7 @@
             <span id="coupon-content-display">優惠資料讀取中...</span>
         </div>
         <div style="font-size:14px; color:#666; margin-top:4px;">
-            滿 <span id="coupon-min-spend-display">--</span> 元 <span id="coupon-action-display">--</span>
+            滿 <span id="coupon-min-spend-display">--</span> 元 <span id="coupon-action-label">贈</span> <span id="coupon-action-value-display">--</span> <span id="coupon-action-unit">點</span>
         </div>
         <div id="coupon-status-display" style="font-size:13px; margin-top:6px; font-weight:bold;">
             請輸入消費金額以確認門檻
@@ -1050,13 +1050,31 @@ function displayCouponInfo(data) {
         }
     }
     
-    var minSpendDisplay = document.getElementById('coupon-minSpend-display');
+    // 🔥🔥🔥 修改：顯示「滿 X 元 贈 Y 點」或「滿 X 元 折 Y 元」
+    var minSpendDisplay = document.getElementById('coupon-min-spend-display');
+    var actionDisplay = document.getElementById('coupon-action-display');
+    
     if (minSpendDisplay) {
         if (data.minSpend > 0) {
-            minSpendDisplay.innerText = '💰 滿 $' + data.minSpend + ' 元可使用';
-            minSpendDisplay.style.display = 'block';
+            minSpendDisplay.innerText = data.minSpend;
+            minSpendDisplay.style.display = 'inline';
         } else {
-            minSpendDisplay.style.display = 'none';
+            minSpendDisplay.innerText = '--';
+            minSpendDisplay.style.display = 'inline';
+        }
+    }
+    
+    // 🔥🔥🔥 設定動作顯示（贈點 / 折抵）
+    if (actionDisplay) {
+        if (data.type === '贈點' && data.bonusPoints > 0) {
+            actionDisplay.innerText = ' 贈 ' + data.bonusPoints + ' 點';
+            actionDisplay.style.display = 'inline';
+        } else if (data.type === '消費折抵' && data.discountAmount > 0) {
+            actionDisplay.innerText = ' 折 ' + data.discountAmount + ' 元';
+            actionDisplay.style.display = 'inline';
+        } else {
+            actionDisplay.innerText = '';
+            actionDisplay.style.display = 'none';
         }
     }
     
@@ -1072,7 +1090,6 @@ function displayCouponInfo(data) {
         typeDisplay.innerText = typeMap[data.type] || data.type || '優惠券';
     }
 }
-
     // ============================================================
     //  核心函數：parseScannedCode
     // ============================================================
