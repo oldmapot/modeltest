@@ -1698,6 +1698,12 @@ async function submitData() {
         customerId = window.customerId;
         console.log('🔄 從 window 還原 customerId:', customerId);
     }
+    // 🔥 優惠券流程中，不要鎖住表單
+const urlParams = new URLSearchParams(window.location.search);
+const fromCoupon = urlParams.get('fromCoupon');
+if (fromCoupon === 'true') {
+    console.log('🎯 優惠券流程中，保留表單解鎖狀態');
+}
     if (!customerId) {
         var urlUserId = new URLSearchParams(window.location.search).get('userId');
         if (urlUserId) {
@@ -1892,9 +1898,23 @@ async function submitData() {
                         if (couponInfoEl) couponInfoEl.remove();
                     }
                     
-                    // 重置會員資料（但保留點數顯示）
-                    resetMember();
-                    showToast('✅ 集點完成，已清除會員資料');
+ // 🔥 優惠券流程中，不要重置會員資料
+const urlParams = new URLSearchParams(window.location.search);
+const fromCoupon = urlParams.get('fromCoupon');
+
+if (fromCoupon === 'true') {
+    // 優惠券流程：只清除輸入框，不鎖表單
+    document.getElementById('totalSpend').value = '';
+    document.getElementById('ticketSpend').value = '';
+    document.getElementById('redeemAmount').value = '';
+    document.getElementById('new-pts').innerText = '0 點';
+    document.getElementById('after-pts').innerText = '0 點';
+    showToast('✅ 集點完成！');
+} else {
+    // 一般流程：完整重置
+    resetMember();
+    showToast('✅ 集點完成，已清除會員資料');
+}
                     
                     // 🔥 修正點：如果有優惠券且不是重複提交，顯示優惠券已使用
                     if (couponType && !isDuplicate) {
@@ -1943,10 +1963,30 @@ async function submitData() {
 function resetMember() {
     try {
         // ============================================================
+        //  🔥 如果正在優惠券流程中，不要完全重置
+        // ============================================================
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromCoupon = urlParams.get('fromCoupon');
+        
+        if (fromCoupon === 'true') {
+            console.log('🔄 優惠券流程中，跳過重置會員資料');
+            // 只重置掃描相關狀態
+            customerId = "";
+            window.customerId = undefined;
+            currentMemberData = null;
+            
+            // 🔥 重新聚焦隱藏輸入框
+            setTimeout(function() {
+                focusHiddenInput();
+            }, 300);
+            return;
+        }
+        
+        // ============================================================
         //  1️⃣ 重置掃描相關的狀態
         // ============================================================
         customerId = "";
-        window.customerId = undefined;  // ✅ 清理 window 全域
+        window.customerId = undefined;
         currentMemberData = null;
         
         // ============================================================
@@ -2076,6 +2116,18 @@ function resetMember() {
                 console.warn('⚠️ URL 清理時發生非致命例外:', err);
             }
         }
+        
+        // ============================================================
+        //  9️⃣ 重置處理狀態
+        // ============================================================
+        isProcessing = false;
+        
+        // ============================================================
+        //  🔟 重新聚焦隱藏輸入框
+        // ============================================================
+        setTimeout(function() {
+            focusHiddenInput();
+        }, 300);
         
         console.log('🔄 會員資料已完整重置');
     } catch (error) {
