@@ -1319,7 +1319,7 @@ if (scanMode === 'coupon') {
 function doCalc() {
     let couponDiscountAmount = 0;
     let finalCouponBonus = 0;
-    console.log('🔥🔥🔥 doCalc 已更新（新版本）');
+    
     // ---------- 1. 獲取所有 DOM 元素（統一管理） ----------
     const elements = {
         totalInput: document.getElementById('totalSpend'),
@@ -2193,7 +2193,7 @@ function init() {
     
     console.log("✅ 電腦版初始化完成，店員:", staff.name);
     
-    // ============================================================
+// ============================================================
     //  🔥 檢查是否從優惠券跳轉回來（加入這段）
     // ============================================================
     const urlParams = new URLSearchParams(window.location.search);
@@ -2224,22 +2224,27 @@ function init() {
         
         console.log("✅ 已還原優惠券資料:", window.activeCoupon);
         
-        setTimeout(function() {
-            loadMemberData(userId);
-        }, 300);
+        // 🔥 直接載入會員，不延遲
+        loadMemberData(userId);
         
-        setTimeout(function() {
-            if (window.activeCoupon) {
-                displayCouponInfo(window.activeCoupon);
-            }
-        }, 500);
+        // 🔥 顯示優惠券資訊
+        if (window.activeCoupon) {
+            displayCouponInfo(window.activeCoupon);
+        }
+        
+        // 🔥 清除 URL 中的 fromCoupon 參數
+        if (window.history && window.history.replaceState) {
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('fromCoupon');
+                window.history.replaceState({}, document.title, url.toString());
+            } catch (err) {}
+        }
+        
+        // 🔥 跳過後續背景 API，直接返回
+        hideLoading();
+        return;
     }
-    
-    // 背景預載切換帳號清單
-    preloadSwitchableStaff();
-    getCouponPrefixes();
-    hideLoading();
-    
     // 自動聚焦掃描輸入框
     setTimeout(function() {
         if (document.getElementById('scanInput')) {
