@@ -1384,8 +1384,6 @@ function doCalc() {
         console.log('❌ 未達門檻（需滿', couponMinSpend, '，實際', actualSpend, '），折抵歸零');
        }
      }
-    }
-  }
     const finalCouponDiscount = parseFloat(elements.couponDiscountInput?.value) || 0;
     baseAmount = totalSpend - ticketSpend - finalCouponDiscount;
     
