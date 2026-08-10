@@ -623,12 +623,24 @@ setTimeout(function() {
     focusHiddenInput();
 }, 300);
 
-// 🔥 點擊頁面時重新聚焦隱藏輸入框
 document.addEventListener('click', function(e) {
     var target = e.target;
-    if (target.tagName !== 'INPUT' || target.id === 'hiddenScanInput') {
-        setTimeout(focusHiddenInput, 100);
+    
+    // 如果點擊的是輸入框
+    if (target.tagName === 'INPUT') {
+        var id = target.id;
+        // 金額輸入框：允許正常使用，不搶焦點
+        if (id === 'totalSpend' || id === 'ticketSpend' || id === 'redeemAmount' || id === 'couponDiscount') {
+            return;
+        }
+        // 隱藏輸入框：不做任何事
+        if (id === 'hiddenScanInput') {
+            return;
+        }
     }
+    
+    // 其他情況（點擊空白處），才聚焦隱藏輸入框
+    setTimeout(focusHiddenInput, 100);
 });
 
 // 🔥 隱藏輸入框監聽掃描
@@ -638,9 +650,19 @@ hiddenScanInput.addEventListener('focus', function() {
 
 // 🔥 失焦時，如果沒有在處理掃描，才重新聚焦
 hiddenScanInput.addEventListener('blur', function() {
-    if (!isProcessing) {
-        setTimeout(focusHiddenInput, 50);
+    // 如果正在處理掃描，不聚焦
+    if (isProcessing) {
+        return;
     }
+    // 如果目前焦點在金額輸入框，不搶焦點
+    var activeElement = document.activeElement;
+    if (activeElement && activeElement.tagName === 'INPUT') {
+        var id = activeElement.id;
+        if (id === 'totalSpend' || id === 'ticketSpend' || id === 'redeemAmount' || id === 'couponDiscount') {
+            return;
+        }
+    }
+    setTimeout(focusHiddenInput, 50);
 });
 
 // 🔥 監聽輸入（掃碼槍打字進來）
