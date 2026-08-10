@@ -449,18 +449,20 @@
         padding: 10px 14px;
         margin-bottom: 15px;
     ">
-        <input type="text" id="scanInput" placeholder="對準 QR Code 掃描" style="
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            font-family: 'Courier New', monospace;
-            box-sizing: border-box;
-            background: white;
-            outline: none;
-            transition: border-color 0.3s ease;
-        ">
+       <input type="text" id="scanInput" placeholder="對準 QR Code 掃描" readonly style="
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+    box-sizing: border-box;
+    background: #f5f5f5;
+    outline: none;
+    transition: border-color 0.3s ease;
+    cursor: default;
+    user-select: none;
+">
         
         <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px;">
             <span style="font-size: 14px;">📷</span>
@@ -529,20 +531,20 @@
         <div id="normal-fields">
             <div class="input-group">
                 <label>1. 本日消費總額</label>
-                <input type="number" id="totalSpend" oninput="doCalc()" placeholder="輸入消費金額">
+                <input type="text" id="totalSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入消費金額" style="...">
             </div>
             <div class="input-group">
                 <label>2. 活動折抵消費 <span id="coupon-discount-label" style="color:#ff9800;font-size:12px;"></span></label>
-                <input type="number" id="couponDiscount" oninput="doCalc()" placeholder="0" readonly style="background:#f5f5f5;cursor:not-allowed;">
+                <input type="text" id="couponDiscount" inputmode="decimal" oninput="doCalc()" placeholder="0" readonly style="background:#f5f5f5;cursor:not-allowed;user-select:none;">
                 <div style="font-size:12px;color:#999;margin-top:4px;">💡 此欄位由優惠券自動帶入，不可編輯</div>
             </div>
             <div class="input-group">
                 <label>3. 使用餐券金額</label>
-                <input type="number" id="ticketSpend" oninput="doCalc()" placeholder="輸入餐券支付額">
+                <input type="text" id="ticketSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入餐券支付額" style="...">
             </div>
             <div class="input-group">
                 <label>4. 折抵點數 (上限：<span id="max-hint" style="color:blue;">0</span> 點)</label>
-                <input type="number" id="redeemAmount" oninput="doCalc()" placeholder="欲折抵點數">
+                <input type="text" id="redeemAmount" inputmode="numeric" oninput="doCalc()" placeholder="欲折抵點數" style="...">
                 <div id="redeemTip" class="redeem-tip tip-normal"></div>
             </div>
         </div>
@@ -656,8 +658,9 @@
     });
 
     scanInput.addEventListener('focus', function() {
-        this.select();
-        hideScanError();
+    // ✅ 掃描框不能手動輸入，聚焦後立即失焦
+    this.blur();
+    hideScanError();
     });
 
     // 自動聚焦
