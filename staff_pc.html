@@ -451,15 +451,7 @@
     margin-bottom: 15px;
     position: relative;
 ">
-    <!-- 🔥 隱藏輸入框：專門接收掃碼槍輸入 -->
-    <input type="text" id="hiddenScanInput" style="
-        position: absolute;
-        left: -9999px;
-        top: -9999px;
-        opacity: 0;
-        width: 1px;
-        height: 1px;
-    ">
+   
     
     <!-- 可見的掃描狀態顯示區 -->
     <div style="display: flex; align-items: center; gap: 8px;">
@@ -596,148 +588,44 @@
 
 
 // ============================================================
-//  掃描器輸入監聽（隱藏輸入框版 - 優化版）
+//  掃碼槍監聽（不搶焦點版）
 // ============================================================
 
-// 🔥 取得隱藏輸入框
-var hiddenScanInput = document.getElementById('hiddenScanInput');
-var scanStatusDot = document.getElementById('scanStatusDot');
-var scanStatusText = document.getElementById('scanStatusText');
-var scanErrorMessage = document.getElementById('scanErrorMessage');
-var scanErrorText = document.getElementById('scanErrorText');
+let scanBuffer = '';
+let scanTimer = null;
 
-// 🔥 自動聚焦隱藏輸入框（但掃描處理中不聚焦）
-function focusHiddenInput() {
-    if (isProcessing) {
-        console.log('⏳ 掃描處理中，暫不聚焦');
-        return;
-    }
-    if (hiddenScanInput) {
-        hiddenScanInput.focus();
-        console.log('📌 隱藏輸入框已聚焦');
-    }
-}
-
-// 🔥 頁面載入後自動聚焦
-setTimeout(function() {
-    focusHiddenInput();
-}, 300);
-
-document.addEventListener('click', function(e) {
-    var target = e.target;
-    
-    // 如果點擊的是輸入框
-    if (target.tagName === 'INPUT') {
-        var id = target.id;
-        // 金額輸入框：允許正常使用，不搶焦點
-        if (id === 'totalSpend' || id === 'ticketSpend' || id === 'redeemAmount' || id === 'couponDiscount') {
-            return;
-        }
-        // 隱藏輸入框：不做任何事
-        if (id === 'hiddenScanInput') {
-            return;
-        }
-    }
-    
-    // 其他情況（點擊空白處），才聚焦隱藏輸入框
-    setTimeout(focusHiddenInput, 100);
-});
-
-// 🔥 隱藏輸入框監聽掃描
-hiddenScanInput.addEventListener('focus', function() {
-    console.log('📌 隱藏輸入框獲得焦點');
-});
-
-// 🔥 失焦時，如果沒有在處理掃描，才重新聚焦
-hiddenScanInput.addEventListener('blur', function() {
-    // 如果正在處理掃描，不聚焦
-    if (isProcessing) {
-        return;
-    }
-    // 如果目前焦點在金額輸入框，不搶焦點
-    var activeElement = document.activeElement;
-    if (activeElement && activeElement.tagName === 'INPUT') {
-        var id = activeElement.id;
-        if (id === 'totalSpend' || id === 'ticketSpend' || id === 'redeemAmount' || id === 'couponDiscount') {
-            return;
-        }
-    }
-    setTimeout(focusHiddenInput, 50);
-});
-
-// 🔥 監聽輸入（掃碼槍打字進來）
-hiddenScanInput.addEventListener('input', function(e) {
-    var val = this.value;
-    if (/[^\x00-\x7F]/.test(val)) {
-        showScanError('請切換到英文輸入法再掃描');
-        this.value = '';
-        return;
-    }
-});
-
-// 🔥 監聽 Enter（掃碼槍輸入完成）
-hiddenScanInput.addEventListener('keydown', function(e) {
+document.addEventListener('keydown', function(e) {
+    // 如果按的是 Enter，檢查緩衝區
     if (e.key === 'Enter') {
-        var val = this.value.trim();
-        console.log('📌 掃描輸入:', val);
-        
-        if (val.length > 5) {
-            // 🔥 標記正在處理
-            isProcessing = true;
-            showScanning();
-            
-            try {
-                this.value = '';
-                onScanSuccess(val);
-                hideScanError();
-                scanStatusDot.style.background = '#28a745';
-                scanStatusText.textContent = '成功 ✅';
-                scanStatusText.style.color = '#28a745';
-                setTimeout(function() {
-                    scanStatusText.textContent = '就緒';
-                    // 🔥 處理完成，解除標記並聚焦
-                    isProcessing = false;
-                    focusHiddenInput();
-                }, 1500);
-            } catch(err) {
-                console.error('掃描錯誤:', err);
-                showScanError('掃描處理失敗，請重新掃描');
-                this.value = '';
-                // 🔥 處理完成，解除標記並聚焦
-                isProcessing = false;
-                focusHiddenInput();
-            }
-        } else if (val.length > 0 && val.length <= 5) {
-            showScanError('QR Code 內容太短，請確認');
-            this.value = '';
-            // 🔥 不用聚焦，等使用者重新掃描
-            focusHiddenInput();
+        if (scanBuffer.length > 5) {
+            // 掃描完成
+            console.log('📌 掃描輸入:', scanBuffer);
+            var val = scanBuffer.trim();
+            scanBuffer = '';
+            onScanSuccess(val);
         }
+        return;
+    }
+    
+    // 只處理可列印字元（掃碼槍輸入）
+    if (e.key.length === 1 && e.key.match(/[\w\d\-_=+]/)) {
+        // 如果焦點在金額輸入框，不攔截
+        var active = document.activeElement;
+        if (active && active.tagName === 'INPUT') {
+            var id = active.id;
+            if (id === 'totalSpend' || id === 'ticketSpend' || id === 'redeemAmount' || id === 'couponDiscount') {
+                return; // 讓金額輸入框正常輸入
+            }
+        }
+        
+        // 收集掃碼槍輸入
+        scanBuffer += e.key;
+        clearTimeout(scanTimer);
+        scanTimer = setTimeout(function() {
+            scanBuffer = '';
+        }, 100);
     }
 });
-
-// 🔥 防止隱藏輸入框被 Tab 選中
-hiddenScanInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Tab') {
-        e.preventDefault();
-        setTimeout(focusHiddenInput, 10);
-    }
-});
-
-// 🔥 中文輸入法處理
-hiddenScanInput.addEventListener('compositionstart', function() {
-    this.dataset.composing = 'true';
-});
-
-hiddenScanInput.addEventListener('compositionend', function() {
-    this.dataset.composing = 'false';
-    var val = this.value.trim();
-    if (val.length > 5) {
-        var event = new KeyboardEvent('keydown', { key: 'Enter' });
-        this.dispatchEvent(event);
-    }
-});
-
 // ============================================================
 //  掃描狀態輔助函數
 // ============================================================
