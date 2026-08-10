@@ -592,12 +592,11 @@
     let currentMemberData = null;
     let isScreenLocked = false;
     let cachedSwitchableStaff = null;
+    let isProcessing = false;  // 🔥 新增：標記是否正在處理掃描
 
-    // ============================================================
-    //  掃描狀態控制
-    // ============================================================
+
 // ============================================================
-//  掃描器輸入監聽（隱藏輸入框版）
+//  掃描器輸入監聽（隱藏輸入框版 - 優化版）
 // ============================================================
 
 // 🔥 取得隱藏輸入框
@@ -607,8 +606,12 @@ var scanStatusText = document.getElementById('scanStatusText');
 var scanErrorMessage = document.getElementById('scanErrorMessage');
 var scanErrorText = document.getElementById('scanErrorText');
 
-// 🔥 自動聚焦隱藏輸入框
+// 🔥 自動聚焦隱藏輸入框（但掃描處理中不聚焦）
 function focusHiddenInput() {
+    if (isProcessing) {
+        console.log('⏳ 掃描處理中，暫不聚焦');
+        return;
+    }
     if (hiddenScanInput) {
         hiddenScanInput.focus();
         console.log('📌 隱藏輸入框已聚焦');
@@ -633,8 +636,11 @@ hiddenScanInput.addEventListener('focus', function() {
     console.log('📌 隱藏輸入框獲得焦點');
 });
 
+// 🔥 失焦時，如果沒有在處理掃描，才重新聚焦
 hiddenScanInput.addEventListener('blur', function() {
-    setTimeout(focusHiddenInput, 50);
+    if (!isProcessing) {
+        setTimeout(focusHiddenInput, 50);
+    }
 });
 
 // 🔥 監聽輸入（掃碼槍打字進來）
@@ -654,7 +660,10 @@ hiddenScanInput.addEventListener('keydown', function(e) {
         console.log('📌 掃描輸入:', val);
         
         if (val.length > 5) {
+            // 🔥 標記正在處理
+            isProcessing = true;
             showScanning();
+            
             try {
                 this.value = '';
                 onScanSuccess(val);
@@ -664,17 +673,22 @@ hiddenScanInput.addEventListener('keydown', function(e) {
                 scanStatusText.style.color = '#28a745';
                 setTimeout(function() {
                     scanStatusText.textContent = '就緒';
+                    // 🔥 處理完成，解除標記並聚焦
+                    isProcessing = false;
                     focusHiddenInput();
                 }, 1500);
             } catch(err) {
                 console.error('掃描錯誤:', err);
                 showScanError('掃描處理失敗，請重新掃描');
                 this.value = '';
+                // 🔥 處理完成，解除標記並聚焦
+                isProcessing = false;
                 focusHiddenInput();
             }
         } else if (val.length > 0 && val.length <= 5) {
             showScanError('QR Code 內容太短，請確認');
             this.value = '';
+            // 🔥 不用聚焦，等使用者重新掃描
             focusHiddenInput();
         }
     }
@@ -701,11 +715,6 @@ hiddenScanInput.addEventListener('compositionend', function() {
         this.dispatchEvent(event);
     }
 });
-    
-    var scanStatusDot = document.getElementById('scanStatusDot');
-    var scanStatusText = document.getElementById('scanStatusText');
-    var scanErrorMessage = document.getElementById('scanErrorMessage');
-    var scanErrorText = document.getElementById('scanErrorText');
 
 // ============================================================
 //  掃描狀態輔助函數
