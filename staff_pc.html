@@ -587,7 +587,7 @@
     let isProcessing = false;  // 🔥 新增：標記是否正在處理掃描
     // 閒置計時器
     let idleTimer = null;
-    const IDLE_TIMEOUT = 5 * 60 * 1000; // 5分鐘
+    let idleTimeout = 5 * 60 * 1000; // 5 分鐘（毫秒）
 
 // ============================================================
 //  掃碼槍監聽（不搶焦點版）
@@ -766,11 +766,12 @@ function showScanning() {
 // ============================================================
 
 function resetIdleTimer() {
+    console.log('🔄 重置閒置計時器');  // ← 加這行
     clearTimeout(idleTimer);
     idleTimer = setTimeout(function() {
-        console.log('⏰ 閒置5分鐘，自動鎖屏');
+        console.log('⏰ 閒置 5 分鐘，自動鎖屏');
         showIdleLockScreen();
-    }, IDLE_TIMEOUT);
+    }, idleTimeout);
 }
 
 function showIdleLockScreen() {
