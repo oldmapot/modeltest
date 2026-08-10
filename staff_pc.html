@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -555,9 +556,6 @@
 	let isScreenLocked = false;
 	let cachedSwitchableStaff = null;
 	let isProcessing = false; // 🔥 新增：標記是否正在處理掃描
-	// **閒置計時器（電腦版 5 分鐘）
-	let idleTimer = null;
-	let idleTimeout = 5 * 60 * 1000; // 5 分鐘（毫秒）
 	// ============================================================
 	//  掃碼槍監聽（不搶焦點版）
 	// ============================================================
@@ -701,11 +699,37 @@
 		setTimeout(() => toast.remove(), 2000);
 	}
 	// ============================================================
+	//  🔒 閒置鎖屏（電腦版）
+	// ============================================================
+	let idleTimer = null;
+	const IDLE_TIMEOUT = 5 * 60 * 1000; // 5 分鐘
+	function resetIdleTimer() {
+		if(!isLoggedIn) return;
+		clearTimeout(idleTimer);
+		idleTimer = setTimeout(function() {
+			lockScreen(); // 鎖屏（不登出）
+		}, IDLE_TIMEOUT);
+	}
+	// 監聽使用者活動（重置計時器）
+	function setupIdleDetection() {
+		var events = ['click', 'touchstart', 'scroll', 'keydown', 'mousemove'];
+		events.forEach(function(evt) {
+			document.addEventListener(evt, function() {
+				if(!isScreenLocked && isLoggedIn) {
+					resetIdleTimer();
+				}
+			});
+		});
+		resetIdleTimer();
+		console.log('✅ 閒置鎖屏已啟動（5 分鐘）');
+	}
+	// ============================================================
 	//  鎖屏與切換帳號
 	// ============================================================
 	function lockScreen() {
+		if(isScreenLocked) return;
 		if(!isLoggedIn) return;
-		console.log('🔒 開啟切換帳號畫面');
+		console.log('🔒 畫面已鎖定（閒置 5 分鐘）');
 		isScreenLocked = true;
 		populateLockStaffListInstant();
 		document.getElementById('lockPassword').value = '';
@@ -721,39 +745,6 @@
 		document.getElementById('lockPassword').value = '';
 		document.getElementById('lockScreen').style.display = 'flex';
 		console.log('🔄 切換帳號介面已開啟');
-	}
-	// ============================================================
-	//  閒置計時器控制（電腦版）
-	// ============================================================
-	// 重置閒置計時器
-	function resetIdleTimer() {
-		clearTimeout(idleTimer);
-		idleTimer = setTimeout(function() {
-			console.log('⏰ 閒置 5 分鐘，自動鎖屏');
-			showLockScreenForIdle();
-		}, idleTimeout);
-	}
-	// 顯示鎖屏（閒置觸發）
-	function showLockScreenForIdle() {
-		if(!isLoggedIn) return;
-		console.log('🔒 閒置鎖屏');
-		isScreenLocked = true;
-		populateLockStaffListInstant();
-		document.getElementById('lockPassword').value = '';
-		document.getElementById('lockScreen').style.display = 'flex';
-	}
-	// 清除閒置計時器（登出時呼叫）
-	function clearIdleTimer() {
-		clearTimeout(idleTimer);
-	}
-	// 監聽使用者操作，重置閒置計時器
-	function setupIdleListeners() {
-		const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'click', 'touchstart'];
-		events.forEach(function(event) {
-			document.addEventListener(event, function() {
-				resetIdleTimer();
-			});
-		});
 	}
 	async function getSwitchableStaff() {
 		try {
@@ -843,83 +834,92 @@
 			};
 		}
 	}
-	async function unlockSession() {
-		const staffId = document.getElementById('lockStaffSelect').value;
-		const password = document.getElementById('lockPassword').value;
-		const errorEl = document.getElementById('lockPasswordError');
-		const inputEl = document.getElementById('lockPassword');
-		errorEl.style.display = 'none';
-		inputEl.style.borderColor = '';
-		inputEl.style.backgroundColor = '';
-		if(!staffId) {
-			errorEl.textContent = '⚠️ 選帳號';
-			errorEl.style.display = 'block';
-			inputEl.style.borderColor = '#ff4444';
-			inputEl.style.backgroundColor = '#fff5f5';
-			return;
-		}
-		if(!password) {
-			errorEl.textContent = '⚠️ 輸密碼';
-			errorEl.style.display = 'block';
-			inputEl.style.borderColor = '#ff4444';
-			inputEl.style.backgroundColor = '#fff5f5';
-			inputEl.focus();
-			return;
-		}
-		try {
-			const result = await verifyStaffPassword(staffId, password);
-			if(result.success) {
-				const staffList = await getSwitchableStaff();
-				const selectedStaff = staffList.find(s => s.id === staffId || s.loginId === staffId);
-				if(!selectedStaff) {
-					throw new Error('找不到該店員資料');
-				}
-				staff.name = selectedStaff.name || '';
-				staff.branch = selectedStaff.branch || staff.branch;
-				staff.role = selectedStaff.role || '夥伴';
-				staff.loginId = selectedStaff.loginId || selectedStaff.id;
-				isLoggedIn = true;
-				localStorage.setItem('staffLoginId', staff.loginId);
-				localStorage.setItem('staffName', staff.name);
-				localStorage.setItem('staffRole', staff.role);
-				localStorage.setItem('staffBranch', staff.branch);
-				document.getElementById('staff-name').innerText = staff.name;
-				document.getElementById('role-text').innerText = staff.role;
-				document.getElementById('shop-name').innerText = staff.branch || '老娘領地';
-				const submitBtn = document.getElementById('submitBtn');
-				if(submitBtn) {
-					submitBtn.disabled = false;
-					submitBtn.innerHTML = '確認過卡';
-				}
-				errorEl.style.display = 'none';
-				inputEl.style.borderColor = '';
-				inputEl.style.backgroundColor = '';
-				document.getElementById('lockScreen').style.display = 'none';
-				isScreenLocked = false;
-				resetIdleTimer();
-				showToast('✅ 切換成功');
-			} else {
-				errorEl.textContent = '❌ 密碼錯誤';
-				errorEl.style.display = 'block';
-				inputEl.value = '';
-				inputEl.style.borderColor = '#ff4444';
-				inputEl.style.backgroundColor = '#fff5f5';
-				inputEl.focus();
-			}
-		} catch(error) {
-			errorEl.textContent = '⚠️ ' + error.message;
-			errorEl.style.display = 'block';
-			console.error('❌ unlockSession 錯誤:', error);
-		}
-	}
-var lockPassword = document.getElementById('lockPassword');
-if (lockPassword) {
-    lockPassword.addEventListener('input', function() {
-        var errorEl = document.getElementById('lockPasswordError');
-        errorEl.style.display = 'none';
-        this.style.borderColor = '';
-        this.style.backgroundColor = '';
-    });
+async function unlockSession() {
+    const staffId = document.getElementById('lockStaffSelect').value;
+    const password = document.getElementById('lockPassword').value;
+    const errorEl = document.getElementById('lockPasswordError');
+    const inputEl = document.getElementById('lockPassword');
+    
+    errorEl.style.display = 'none';
+    inputEl.style.borderColor = '';
+    inputEl.style.backgroundColor = '';
+    
+    if (!staffId) {
+        errorEl.textContent = '⚠️ 選帳號';
+        errorEl.style.display = 'block';
+        inputEl.style.borderColor = '#ff4444';
+        inputEl.style.backgroundColor = '#fff5f5';
+        return;
+    }
+    
+    if (!password) {
+        errorEl.textContent = '⚠️ 輸密碼';
+        errorEl.style.display = 'block';
+        inputEl.style.borderColor = '#ff4444';
+        inputEl.style.backgroundColor = '#fff5f5';
+        inputEl.focus();
+        return;
+    }
+    
+    try {
+        const result = await verifyStaffPassword(staffId, password);
+        
+        if (result.success) {
+            // ✅ 解鎖成功
+            const staffList = await getSwitchableStaff();
+            const selectedStaff = staffList.find(s => s.id === staffId || s.loginId === staffId);
+            
+            if (!selectedStaff) {
+                throw new Error('找不到該店員資料');
+            }
+            
+            // 更新店員資訊
+            staff.name = selectedStaff.name || '';
+            staff.branch = selectedStaff.branch || staff.branch;
+            staff.role = selectedStaff.role || '夥伴';
+            staff.loginId = selectedStaff.loginId || selectedStaff.id;
+            isLoggedIn = true;
+            
+            localStorage.setItem('staffLoginId', staff.loginId);
+            localStorage.setItem('staffName', staff.name);
+            localStorage.setItem('staffRole', staff.role);
+            localStorage.setItem('staffBranch', staff.branch);
+            
+            document.getElementById('staff-name').innerText = staff.name;
+            document.getElementById('role-text').innerText = staff.role;
+            document.getElementById('shop-name').innerText = staff.branch || '老娘領地';
+            
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '確認過卡';
+            }
+            
+            // ✅ 關閉鎖屏，重置計時器
+            errorEl.style.display = 'none';
+            inputEl.style.borderColor = '';
+            inputEl.style.backgroundColor = '';
+            document.getElementById('lockScreen').style.display = 'none';
+            isScreenLocked = false;
+            
+            // ✅ 重置閒置計時器
+            resetIdleTimer();
+            
+            showToast('✅ 解鎖成功');
+            
+        } else {
+            errorEl.textContent = '❌ 密碼錯誤';
+            errorEl.style.display = 'block';
+            inputEl.value = '';
+            inputEl.style.borderColor = '#ff4444';
+            inputEl.style.backgroundColor = '#fff5f5';
+            inputEl.focus();
+        }
+    } catch (error) {
+        errorEl.textContent = '⚠️ ' + error.message;
+        errorEl.style.display = 'block';
+        console.error('❌ unlockSession 錯誤:', error);
+    }
 }
 	function forceLogout() {
 		if(confirm('確定要登出嗎？')) {
@@ -2016,8 +2016,6 @@ if (lockPassword) {
 	}
 
 	function logout() {
-		// 🔥 清除閒置計時器
-		clearIdleTimer();
 		showToast("正在登出...");
 		localStorage.removeItem('staffLoginId');
 		localStorage.removeItem('staffName');
@@ -2069,7 +2067,12 @@ if (lockPassword) {
 			submitBtn.disabled = false;
 			submitBtn.innerHTML = '確認過卡';
 		}
-		console.log("✅ 電腦版初始化完成，店員:", staff.name);
+	
+    // ✅ 啟動閒置鎖屏（電腦版）
+    setupIdleDetection();
+    
+    console.log("✅ 電腦版初始化完成，店員:", staff.name);
+}
 		// ============================================================
 		//  🔥 檢查是否從優惠券跳轉回來（加入這段）
 		// ============================================================
@@ -2110,24 +2113,11 @@ if (lockPassword) {
 					window.history.replaceState({}, document.title, url.toString());
 				} catch(err) {}
 			}
+			// 🔥 跳過後續背景 API，直接返回
 			hideLoading();
-			// 🔥 啟動閒置計時器
-			resetIdleTimer();
-			setupIdleListeners();
-			setTimeout(function() {
-				if(document.getElementById('scanInput')) {
-					document.getElementById('scanInput').focus();
-				}
-			}, 500);
 			return;
 		}
-		// 非優惠券流程
-		preloadSwitchableStaff();
-		getCouponPrefixes();
-		hideLoading();
-		// 🔥 啟動閒置計時器
-		resetIdleTimer();
-		setupIdleListeners();
+		// 自動聚焦掃描輸入框
 		setTimeout(function() {
 			if(document.getElementById('scanInput')) {
 				document.getElementById('scanInput').focus();
