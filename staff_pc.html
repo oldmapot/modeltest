@@ -588,6 +588,7 @@
     // 閒置計時器
     let idleTimer = null;
     let idleTimeout = 5 * 60 * 1000; // 5 分鐘（毫秒）
+    let isLocked = false;  // 🔥 鎖定標記
 
 // ============================================================
 //  掃碼槍監聽（不搶焦點版）
@@ -777,6 +778,11 @@ function resetIdleTimer() {
 function showIdleLockScreen() {
     if (!isLoggedIn) return;
     console.log('🔒 閒置鎖屏');
+    
+    // 🔥 儲存鎖定標記
+    localStorage.setItem('isLocked', 'true');
+    isLocked = true;
+    
     populateLockStaffListInstant();
     document.getElementById('lockPassword').value = '';
     document.getElementById('lockScreen').style.display = 'flex';
@@ -932,7 +938,9 @@ async function getSwitchableStaff() {
                 inputEl.style.borderColor = '';
                 inputEl.style.backgroundColor = '';
                 document.getElementById('lockScreen').style.display = 'none';
-                isScreenLocked = false;
+                // 🔥 清除鎖定標記
+                localStorage.removeItem('isLocked');
+                isLocked = false;
 
                 resetIdleTimer();
                 showToast('✅ 切換成功');
@@ -2188,7 +2196,8 @@ function forceReset() {
         localStorage.removeItem('staffRole');
         localStorage.removeItem('staffBranch');
         localStorage.removeItem('staffData');
-        isLoggedIn = false;
+        localStorage.removeItem('isLocked');  // 🔥 清除鎖定標記
+        isLocked = false;  // 🔥 重置變數
         window.location.href = 'staff_login_pc.html';
     }
 
@@ -2197,6 +2206,16 @@ function forceReset() {
     // ============================================================
 function init() {
     console.log("📌 電腦版 staff_pc.html 啟動");
+    
+    // 🔥 檢查是否被鎖定
+    const isLockedStorage = localStorage.getItem('isLocked');
+    if (isLockedStorage === 'true') {
+        console.log('🔒 頁面已被鎖定，顯示鎖屏畫面');
+        isLocked = true;
+        // 直接顯示鎖屏，不進行自動登入
+        showIdleLockScreen();
+        return;
+    }
     
     var submitBtn = document.getElementById('submitBtn');
     if (submitBtn) {
