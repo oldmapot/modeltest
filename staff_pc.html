@@ -1127,14 +1127,7 @@ function displayCouponInfo(data) {
         setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
         return;
     }
-    // ✅ 電腦版不需要相機相關程式碼
-      // if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
-    
-      // console.log("⏱️", Date.now() - startTime, "ms - 關閉相機");
-      //await closeCamera();
-      // if (navigator.vibrate) navigator.vibrate(200);
-      // resetIdleTimer();
-    
+       
     // 🔥 只有「掃描優惠券」模式才需要取得前綴
 let parsed;
 if (scanMode === 'coupon') {
@@ -1376,21 +1369,21 @@ function doCalc() {
         const actualSpend = totalSpend - ticketSpend;
         const hasValidCoupon = window.activeCouponDocId && window.activeCouponDocId !== '';
         
-        if (hasValidCoupon && couponMinSpend > 0) {
-            if (actualSpend >= couponMinSpend) {
-                if (elements.couponDiscountInput.value != couponDiscountOriginal) {
-                    elements.couponDiscountInput.value = couponDiscountOriginal;
-                    console.log('✅ 達門檻！折抵金額恢復為:', couponDiscountOriginal);
-                }
-            } else {
-                if (elements.couponDiscountInput.value != 0) {
-                    elements.couponDiscountInput.value = 0;
-                    console.log('❌ 未達門檻（需滿', couponMinSpend, '，實際', actualSpend, '），折抵歸零');
-                }
-            }
-        }
+        if (actualSpend >= couponMinSpend) {
+    if (elements.couponDiscountInput.value != couponDiscountOriginal) {
+        elements.couponDiscountInput.value = couponDiscountOriginal;
+        couponDiscount = couponDiscountOriginal;  // ← 🔥 加入這行
+        console.log('✅ 達門檻！折抵金額恢復為:', couponDiscountOriginal);
     }
-    
+} else {
+    if (elements.couponDiscountInput.value != 0) {
+        elements.couponDiscountInput.value = 0;
+        couponDiscount = 0;  // ← 🔥 加入這行
+        console.log('❌ 未達門檻（需滿', couponMinSpend, '，實際', actualSpend, '），折抵歸零');
+       }
+     }
+    }
+  }
     const finalCouponDiscount = parseFloat(elements.couponDiscountInput?.value) || 0;
     baseAmount = totalSpend - ticketSpend - finalCouponDiscount;
     
@@ -1671,7 +1664,7 @@ if (fromCoupon === 'true') {
     const btn = document.getElementById('submitBtn');
     btn.disabled = true;
     showLoading('處理中...保持微笑');
-    resetIdleTimer();
+   
     
     // ---------- 5. 產生交易 ID ----------
     const transactionId = generateTransactionId(customerId);
