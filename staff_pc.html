@@ -779,15 +779,26 @@
     }
 
     function showSwitchAccount() {
-        if (!isLoggedIn) {
-            showToast('⚠️ 請先登入');
-            return;
-        }
-        populateLockStaffListInstant();
-        document.getElementById('lockPassword').value = '';
-        document.getElementById('lockScreen').style.display = 'flex';
-        console.log('🔄 切換帳號介面已開啟');
+    if (!isLoggedIn) {
+        showToast('⚠️ 請先登入');
+        return;
     }
+    
+    console.log('🔄 切換帳號按鈕被點擊');
+    
+    // 確保 lockScreen 元素存在
+    var lockScreen = document.getElementById('lockScreen');
+    if (!lockScreen) {
+        console.error('❌ 找不到 lockScreen 元素');
+        showToast('⚠️ 系統錯誤，請重新整理');
+        return;
+    }
+    
+    populateLockStaffListInstant();
+    document.getElementById('lockPassword').value = '';
+    document.getElementById('lockScreen').style.display = 'flex';
+    console.log('🔄 切換帳號介面已開啟');
+}
 
     async function getSwitchableStaff() {
         try {
@@ -846,17 +857,20 @@
         }
     }
 
-    function renderStaffOptions(staffList) {
-        var select = document.getElementById('lockStaffSelect');
-        if (!select) return;
-        select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
-        staffList.forEach(function(s) {
-            var option = document.createElement('option');
-            option.value = s.id;
-            option.textContent = s.name;
-            select.appendChild(option);
-        });
+   function renderStaffOptions(staffList) {
+    var select = document.getElementById('lockStaffSelect');
+    if (!select) {
+        console.error('❌ 找不到 lockStaffSelect 元素');
+        return;
     }
+    select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
+    staffList.forEach(function(s) {
+        var option = document.createElement('option');
+        option.value = s.id;
+        option.textContent = s.name;
+        select.appendChild(option);
+    });
+}
 
     async function verifyStaffPassword(loginId, keyword) {
         var url = GAS_URL + '?action=verifyStaffPassword' +
@@ -1156,9 +1170,10 @@
         }
         
         let parsed;
-        if (scanMode === 'coupon') {
-            console.log("⏱️", Date.now() - startTime, "ms - 取得優惠券前綴");
-            await getCouponPrefixes();
+        var parsed = parseScannedCode(scannedText);
+if (parsed.type === 'coupon') {
+    await getCouponPrefixes();
+}
             parsed = parseScannedCode(scannedText);
             console.log("📌 解析結果（優惠券模式）:", parsed);
         } else {
@@ -1171,14 +1186,95 @@
             showLoading("連線中...");
             console.log("⏱️", Date.now() - startTime, "ms - 顯示載入中");
             
-            if (parsed.type === "coupon") {
-                // ... 優惠券處理邏輯（與手機版相同）...
-                // 為節省篇幅，這裡簡化，實際請複製手機版完整邏輯
-                showToast("🎫 優惠券掃描功能開發中");
-                hideLoading();
-                return;
-            }
+              // ============================================================
+        //  🔥 優惠券處理
+        // ============================================================
+        if (parsed.type === "coupon") {
+    const realStaffName = staff.name;
+    const realStaffBranch = staff.branch;
+    const clientIp = await getUserIP();
+    const loginId = staff.loginId || "";
+    const deviceId = staff.deviceId || "";
+    
+    // 🔥 傳送完整 QR 字串
+    const fullQr = parsed.fullData;  // ANN_OMP_pt01_U590...
+    console.log("🎯 優惠券掃描，完整 QR:", fullQr);
+    
+    showLoading("🔄 處理優惠券兌換中...");
+    
+    try {
+        // 🔥🔥🔥 傳送完整 QR 字串
+        const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(fullQr)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
+        const res = await fetch(url);
+        const text = await res.text();  // ← 先讀成文字
+        console.log('📊 原始回應:', text);
+        // ✅ 安全解析
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (parseErr) {
+            console.error('❌ JSON 解析失敗:', text);
+            hideLoading();
+            showModal('❌ 伺服器回應格式錯誤');
+            return;
+        }
+
+        const data = safeJsonParse(text);  // ← 安全解析
+        if (!data) {
+        hideLoading();
+        showModal('❌ 伺服器回應格式錯誤，請聯繫管理員');
+        return;
+        }
+        console.log("📊 優惠券兌換回應:", JSON.stringify(result));
+        
+        if (result.logout) {
+            hideLoading();
+            showToast("⏰ 登入已過期，請重新登入");
+            setTimeout(() => { logout(); }, 2000);
+            return;
+        }
+        
+        // 🔥🔥🔥 檢查是否為「贈點」或「消費折抵」類型
+        if (result.needAmount === true) {
+            hideLoading();
+            console.log("🎯 優惠券需要進入結帳畫面");
             
+            var redirectUrl = 'staff.html?userId=' + encodeURIComponent(result.userId) +
+      '&fromCoupon=true' +
+      '&couponDocId=' + encodeURIComponent(result.couponDocId) +
+      '&minSpend=' + encodeURIComponent(result.minSpend) +
+      '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
+      '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
+      '&couponType=' + encodeURIComponent(result.type || '') +
+      '&couponName=' + encodeURIComponent(result.couponName || '優惠券') +
+      '&couponContent=' + encodeURIComponent(result.couponContent || '') +  // 🔥🔥🔥 加入這行
+      '&name=' + encodeURIComponent(staff.name) +
+      '&branch=' + encodeURIComponent(staff.branch) +
+      '&loginId=' + encodeURIComponent(staff.loginId);
+            
+            window.location.href = redirectUrl;
+            return;
+        }
+        
+        if (result.success) {
+            hideLoading();
+            showModal(`🎉 ${result.message || "優惠券兌換成功！"}`);
+        } else {
+            hideLoading();
+            showModal(`❌ 優惠券兌換失敗<br><br>錯誤訊息：${result.error || result.message || "未知錯誤"}`);
+        }
+        
+    } catch (err) {
+        hideLoading();
+        console.error("❌ 優惠券處理錯誤:", err);
+        showModal(`❌ 連線錯誤：${err.message}`);
+    }
+    return;
+}
+     // ============================================================
+     //  🔥 會員處理
+     // ============================================================
+      
             if (parsed.type === "member") {
                 if (!parsed.userId) {
                     hideLoading();
