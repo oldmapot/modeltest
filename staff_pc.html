@@ -496,7 +496,7 @@
 
     <!-- ✅ 重新整理按鈕 -->
     <div style="display: flex; gap: 12px; margin-bottom: 15px;">
-        <button onclick="resetMember()" style="
+        <button onclick="forceReset()" style="
             width: 100%;
             padding: 10px;
             background: #666;
@@ -2156,7 +2156,93 @@ function resetMember() {
         console.warn('⚠️ 重置會員資料時發生錯誤:', error);
     }
 }
-
+// ============================================================
+//  🔥 強制重置（重新整理按鈕專用）
+// ============================================================
+function forceReset() {
+    console.log('🔄 強制重置所有資料');
+    
+    // 清除 URL 中的 fromCoupon 參數
+    if (window.history && window.history.replaceState) {
+        try {
+            var url = new URL(window.location.href);
+            url.searchParams.delete('fromCoupon');
+            url.searchParams.delete('userId');
+            url.searchParams.delete('couponDocId');
+            url.searchParams.delete('minSpend');
+            url.searchParams.delete('bonusPoints');
+            url.searchParams.delete('discountAmount');
+            url.searchParams.delete('couponType');
+            url.searchParams.delete('couponName');
+            url.searchParams.delete('couponContent');
+            window.history.replaceState({}, document.title, url.toString());
+            console.log('✅ URL 參數已清除');
+        } catch (err) {
+            console.warn('⚠️ 清除 URL 參數失敗:', err);
+        }
+    }
+    
+    // 清除優惠券全域變數
+    window.activeCoupon = null;
+    window.activeCouponDocId = null;
+    window.calcResult = null;
+    window.couponData = null;
+    window.couponMinSpend = 0;
+    window.couponBonusPoints = 0;
+    window.couponDiscountAmount = 0;
+    window.couponType = '';
+    
+    // 重置會員資料
+    customerId = "";
+    window.customerId = undefined;
+    currentMemberData = null;
+    currentPoints = 0;
+    memberLevel = "";
+    levelRate = 1;
+    
+    // 清除會員 UI
+    const memberUI = document.getElementById('member-ui');
+    if (memberUI) memberUI.style.display = 'none';
+    
+    // 清除優惠券 UI
+    const couponInfo = document.getElementById('coupon-info');
+    if (couponInfo) couponInfo.style.display = 'none';
+    
+    // 清除所有輸入框
+    document.getElementById('totalSpend').value = '';
+    document.getElementById('ticketSpend').value = '';
+    document.getElementById('redeemAmount').value = '';
+    document.getElementById('couponDiscount').value = '';
+    document.getElementById('new-pts').innerText = '0 點';
+    document.getElementById('after-pts').innerText = '0 點';
+    document.getElementById('max-hint').innerText = '0';
+    document.getElementById('redeemTip').innerHTML = '';
+    document.getElementById('cus-name').innerText = '-';
+    document.getElementById('cus-pts').innerText = '0';
+    document.getElementById('cus-total').innerText = '0';
+    document.getElementById('member-level').innerText = '';
+    
+    // 鎖住表單
+    document.getElementById('form-ui').classList.add('locked');
+    
+    // 重置按鈕
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '請先掃描會員';
+    }
+    
+    // 重置處理狀態
+    isProcessing = false;
+    
+    // 聚焦隱藏輸入框
+    setTimeout(function() {
+        focusHiddenInput();
+    }, 300);
+    
+    showToast('✅ 已清除所有資料');
+    console.log('🔄 強制重置完成');
+}
     function logout() {
         showToast("正在登出...");
         localStorage.removeItem('staffLoginId');
