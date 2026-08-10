@@ -859,17 +859,27 @@
 
    function renderStaffOptions(staffList) {
     var select = document.getElementById('lockStaffSelect');
-    if (!select) {
-        console.error('❌ 找不到 lockStaffSelect 元素');
-        return;
-    }
+    if (!select) return;
+    
+    // ✅ 先清空，加入預設選項
     select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
+    
+    // ✅ 使用 Set 去重（避免重複）
+    var seen = new Set();
+    
     staffList.forEach(function(s) {
+        // 使用 id 或 loginId（看 API 回傳）
+        var id = s.id || s.loginId;
+        if (!id || seen.has(id)) return;
+        seen.add(id);
+        
         var option = document.createElement('option');
-        option.value = s.id;
-        option.textContent = s.name;
+        option.value = id;
+        option.textContent = s.name || s.staffName || '店員';
         select.appendChild(option);
     });
+    
+    console.log('✅ 已載入 ' + seen.size + ' 位店員');
 }
 
     async function verifyStaffPassword(loginId, keyword) {
