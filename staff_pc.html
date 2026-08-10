@@ -1382,9 +1382,21 @@ function startScanning() {
 }
 
 async function closeCamera() {
-    if (scanInterval) clearInterval(scanInterval);
-    if (cameraStream) cameraStream.getTracks().forEach(t => t.stop());
-    document.getElementById('cameraContainer').style.display = 'none';
+    // ✅ 加入空值檢查
+    if (scanInterval) {
+        clearInterval(scanInterval);
+        scanInterval = null;
+    }
+    
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+        cameraStream = null;
+    }
+    
+    var cameraContainer = document.getElementById('cameraContainer');
+    if (cameraContainer) {
+        cameraContainer.style.display = 'none';
+    }
 }
 function setupScannerListener() {
     const input = document.getElementById('hiddenIdInput');
