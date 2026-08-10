@@ -1047,48 +1047,49 @@
         }
     }
 
-    function displayCouponInfo(data) {
-        var couponInfoDiv = document.getElementById('coupon-info');
-        if (!couponInfoDiv) return;
-        
-        couponInfoDiv.style.display = 'block';
-        document.getElementById('coupon-name-display').innerText = data.couponName || '優惠券';
-        document.getElementById('coupon-content-display').innerText = data.couponContent || '';
-        
-        var discountInput = document.getElementById('couponDiscount');
-        if (discountInput) {
-            if (data.type === '消費折抵') {
-                discountInput.value = data.discountAmount || 0;
-                console.log('💰 折抵型優惠券，帶入折抵金額:', data.discountAmount);
-            } else if (data.type === '贈點') {
-                discountInput.value = 0;
-                console.log('⭐ 贈點型優惠券，折抵金額設為 0');
-            } else {
-                discountInput.value = 0;
-            }
-        }
-        
-        var minSpendDisplay = document.getElementById('coupon-minSpend-display');
-        if (minSpendDisplay) {
-            if (data.minSpend > 0) {
-                minSpendDisplay.innerText = '💰 滿 $' + data.minSpend + ' 元可使用';
-                minSpendDisplay.style.display = 'block';
-            } else {
-                minSpendDisplay.style.display = 'none';
-            }
-        }
-        
-        var typeDisplay = document.getElementById('coupon-type-display');
-        if (typeDisplay) {
-            var typeMap = {
-                '贈點': '⭐ 滿額贈點券',
-                '消費折抵': '💰 滿額折抵券',
-                '兌換': '🎁 兌換券',
-                '優惠套餐': '🍽️ 優惠套餐券'
-            };
-            typeDisplay.innerText = typeMap[data.type] || data.type || '優惠券';
+function displayCouponInfo(data) {
+    var couponInfoDiv = document.getElementById('coupon-info');
+    if (!couponInfoDiv) return;
+    
+    couponInfoDiv.style.display = 'block';
+    document.getElementById('coupon-name-display').innerText = data.couponName || '優惠券';
+    document.getElementById('coupon-content-display').innerText = data.couponContent || '';
+    
+    var discountInput = document.getElementById('couponDiscount');
+    if (discountInput) {
+        if (data.type === '消費折抵') {
+            discountInput.value = data.discountAmount || 0;
+            console.log('💰 折抵型優惠券，帶入折抵金額:', data.discountAmount);
+        } else if (data.type === '贈點') {
+            discountInput.value = 0;
+            console.log('⭐ 贈點型優惠券，折抵金額設為 0');
+        } else {
+            discountInput.value = 0;
         }
     }
+    
+    var minSpendDisplay = document.getElementById('coupon-minSpend-display');
+    if (minSpendDisplay) {
+        if (data.minSpend > 0) {
+            minSpendDisplay.innerText = '💰 滿 $' + data.minSpend + ' 元可使用';
+            minSpendDisplay.style.display = 'block';
+        } else {
+            minSpendDisplay.style.display = 'none';
+        }
+    }
+    
+    // 🔥 檢查 coupon-type-display 是否存在
+    var typeDisplay = document.getElementById('coupon-type-display');
+    if (typeDisplay) {
+        var typeMap = {
+            '贈點': '⭐ 滿額贈點券',
+            '消費折抵': '💰 滿額折抵券',
+            '兌換': '🎁 兌換券',
+            '優惠套餐': '🍽️ 優惠套餐券'
+        };
+        typeDisplay.innerText = typeMap[data.type] || data.type || '優惠券';
+    }
+}
 
     // ============================================================
     //  核心函數：parseScannedCode
@@ -1150,7 +1151,6 @@
       // console.log("⏱️", Date.now() - startTime, "ms - 關閉相機");
       //await closeCamera();
       // if (navigator.vibrate) navigator.vibrate(200);
-    
       // resetIdleTimer();
     
     // 🔥 只有「掃描優惠券」模式才需要取得前綴
@@ -2025,67 +2025,108 @@ function resetMember() {
     // ============================================================
     //  初始化
     // ============================================================
-    function init() {
-        console.log("📌 電腦版 staff_pc.html 啟動");
-        
-        var submitBtn = document.getElementById('submitBtn');
+function init() {
+    console.log("📌 電腦版 staff_pc.html 啟動");
+    
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '⏳ 資料載入中...';
+    }
+    
+    // 從 localStorage 讀取登入狀態
+    var loginId = localStorage.getItem('staffLoginId');
+    var staffName = localStorage.getItem('staffName');
+    var branchName = localStorage.getItem('staffBranch');
+    var role = localStorage.getItem('staffRole') || '夥伴';
+    
+    if (!loginId) {
+        console.log("❌ 無登入憑證，請先登入");
         if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '⏳ 資料載入中...';
+            submitBtn.innerHTML = '請先登入';
         }
-        
-        // 從 localStorage 讀取登入狀態
-        var loginId = localStorage.getItem('staffLoginId');
-        var staffName = localStorage.getItem('staffName');
-        var branchName = localStorage.getItem('staffBranch');
-        var role = localStorage.getItem('staffRole') || '夥伴';
-        
-        if (!loginId) {
-            console.log("❌ 無登入憑證，請先登入");
-            if (submitBtn) {
-                submitBtn.innerHTML = '請先登入';
-            }
-            setTimeout(function() {
-                window.location.href = 'staff_login_pc.html';
-            }, 1500);
-            return;
-        }
-        
-        // 設定店員資訊
-        staff.name = staffName || '';
-        staff.branch = branchName || '老娘鍋河堤店';
-        staff.loginId = loginId;
-        staff.role = role;
-        staff.deviceId = getDeviceId();
-        isLoggedIn = true;
-        
-        var staffNameEl = document.getElementById('staff-name');
-        var shopNameEl = document.getElementById('shop-name');
-        var roleTextEl = document.getElementById('role-text');
-        if (staffNameEl) staffNameEl.innerText = staff.name || '夥伴';
-        if (shopNameEl) shopNameEl.innerText = staff.branch || '老娘領地';
-        if (roleTextEl) roleTextEl.innerText = staff.role || '夥伴';
-        
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '確認過卡';
-        }
-        
-        console.log("✅ 電腦版初始化完成，店員:", staff.name);
-        
-        // 背景預載切換帳號清單
-        preloadSwitchableStaff();
-        getCouponPrefixes();
-        hideLoading();
-        
-        // 自動聚焦掃描輸入框
         setTimeout(function() {
-            if (document.getElementById('scanInput')) {
-                document.getElementById('scanInput').focus();
+            window.location.href = 'staff_login_pc.html';
+        }, 1500);
+        return;
+    }
+    
+    // 設定店員資訊
+    staff.name = staffName || '';
+    staff.branch = branchName || '老娘鍋河堤店';
+    staff.loginId = loginId;
+    staff.role = role;
+    staff.deviceId = getDeviceId();
+    isLoggedIn = true;
+    
+    var staffNameEl = document.getElementById('staff-name');
+    var shopNameEl = document.getElementById('shop-name');
+    var roleTextEl = document.getElementById('role-text');
+    if (staffNameEl) staffNameEl.innerText = staff.name || '夥伴';
+    if (shopNameEl) shopNameEl.innerText = staff.branch || '老娘領地';
+    if (roleTextEl) roleTextEl.innerText = staff.role || '夥伴';
+    
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '確認過卡';
+    }
+    
+    console.log("✅ 電腦版初始化完成，店員:", staff.name);
+    
+    // ============================================================
+    //  🔥 檢查是否從優惠券跳轉回來（加入這段）
+    // ============================================================
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromCoupon = urlParams.get('fromCoupon');
+    const userId = urlParams.get('userId');
+
+    if (fromCoupon === 'true' && userId) {
+        console.log("🎯 從優惠券跳轉回來，userId:", userId);
+        
+        const couponDocId = urlParams.get('couponDocId') || '';
+        const minSpend = parseFloat(urlParams.get('minSpend')) || 0;
+        const bonusPoints = parseFloat(urlParams.get('bonusPoints')) || 0;
+        const discountAmount = parseFloat(urlParams.get('discountAmount')) || 0;
+        const couponType = urlParams.get('couponType') || '';
+        const couponName = urlParams.get('couponName') || '優惠券';
+        const couponContent = urlParams.get('couponContent') || '';
+        
+        window.activeCoupon = {
+            couponName: couponName,
+            couponContent: couponContent,
+            minSpend: minSpend,
+            bonusPoints: bonusPoints,
+            discountAmount: discountAmount,
+            type: couponType,
+            couponDocId: couponDocId
+        };
+        window.activeCouponDocId = couponDocId;
+        
+        console.log("✅ 已還原優惠券資料:", window.activeCoupon);
+        
+        setTimeout(function() {
+            loadMemberData(userId);
+        }, 300);
+        
+        setTimeout(function() {
+            if (window.activeCoupon) {
+                displayCouponInfo(window.activeCoupon);
             }
         }, 500);
     }
-
+    
+    // 背景預載切換帳號清單
+    preloadSwitchableStaff();
+    getCouponPrefixes();
+    hideLoading();
+    
+    // 自動聚焦掃描輸入框
+    setTimeout(function() {
+        if (document.getElementById('scanInput')) {
+            document.getElementById('scanInput').focus();
+        }
+    }, 500);
+}
     // ============================================================
     //  啟動
     // ============================================================
