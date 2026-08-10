@@ -589,7 +589,7 @@
     var scanStatusText = document.getElementById('scanStatusText');
     var scanErrorMessage = document.getElementById('scanErrorMessage');
     var scanErrorText = document.getElementById('scanErrorText');
-    // 顯示錯誤訊息
+
     function showScanError(message) {
         scanErrorText.textContent = message;
         scanErrorMessage.style.display = 'block';
@@ -597,7 +597,6 @@
         scanStatusText.textContent = '錯誤';
         scanStatusText.style.color = '#dc3545';
         scanInput.style.borderColor = '#ff4444';
-        
         clearTimeout(window.scanErrorTimer);
         window.scanErrorTimer = setTimeout(function() {
             hideScanError();
@@ -766,13 +765,10 @@
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 2000);
     }
-    // ============================================================
-    //  🔒 鎖屏與切換帳號（電腦版簡化）
-    // ============================================================
 
-    // 電腦版：不使用鎖屏計時器，但保留切換帳號功能
-    let isScreenLocked = false;
-    
+    // ============================================================
+    //  鎖屏與切換帳號
+    // ============================================================
     function lockScreen() {
         if (!isLoggedIn) return;
         console.log('🔒 開啟切換帳號畫面');
@@ -793,7 +789,6 @@
         console.log('🔄 切換帳號介面已開啟');
     }
 
-   // 從 GAS 取得可切換的店員
     async function getSwitchableStaff() {
         try {
             var currentLoginId = localStorage.getItem('staffLoginId') || '';
@@ -804,21 +799,17 @@
                 console.error('⚠️ 無法取得 loginId');
                 return [];
             }
-            
-            // 電腦版：傳送 deviceId 作為識別
             var deviceId = localStorage.getItem('pc_device_id') || getDeviceId();
-            
             var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&deviceId=' + encodeURIComponent(deviceId) + '&t=' + Date.now();
             var res = await fetch(url);
             var data = await res.json();
+            console.log('📌 getSwitchableStaff 回傳:', data);
             return data.success && data.staff ? data.staff : [];
         } catch (e) {
             console.error('取得可切換店員失敗:', e);
             return [];
         }
     }
-
-    let cachedSwitchableStaff = null;
 
     async function preloadSwitchableStaff() {
         try {
@@ -827,6 +818,8 @@
             if (staffList && staffList.length > 0) {
                 cachedSwitchableStaff = staffList;
                 console.log('⚡ 可切換店員名單已預載！', staffList.length);
+            } else {
+                console.warn('⚠️ 可切換店員名單為空');
             }
         } catch (e) {
             console.error('預先載入失敗:', e);
@@ -835,6 +828,10 @@
 
     async function populateLockStaffListInstant() {
         var select = document.getElementById('lockStaffSelect');
+        if (!select) {
+            console.error('❌ 找不到 lockStaffSelect');
+            return;
+        }
         if (cachedSwitchableStaff && cachedSwitchableStaff.length > 0) {
             renderStaffOptions(cachedSwitchableStaff);
             return;
@@ -849,8 +846,9 @@
         }
     }
 
- function renderStaffOptions(staffList) {
+    function renderStaffOptions(staffList) {
         var select = document.getElementById('lockStaffSelect');
+        if (!select) return;
         select.innerHTML = '<option value="">-- 請選擇帳號 --</option>';
         staffList.forEach(function(s) {
             var option = document.createElement('option');
@@ -860,14 +858,11 @@
         });
     }
 
-
-  // 驗證店員密碼
     async function verifyStaffPassword(loginId, keyword) {
         var url = GAS_URL + '?action=verifyStaffPassword' +
             '&loginId=' + encodeURIComponent(loginId) +
             '&keyword=' + encodeURIComponent(keyword) +
             '&t=' + Date.now();
-        
         try {
             var res = await fetch(url);
             if (!res.ok) {
@@ -914,42 +909,34 @@
             const result = await verifyStaffPassword(staffId, password);
             
             if (result.success) {
-                // 切換帳號
                 const staffList = await getSwitchableStaff();
                 const selectedStaff = staffList.find(s => s.id === staffId || s.loginId === staffId);
-                
                 if (!selectedStaff) {
                     throw new Error('找不到該店員資料');
                 }
-                
                 staff.name = selectedStaff.name || '';
                 staff.branch = selectedStaff.branch || staff.branch;
                 staff.role = selectedStaff.role || '夥伴';
                 staff.loginId = selectedStaff.loginId || selectedStaff.id;
                 isLoggedIn = true;
-                
                 localStorage.setItem('staffLoginId', staff.loginId);
                 localStorage.setItem('staffName', staff.name);
                 localStorage.setItem('staffRole', staff.role);
                 localStorage.setItem('staffBranch', staff.branch);
-                
                 document.getElementById('staff-name').innerText = staff.name;
                 document.getElementById('role-text').innerText = staff.role;
                 document.getElementById('shop-name').innerText = staff.branch || '老娘領地';
-                
                 const submitBtn = document.getElementById('submitBtn');
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = '確認過卡';
                 }
-                
                 errorEl.style.display = 'none';
                 inputEl.style.borderColor = '';
                 inputEl.style.backgroundColor = '';
                 document.getElementById('lockScreen').style.display = 'none';
                 isScreenLocked = false;
                 showToast('✅ 切換成功');
-                
             } else {
                 errorEl.textContent = '❌ 密碼錯誤';
                 errorEl.style.display = 'block';
@@ -965,7 +952,6 @@
         }
     }
 
-    // 輸入時自動隱藏錯誤
     document.getElementById('lockPassword')?.addEventListener('input', function() {
         const errorEl = document.getElementById('lockPasswordError');
         errorEl.style.display = 'none';
@@ -973,13 +959,11 @@
         this.style.backgroundColor = '';
     });
 
-    // 強制登出
     function forceLogout() {
         if (confirm('確定要登出嗎？')) {
             logout();
         }
     }
-
 
     // ============================================================
     //  核心函數：getCouponPrefixes
