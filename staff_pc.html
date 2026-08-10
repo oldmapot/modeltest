@@ -1254,7 +1254,7 @@ async function onScanSuccess(scannedText) {
     
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
-        setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
+        setTimeout(() => { window.location.href = 'staff_login_pc.html'; }, 1500);
         return;
     }
     
@@ -1520,7 +1520,7 @@ async function logout() {
         console.log("⚠️ 未找到 loginId，無法寫入登出紀錄");
     }
     
-    window.location.href = 'staff_login.html';
+    window.location.href = 'staff_login_pc.html';
 }
 async function getUserIP() {
   try {
@@ -2081,7 +2081,7 @@ async function submitData() {
     // ---------- 1. 前置檢查 ----------
     if (!isLoggedIn || !staff?.loginId) {
         showToast('⚠️ 請先登入');
-        setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
+        setTimeout(() => { window.location.href = 'staff_login_pc.html'; }, 1500);
         return;
     }
     
