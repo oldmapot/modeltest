@@ -1036,6 +1036,10 @@ function displayCouponInfo(data) {
     couponInfoDiv.style.display = 'block';
     document.getElementById('coupon-name-display').innerText = data.couponName || '優惠券';
     document.getElementById('coupon-content-display').innerText = data.couponContent || '';
+    document.getElementById('coupon-min-spend-display').innerText = data.minSpend || '--';
+    document.getElementById('coupon-action-value-display').innerText = data.type === '贈點' ? data.bonusPoints : data.discountAmount || '--';
+    document.getElementById('coupon-action-label').innerText = data.type === '贈點' ? '贈' : '折';
+     document.getElementById('coupon-action-unit').innerText = data.type === '贈點' ? '點' : '元';
     
     var discountInput = document.getElementById('couponDiscount');
     if (discountInput) {
