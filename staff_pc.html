@@ -434,7 +434,7 @@
     <div class="input-group" id="coupon-discount-group">
         <label>2. 活動折抵消費</label>
         <input type="text" id="couponDiscount" inputmode="decimal" oninput="doCalc()" placeholder="0" readonly style="background:#f5f5f5;cursor:not-allowed;">
-        <div style="font-size:11px;color:#999;margin-top:2px;">💡 此欄位由優惠券自動帶入，不可編輯</div>
+        <div style="font-size:11px;color:#999;margin-top:2px;">💡 優惠券自動帶入</div>
     </div>
     
     <!-- 4. 折抵點數（一般模式顯示） -->
@@ -1505,14 +1505,14 @@ const expireMonths = cfg.REWARD_EXPIRY_MONTHS || 12;
             tipClass = 'redeem-tip tip-no-redeem';
         } else if (baseForRedeem < minSpendThreshold) {
             maxRedeem = 0;
-            tipMessage = `⚠️ 未達低消門檻 ${minSpendThreshold} 元，無法折抵點數`;
+            tipMessage = `⚠️ 未達門檻 ${minSpendThreshold} 元，無法折點`;
             tipClass = 'redeem-tip tip-no-redeem';
         } else {
             maxRedeem = Math.min(
                 currentPoints || 0,
                 Math.floor(baseForRedeem * maxRate)
             );
-            tipMessage = `✅ 已達低消 ${minSpendThreshold} 元，可折抵 ${maxRedeem} 點`;
+            tipMessage = `✅ 達低消 ${minSpendThreshold} 元，可抵 ${maxRedeem} 點`;
             tipClass = 'redeem-tip tip-normal';
         }
         
