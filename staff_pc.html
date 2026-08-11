@@ -1356,14 +1356,21 @@ function doCalc() {
     const couponName = window.activeCoupon?.couponName || '';
     const couponDiscountOriginal = window.activeCoupon?.discountAmount || 0;
     
-    // ---------- 6. 取得系統配置 ----------
-    const cfg = config || {};
-    const earnRate = cfg.earnRate || 0.03;
-    const ticketRate = cfg.ticketRate || 0.02;
-    const levelRate = cfg.levelRate || 1;
-    const eventMultiplier = cfg.eventMultiplier || 1;
-    const maxRate = cfg.maxRate || 0;
-    const shopCode = cfg.shopCode || 'OMP';
+// ---------- 6. 取得系統配置 ----------
+const cfg = config || {};
+const shopCode = cfg.shopCode || 'OMP';
+
+// 🔥 品牌別參數（根據 shopCode 動態讀取）
+const earnRate = cfg['DEFAULT_EARN_RATE_' + shopCode] || 0.03;
+const maxRate = cfg['DEFAULT_REDEEM_RATE_' + shopCode] || 0.1;
+const minSpend = cfg['MIN_SPEND_THRESHOLD_' + shopCode] || 1500;
+const ticketRate = cfg['ticketRate_' + shopCode] || 0;
+
+// 🔥 通用參數（直接讀取）
+const levelRate = cfg.levelRate || 1;
+const eventMultiplier = cfg.eventMultiplier || 1;
+const refRate = cfg.MGM_COMMISSION_RATE || 0.02;
+const expireMonths = cfg.REWARD_EXPIRY_MONTHS || 12;
     
     // ---------- 7. 宣告結果變數 ----------
     let redeem = 0;
