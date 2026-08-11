@@ -638,7 +638,7 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbxlvZ-DzBBuZlqudFQF2RWT
 let staff = { name: "", branch: "", role: "夥伴", loginId: "", deviceId: "" };
 let isLoggedIn = false;
 let isStaffVerified = false;  // 🔥 新增：驗證狀態
-let config = { minSpend: 0, maxRate: 0, earnRate: 0, ticketRate: 0, shopCode: "", eventMultiplier: 1 };
+let config = {};  // ✅ 保持這樣，GAS 會回傳完整的 config
 let customerId = "", currentPoints = 0, memberLevel = "", levelRate = 1;
 let cameraStream = null;
 let scanInterval = null;
@@ -2129,14 +2129,21 @@ function doCalc() {
     const couponName = window.activeCoupon?.couponName || '';
     const couponDiscountOriginal = window.activeCoupon?.discountAmount || 0;
     
-    // ---------- 5. 取得系統配置 ----------
-    const cfg = config || {};
-    const earnRate = cfg.earnRate || 0.03;
-    const levelRate = cfg.levelRate || 1;
-    const eventMultiplier = cfg.eventMultiplier || 1;
-    const maxRate = cfg.maxRate || 0;
-    const shopCode = cfg.shopCode || 'OMP';
-    
+  // ---------- 5. 取得系統配置 ----------
+const cfg = config || {};
+const shopCode = cfg.shopCode || 'OMP';
+
+// 🔥 品牌別參數（根據 shopCode 動態讀取）
+const earnRate = cfg['DEFAULT_EARN_RATE_' + shopCode] || 0.03;
+const maxRate = cfg['DEFAULT_REDEEM_RATE_' + shopCode] || 0.1;
+const minSpend = cfg['MIN_SPEND_THRESHOLD_' + shopCode] || 1500;
+const ticketRate = cfg['ticketRate_' + shopCode] || 0;
+
+// 🔥 通用參數（直接讀取）
+const levelRate = cfg.levelRate || 1;
+const eventMultiplier = cfg.eventMultiplier || 1;
+const refRate = cfg.MGM_COMMISSION_RATE || 0.02;
+const expireMonths = cfg.REWARD_EXPIRY_MONTHS || 12;
     // ---------- 6. 計算實際消費金額 ----------
     let baseAmount = totalSpend - ticketSpend - couponDiscount;
     
