@@ -2262,13 +2262,7 @@ function init() {
         document.addEventListener('scroll', resetIdleTimer);
         document.addEventListener('click', resetIdleTimer);
         
-        setTimeout(function() {
-            if (document.getElementById('scanInput')) {
-                document.getElementById('scanInput').focus();
-            }
-        }, 500);
-        
-        return;
+        return;  // ← 這裡 return 是對的，跳出 init()
     }
     
     // ============================================================
@@ -2286,11 +2280,6 @@ function init() {
     document.addEventListener('scroll', resetIdleTimer);
     document.addEventListener('click', resetIdleTimer);
     
-    setTimeout(function() {
-        if (document.getElementById('scanInput')) {
-            document.getElementById('scanInput').focus();
-        }
-    }, 500);
 }  // ← init() 結束
 
 // ============================================================
