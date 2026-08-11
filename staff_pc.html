@@ -1682,6 +1682,8 @@ if (calcResult.isTicketMode) {
         customerId: customerId,
         branch: staff.branch || '',
         staffName: staff.name || '',
+        // 🔥 根據模式決定分類
+        category: isTicketMode ? '購買餐券' : '一般消費',
         totalSpend: totalSpend,
         ticketSpend: ticketSpend,
         redeemAmount: redeem,
@@ -1887,7 +1889,7 @@ function resetMember() {
             
             // 🔥 重新聚焦隱藏輸入框
             setTimeout(function() {
-                focusHiddenInput();
+                //focusHiddenInput();
             }, 300);
             return;
         }
@@ -2036,7 +2038,7 @@ function resetMember() {
         //  🔟 重新聚焦隱藏輸入框
         // ============================================================
         setTimeout(function() {
-            focusHiddenInput();
+            //focusHiddenInput();
         }, 300);
         
         console.log('🔄 會員資料已完整重置');
@@ -2125,7 +2127,7 @@ function forceReset() {
     
     // 聚焦隱藏輸入框
     setTimeout(function() {
-        focusHiddenInput();
+        //focusHiddenInput();
     }, 300);
     
     showToast('✅ 已清除所有資料');
