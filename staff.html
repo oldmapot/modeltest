@@ -2454,6 +2454,8 @@ async function submitData() {
         customerId: customerId,
         branch: staff.branch || '',
         staffName: staff.name || '',
+        // 🔥 根據模式決定分類
+        category: isTicketMode ? '購買餐券' : '一般消費',
         totalSpend: totalSpend,
         ticketSpend: ticketSpend,
         redeemAmount: redeem,
