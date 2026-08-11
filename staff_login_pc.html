@@ -21,7 +21,7 @@
         background: white;
         border-radius: 32px;
         padding: 28px 36px;
-        width: 100%;
+        width: 80%;
         max-width: 780px;
         box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         text-align: left;
@@ -44,27 +44,27 @@
     
     /* ===== Logo 區 ===== */
     .logo-img {
-        width: 130px;
-        height: 130px;
+        width: 180px;
+        height: 180px;
         border-radius: 50%;
         object-fit: cover;
         display: inline-block;
     }
     
-    .brand-title {
-        font-size: 20px;
+    .brand-title {    /* LOGO下方文字 老娘領地 大小 */
+        font-size: 26px;
         color: #8b0000;
         font-weight: 700;
         margin-top: 6px;
     }
     
-    .pc-badge {
+    .pc-badge {  /* LOGO下方文字 電腦版 大小 */
         display: inline-block;
         background: #8b0000;
         color: white;
         padding: 4px 12px;
         border-radius: 20px;
-        font-size: 12px;
+        font-size: 18px;
         font-weight: bold;
         margin-top: 4px;
     }
@@ -221,8 +221,8 @@
             width: 80px;
             height: 80px;
         }
-        .login-left .brand-title {
-            font-size: 16px;
+        .login-left .brand-title {  
+            font-size: 26px;
         }
         .login-right .subtitle {
             text-align: center;
@@ -240,11 +240,18 @@
     <div class="login-card">
         <div class="login-content">
             <!-- 左側：Logo + 品牌 -->
-            <div class="login-left">
-                <img src="https://i.postimg.cc/KvytPffF/wei-ming-ming-she-ji-(23).png" class="logo-img">
-                <div class="brand-title">老娘領地</div>
-                <span class="pc-badge">🖥️ 電腦版</span>
-            </div>
+<div class="login-left">
+    <img src="https://i.postimg.cc/KvytPffF/wei-ming-ming-she-ji-(23).png" class="logo-img">
+    <div class="brand-title">老娘領地</div>
+    <span class="pc-badge">🖥️ 電腦版</span>
+    
+    <div class="demo-hint">
+        <strong>💡 登入說明：</strong><br>
+        • 老娘夥伴限定登入（電腦版）<br>
+        • 請使用總部核發的帳號密碼<br>
+        • 忘記密碼請聯絡管理員
+    </div>
+</div>
             
             <!-- 右側：登入表單 -->
             <div class="login-right">
@@ -267,13 +274,7 @@
                 </form>
                 
                 <div id="errorMsg" class="error-message"></div>
-                
-                <div class="demo-hint">
-                    <strong>💡 登入說明：</strong><br>
-                    • 老娘夥伴限定登入（電腦版）<br>
-                    • 請使用總部核發的帳號密碼<br>
-                    • 忘記密碼請聯絡管理員
-                </div>
+              
                 <div class="footer-note">© 老娘領地 夥伴端（電腦版）</div>
             </div>
         </div>
