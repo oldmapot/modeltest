@@ -69,11 +69,11 @@
         gap: 8px; /* 縮小上下疊放元件之間的間距 */
     }
 
-    /* ===== 修改一：縮小 2x2 輸入區的左右欄間距（讓 1 號跟 3 號靠近） ===== */
+    /* ===== 右側表單內的 2x2 雙欄輸入區 ===== */
     .inputs-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 6px; /* 原本是 12px，縮小成 6px 讓左右更緊密 */
+        gap: 12px;
     }
 
     /* ===== 限制 2x2 裡面輸入框的寬度，讓它不那麼寬 ===== */
@@ -1505,7 +1505,7 @@ const expireMonths = cfg.REWARD_EXPIRY_MONTHS || 12;
             tipClass = 'redeem-tip tip-no-redeem';
         } else if (baseForRedeem < minSpendThreshold) {
             maxRedeem = 0;
-            tipMessage = `⚠️ 未達門檻 ${minSpendThreshold} 元，無法點數抵消費`;
+            tipMessage = `⚠️ 未達門檻 ${minSpendThreshold} 元，無法折點`;
             tipClass = 'redeem-tip tip-no-redeem';
         } else {
             maxRedeem = Math.min(
