@@ -1505,7 +1505,7 @@ const expireMonths = cfg.REWARD_EXPIRY_MONTHS || 12;
             tipClass = 'redeem-tip tip-no-redeem';
         } else if (baseForRedeem < minSpendThreshold) {
             maxRedeem = 0;
-            tipMessage = `⚠️ 未達門檻 ${minSpendThreshold} 元，無法折點`;
+            tipMessage = `⚠️ 未達門檻 ${minSpendThreshold} 元，無法點數抵消費`;
             tipClass = 'redeem-tip tip-no-redeem';
         } else {
             maxRedeem = Math.min(
