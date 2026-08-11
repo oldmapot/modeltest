@@ -18,80 +18,71 @@
         box-sizing: border-box;
     }
      
-    /* ===== 卡片容器 (電腦版寬螢幕卡片，支援內部雙欄與捲軸) ===== */
+    /* ===== 卡片容器 ===== */
     .card {
         background: white;
         padding: 24px;
         border-radius: 16px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
         width: 100%;
-        max-width: 980px; /* 放寬最大寬度以容納左右雙欄 */
-        max-height: 92vh; /* 限制最大高度，避免超出畫面 */
-        overflow-y: auto; /* 內容過多時內部滾動 */
+        max-width: 1050px; 
+        max-height: 95vh;
+        overflow-y: auto;
         box-sizing: border-box;
         margin: auto;
     }
 
-    /* ===== 左右雙欄網格佈局 (對應配置.jpg) ===== */
-    .card-layout {
-        display: grid;
-        grid-template-columns: 1fr 1.3fr; /* 左窄右寬，完美比例 */
-        gap: 20px;
-        align-items: start;
-    }
-
-    .column-left {
+    /* ===== 頂部橫向配置 (對應配置_2.jpg上方) ===== */
+    .top-header-bar {
         display: flex;
-        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #ddd;
+        padding-bottom: 12px;
+        margin-bottom: 20px;
         gap: 15px;
     }
 
-    .column-right {
+    .shop-brand-area {
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 4px;
     }
 
-    /* ===== 標頭 ===== */
-    .header { 
-        text-align: center; 
-        border-bottom: 2px solid #eee; 
-        margin-bottom: 20px; 
-        padding-bottom: 12px; 
-    }
-     
-    .header-top { 
-        display: flex; 
-        justify-content: flex-end; 
-        gap: 6px; 
-        margin-bottom: 5px; 
-    }
-     
-    .header-btn { 
-        font-size: 12px; 
-        padding: 3px 6px; 
-        border: none; 
-        border-radius: 4px; 
-        cursor: pointer; 
-    }
-     
-    .btn-logout { 
-        background: #ff4444; 
-        color: #fff; 
-    }
-     
     .role-badge { 
         background: #333; 
         color: white; 
         padding: 2px 8px; 
         border-radius: 4px; 
         font-size: 12px; 
+        display: inline-block;
+        width: fit-content;
     }
-     
-    /* ===== 按鈕 ===== */
+
+    /* ===== 左右雙欄主網格 ===== */
+    .card-layout {
+        display: grid;
+        grid-template-columns: 1fr 1.35fr; 
+        gap: 20px;
+        align-items: start;
+    }
+
+    .column-left, .column-right {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    /* ===== 右側表單內的 2x2 雙欄輸入區 ===== */
+    .inputs-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* ===== 按鈕通用 ===== */
     .btn { 
-        width: 100%; 
-        padding: 14px; 
+        padding: 12px; 
         border: none; 
         border-radius: 8px; 
         font-size: 16px; 
@@ -100,28 +91,28 @@
         transition: all 0.3s ease;
     }
      
-    .btn:active {
-        transform: scale(0.98);
-    }
-     
     .btn-submit { 
         background: #1a73e8; 
         color: white; 
+        width: 100%;
         margin-top: 5px; 
     }
      
-    .btn-submit:hover:not(:disabled) {
-        background: #1557b0;
+    .btn-submit:hover:not(:disabled) { background: #1557b0; }
+    .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+
+    .header-btn { 
+        font-size: 12px; 
+        padding: 5px 10px; 
+        border: none; 
+        border-radius: 4px; 
+        cursor: pointer; 
+        font-weight: bold;
     }
      
-    .btn-submit:disabled { 
-        background: #ccc; 
-        cursor: not-allowed; 
-    }
-     
-    /* ===== 表單 ===== */
+    /* ===== 表單與欄位 ===== */
     .input-group { 
-        margin-bottom: 12px; 
+        margin-bottom: 0; 
     }
      
     label { 
@@ -133,12 +124,11 @@
      
     input { 
         width: 100%; 
-        padding: 10px 12px; 
+        padding: 9px 12px; 
         border: 1px solid #ddd; 
         border-radius: 8px; 
-        font-size: 15px; 
+        font-size: 14px; 
         box-sizing: border-box; 
-        transition: border-color 0.3s ease;
     }
      
     input:focus {
@@ -147,12 +137,9 @@
         box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
     }
      
-    .locked { 
-        opacity: 0.4; 
-        pointer-events: none; 
-    }
+    .locked { opacity: 0.4; pointer-events: none; }
      
-    /* ===== 會員資訊 ===== */
+    /* ===== 會員與資訊區塊 ===== */
     .member-info { 
         background: #fff9c4; 
         padding: 14px; 
@@ -180,22 +167,11 @@
         font-size: 14px; 
     }
      
-    /* ===== 優惠券狀態顯示 ===== */
-    .coupon-status {
-        padding: 8px 12px;
-        border-radius: 4px;
-        margin: 8px 0;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-     
-    /* ===== 折抵提示 ===== */
     .redeem-tip {
-        margin-top: 6px;
-        padding: 6px 10px;
+        margin-top: 4px;
+        padding: 5px 8px;
         border-radius: 6px;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: bold;
     }
      
@@ -203,57 +179,12 @@
     .redeem-tip.tip-no-redeem { background-color: #ffebee; color: #b71c1c; }
     .redeem-tip.tip-ticket-mode { background-color: #f3e5f5; color: #4a148c; }
      
-    /* ===== Modal & 遮罩 ===== */
-    #customModal, #lockScreen, #loadingOverlay { 
-        display: none; 
-        position: fixed; 
-        top: 0; left: 0; 
-        width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.7); 
-        z-index: 9999; 
-        justify-content: center; 
-        align-items: center; 
-    }
-     
-    .modal-content { 
-        background: white; 
-        width: 85%; 
-        max-width: 400px; 
-        padding: 25px; 
-        border-radius: 15px; 
-        text-align: center; 
-    }
-     
-    .modal-btn { 
-        background: #00b900; 
-        color: white; 
-        padding: 12px 30px; 
-        border: none; 
-        border-radius: 8px; 
-        font-size: 16px; 
-        margin-top: 20px; 
-        cursor: pointer; 
-        width: 100%; 
-    }
-     
-    .loading-spinner { 
-        width: 50px; height: 50px; 
-        border: 5px solid #f3f3f3; 
-        border-top: 5px solid #00b900; 
-        border-radius: 50%; 
-        animation: spin 1s linear infinite; 
-    }
-     
-    @keyframes spin { 
-        0% { transform: rotate(0deg); } 
-        100% { transform: rotate(360deg); } 
-    }
-
-    /* ===== 手機版響應式設計 (自動轉為單欄上下堆疊) ===== */
+    /* ===== 手機響應式 ===== */
     @media (max-width: 768px) {
         body { padding: 8px; }
         .card { padding: 15px; max-height: none; }
-        .card-layout { grid-template-columns: 1fr; gap: 15px; }
+        .card-layout, .top-header-bar, . { grid-template-columns: 1fr; }
+        .top-header-bar { flex-direction: column; align-items: stretch; }
     }
 </style>
     <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -332,38 +263,41 @@
 </div>
 
 <div id="mainUI" class="card">
-    <!-- 頂部標頭（跨左右兩欄） -->
-    <div class="header">
-        <div class="header-top">
-            <button class="header-btn" onclick="showSwitchAccount()" style="background:#ff9800; color:#fff;">🔄 切換帳號</button>
-            <button class="header-btn btn-logout" onclick="logout()">登出</button>
+    <!-- 🌟 頂部橫向配置 (店名、掃描器、按鈕群) -->
+    <div class="top-header-bar">
+        <div class="shop-brand-area">
+            <h2 style="margin:0;"><span id="shop-name">老娘鍋河堤店</span></h2>
+            <div><span id="role-text" class="role-badge">bigBoss</span>：<span id="staff-name">小可</span></div>
         </div>
-        <h2 style="margin:0;"><span id="shop-name">老娘領地</span></h2>
-        <div style="font-size:14px; color:#666; margin-top:5px;">
-            <span id="role-text" class="role-badge">夥伴</span>：<span id="staff-name">-</span>
+
+        <!-- 📷 掃描狀態列置於頂部中間 -->
+        <div id="scanStatusBar" style="background: #f8f9fa; border-radius: 8px; border: 1px solid #ccc; padding: 6px 12px; flex-grow: 1; max-width: 380px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="font-size: 14px;">📷</span>
+                <span id="scanStatusDot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #28a745;"></span>
+                <span id="scanStatusText" style="font-size: 12px; color: #28a745; font-weight: 500;">就緒</span>
+                <div id="scanErrorMessage" style="display: none; margin-left: auto; font-size: 11px; color: #cc0000;">
+                    ❌ <span id="scanErrorText">錯誤</span>
+                </div>
+            </div>
+            <div style="font-size: 10px; color: #888; margin-top: 2px;">💡 請將 QR Code 對準掃碼槍，系統會自動偵測</div>
+        </div>
+
+        <!-- 右上角功能按鈕 -->
+        <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end;">
+            <div style="display: flex; gap: 5px;">
+                <button class="header-btn" onclick="showSwitchAccount()" style="background:#ff9800; color:#fff;">🔄 切換帳號</button>
+                <button class="header-btn" onclick="logout()" style="background:#ff4444; color:#fff;">登出</button>
+            </div>
+            <button class="header-btn" onclick="forceReset()" style="background:#666; color:#fff; width:100%;">🔄 重新整理</button>
         </div>
     </div>
 
-    <!-- 🌟 核心：左右雙欄網格容器 -->
+    <!-- 🌟 左右雙欄主體內容 -->
     <div class="card-layout">
         
-        <!-- 【左欄】：放 掃描狀態、會員資訊、優惠券 -->
+        <!-- 【左欄】：會員資訊、優惠券 -->
         <div class="column-left">
-            <!-- 📷 掃描狀態區塊 -->
-            <div id="scanStatusBar" style="background: #f8f9fa; border-radius: 10px; border: 2px solid #e0e0e0; padding: 10px 14px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 16px;">📷</span>
-                    <span id="scanStatusDot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #28a745;"></span>
-                    <span id="scanStatusText" style="font-size: 13px; color: #28a745; font-weight: 500;">就緒</span>
-                    <div id="scanErrorMessage" style="display: none; margin-left: auto; padding: 4px 10px; border-radius: 4px; font-size: 12px; background: #ffe5e5; border: 1px solid #ff4444; color: #cc0000;">
-                        ❌ <span id="scanErrorText">錯誤訊息</span>
-                    </div>
-                </div>
-                <div style="margin-top: 6px; font-size: 11px; color: #999; text-align: center; border-top: 1px dashed #ddd; padding-top: 6px;">
-                    💡 請將 QR Code 對準掃碼槍，系統會自動偵測
-                </div>
-            </div>
-
             <!-- 👤 會員資訊 -->
             <div class="member-info" id="member-ui">
                 顧客：<b id="cus-name">-</b> <span id="member-level" class="member-level"></span><br>
@@ -389,39 +323,36 @@
                     ⚠️ 未達門檻時，優惠券將保留，下次使用
                 </div>
             </div>
-
-            <!-- 🔄 重新整理按鈕 -->
-            <button onclick="forceReset()" style="width: 100%; padding: 10px; background: #666; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">🔄 重新整理</button>
         </div>
 
-        <!-- 【右欄】：放 模式勾選、四大輸入框、試算金額與送出按鈕 -->
+        <!-- 【右欄】：模式勾選、2x2 輸入框、結算資訊與送出按鈕 -->
         <div class="column-right">
             <div id="form-ui" class="locked">
-                <label style="background:#fff3e0; padding:10px; display:block; border-radius:8px; margin-bottom:12px; cursor:pointer; border:1px solid #ff9800; font-size: 13px;">
+                <label style="background:#fff3e0; padding:8px 12px; display:block; border-radius:8px; margin-bottom:12px; cursor:pointer; border:1px solid #ff9800; font-size: 13px;">
                     <input type="checkbox" id="ticketMode" onchange="toggleMode()" style="width:auto;"> <b>勾選：購買餐券模式 (無股東分紅)</b>
                 </label>
 
-                <div id="normal-fields">
+             <!-- 2x2 左右並排輸入區 (完美對應您的順序) -->
+                <div class="inputs-grid" id="normal-fields">
                     <div class="input-group">
                         <label>1. 本日消費總額</label>
                         <input type="text" id="totalSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入消費金額">
-                    </div>
-                    <div class="input-group">
-                        <label>2. 活動折抵消費 <span id="coupon-discount-label" style="color:#ff9800;font-size:11px;"></span></label>
-                        <input type="text" id="couponDiscount" inputmode="decimal" oninput="doCalc()" placeholder="0" readonly style="background:#f5f5f5;cursor:not-allowed;user-select:none;">
                     </div>
                     <div class="input-group">
                         <label>3. 使用餐券金額</label>
                         <input type="text" id="ticketSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入餐券支付額">
                     </div>
                     <div class="input-group">
-                        <label>4. 折抵點數 (上限：<span id="max-hint" style="color:blue;">0</span> 點)</label>
+                        <label>2. 活動折抵消費</label>
+                        <input type="text" id="couponDiscount" inputmode="decimal" oninput="doCalc()" placeholder="0" readonly style="background:#f5f5f5;cursor:not-allowed;">
+                    </div>
+                    <div class="input-group">
+                        <label>4. 折抵點數 (上限：<span id="max-hint" style="color:blue;">0</span>)</label>
                         <input type="text" id="redeemAmount" inputmode="numeric" oninput="doCalc()" placeholder="欲折抵點數">
                         <div id="redeemTip" class="redeem-tip tip-normal"></div>
                     </div>
                 </div>
-
-                <div class="info-box">
+                <div class="info-box" style="margin-top: 12px;">
                     <div id="pointsDisplay">
                         本次預計發放點數：<b id="new-pts" style="color:#1a73e8;">0</b> 點
                         <span id="bonus-points-display" style="display:none;color:#ff6b00;"></span>
@@ -431,7 +362,7 @@
                     </div>
                 </div>
 
-                <button class="btn btn-submit" id="submitBtn" onclick="submitData()">確認過卡</button>
+                <button class="btn btn-submit" id="submitBtn" onclick="submitData()" style="margin-top: 12px;">確認過卡</button>
             </div>
         </div>
 
