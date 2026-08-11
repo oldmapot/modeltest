@@ -366,16 +366,16 @@
 <!-- 🌟 左右雙欄主體內容 -->
     <div class="card-layout">
         
-        <!-- 【左欄】：會員資訊、優惠券資訊、餐券模式勾選 -->
+<!-- 【左欄】：會員資訊、優惠券資訊、以及永遠固定在下方的餐券模式勾選 -->
         <div class="column-left">
-            <!-- 👤 會員資訊 -->
+            <!-- 👤 會員資訊 (預設隱藏，刷會員後顯示) -->
             <div class="member-info" id="member-ui">
                 顧客：<b id="cus-name">-</b> <span id="member-level" class="member-level"></span><br>
                 現有資產：<b id="cus-pts" style="color:red;">0</b> 點<br>
                 累積消費：<b id="cus-total">0</b> 元
             </div>
             
-            <!-- 🎫 優惠券資訊 -->
+            <!-- 🎫 優惠券資訊 (預設隱藏，刷優惠券後顯示) -->
             <div id="coupon-info" style="display:none; background:#fff3e0; border:2px solid #ff9800; border-radius:10px; padding:12px 15px;">
                 <div style="font-weight:bold; color:#e65100; font-size:15px;">
                     🎫 使用優惠券：<span id="coupon-name-display">載入中...</span>
@@ -394,14 +394,13 @@
                 </div>
             </div>
 
-            <!-- 🔄 購買餐券模式移至左側下方 -->
-            <div id="ticket-mode-container" style="background:#fff3e0; padding:10px 12px; border-radius:10px; border:1px solid #ff9800; font-size:13px;">
+            <!-- 🔄 購買餐券模式 (獨立放在最下方，絕對不會被刷卡動作影響消失) -->
+            <div id="ticket-mode-container" style="background:#fff3e0; padding:10px 12px; border-radius:10px; border:1px solid #ff9800; font-size:13px; margin-top:auto;">
                 <label style="cursor:pointer; margin:0; display:flex; align-items:center; gap:6px;">
                     <input type="checkbox" id="ticketMode" onchange="toggleMode()" style="width:auto;"> <b>勾選：購買餐券模式 (無股東分紅)</b>
                 </label>
             </div>
         </div>
-
         <!-- 【右欄】：精簡版 2x2 輸入區、結算與按鈕 -->
         <div class="column-right">
             <div id="form-ui" class="locked">
