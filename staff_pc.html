@@ -411,26 +411,40 @@
         <!-- 【右欄】：精簡版 2x2 輸入區、結算與按鈕 -->
         <div class="column-right">
             <div id="form-ui" class="locked">
-                <!-- 2x2 左右並排輸入區 (調整寬度更精簡) -->
-                <div class="inputs-grid" id="normal-fields">
-                    <div class="input-group">
-                        <label>1. 本日消費總額</label>
-                        <input type="text" id="totalSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入消費金額">
-                    </div>
-                    <div class="input-group">
-                        <label>3. 使用餐券金額</label>
-                        <input type="text" id="ticketSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入餐券支付額">
-                    </div>
-                    <div class="input-group">
-                        <label>2. 活動折抵消費</label>
-                        <input type="text" id="couponDiscount" inputmode="decimal" oninput="doCalc()" placeholder="0" readonly style="background:#f5f5f5;cursor:not-allowed;">
-                    </div>
-                    <div class="input-group">
-                        <label>4. 折抵點數 (上限：<span id="max-hint" style="color:blue;">0</span>)</label>
-                        <input type="text" id="redeemAmount" inputmode="numeric" oninput="doCalc()" placeholder="欲折抵點數">
-                        <div id="redeemTip" class="redeem-tip tip-normal"></div>
-                    </div>
-                </div>
+<!-- 2x2 左右並排輸入區 -->
+<div class="inputs-grid" id="normal-fields">
+    <!-- 1. 本日消費總額（永遠顯示） -->
+    <div class="input-group" id="total-spend-group">
+        <label>1. 本日消費總額</label>
+        <input type="text" id="totalSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入消費金額">
+    </div>
+    
+    <!-- 3. 使用餐券金額（一般模式顯示） -->
+    <div class="input-group" id="ticket-spend-group">
+        <label>3. 使用餐券金額</label>
+        <input type="text" id="ticketSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入餐券支付額">
+    </div>
+    
+    <!-- 🔥 購買餐券金額（餐券模式顯示） -->
+    <div class="input-group" id="buy-ticket-group" style="display:none;">
+        <label>3. 購買餐券金額</label>
+        <input type="text" id="buyTicket" inputmode="decimal" oninput="doCalc()" placeholder="輸入購買餐券金額">
+    </div>
+    
+    <!-- 2. 活動折抵消費（一般模式顯示） -->
+    <div class="input-group" id="coupon-discount-group">
+        <label>2. 活動折抵消費</label>
+        <input type="text" id="couponDiscount" inputmode="decimal" oninput="doCalc()" placeholder="0" readonly style="background:#f5f5f5;cursor:not-allowed;">
+        <div style="font-size:11px;color:#999;margin-top:2px;">💡 此欄位由優惠券自動帶入，不可編輯</div>
+    </div>
+    
+    <!-- 4. 折抵點數（一般模式顯示） -->
+    <div class="input-group" id="redeem-group">
+        <label>4. 折抵點數 (上限：<span id="max-hint" style="color:blue;">0</span>)</label>
+        <input type="text" id="redeemAmount" inputmode="numeric" oninput="doCalc()" placeholder="欲折抵點數">
+        <div id="redeemTip" class="redeem-tip tip-normal"></div>
+    </div>
+</div>
             <!-- 🎫 購買餐券模式的專屬輸入區 (平時隱藏，打勾後顯示) -->
               <div id="ticket-fields" style="display: none;">
               <div class="input-group">
@@ -1257,19 +1271,39 @@ if (scanMode === 'coupon') {
 function toggleMode() {
     const isTicket = document.getElementById('ticketMode').checked;
     
+    // 🔥 取得需要切換的群組
     const ticketSpendGroup = document.getElementById('ticket-spend-group');
     const buyTicketGroup = document.getElementById('buy-ticket-group');
+    const couponDiscountGroup = document.getElementById('coupon-discount-group');
+    const redeemGroup = document.getElementById('redeem-group');
     
     if (isTicket) {
+        // 🔥 餐券模式：隱藏「使用餐券金額」、「活動折抵消費」、「折抵點數」
         ticketSpendGroup.style.display = 'none';
+        couponDiscountGroup.style.display = 'none';
+        redeemGroup.style.display = 'none';
+        // 🔥 顯示「購買餐券金額」
         buyTicketGroup.style.display = 'block';
-        // 🔥 如果勾選餐券模式時有優惠券，提示
+        
+        // 🔥 清空被隱藏欄位的值
+        document.getElementById('ticketSpend').value = '';
+        document.getElementById('couponDiscount').value = '';
+        document.getElementById('redeemAmount').value = '';
+        document.getElementById('redeemTip').innerHTML = '';
+        
+        // 如果有優惠券，提示
         if (window.activeCoupon) {
             showToast('🍽️ 餐券模式不適用優惠券，優惠券將保留');
         }
     } else {
+        // 🔥 一般模式：顯示所有欄位
         ticketSpendGroup.style.display = 'block';
+        couponDiscountGroup.style.display = 'block';
+        redeemGroup.style.display = 'block';
         buyTicketGroup.style.display = 'none';
+        
+        // 🔥 清空購買餐券金額
+        document.getElementById('buyTicket').value = '';
     }
     
     doCalc();
