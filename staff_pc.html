@@ -314,18 +314,23 @@
             <option value="">-- 請選擇帳號 --</option>
         </select>
         
-        <!-- 密碼輸入 + 錯誤訊息 -->
-        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
-            <input type="password" id="lockPassword" placeholder="輸入密碼" style="
-                flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; min-width: 0;
-            ">
-            <div id="lockPasswordError" style="
-                display: none; color: #ff4444; font-size: 13px; font-weight: 600; white-space: nowrap;
-                background: #fff0f0; padding: 6px 10px; border-radius: 6px; border: 1px solid #ff4444;
-            ">
-                ❌ 錯誤
-            </div>
-        </div>
+       <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; position: relative;">
+       <input type="password" id="lockPassword" placeholder="輸入密碼" style="
+        flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; 
+        font-size: 16px; min-width: 0; padding-right: 40px;
+        ">
+       <span id="togglePassword" style="
+        position: absolute; right: 12px; cursor: pointer; font-size: 18px; user-select: none;
+        color: #888;
+        ">👁️</span>
+        <div id="lockPasswordError" style="
+        display: none; color: #ff4444; font-size: 13px; font-weight: 600; white-space: nowrap;
+        background: #fff0f0; padding: 6px 10px; border-radius: 6px; border: 1px solid #ff4444;
+        flex-shrink: 0;
+       ">
+        ❌ 錯誤
+    </div>
+</div>
         
         <button onclick="unlockSession()" style="
             width: 100%; padding: 14px; background: #00b900; color: white; border: none; border-radius: 8px;
@@ -673,7 +678,11 @@ function showIdleLockScreen() {
     if (!isLoggedIn) return;
     console.log('🔒 閒置鎖屏');
     
-    // 🔥 儲存鎖定標記
+    // 🔥 清除會員資料和輸入框
+    if (typeof resetMember === 'function') {
+        resetMember();
+    }
+    
     localStorage.setItem('isLocked', 'true');
     isLocked = true;
     
@@ -774,7 +783,33 @@ async function getSwitchableStaff() {
             return { success: false, message: '連線異常' };
         }
     }
+ // ============================================================
+//  密碼顯示/隱藏切換 + Enter 鍵送出
+// ============================================================
 
+// 🔥 放在 init() 中執行，或直接執行（因為 DOM 已載入）
+(function() {
+    var togglePassword = document.getElementById('togglePassword');
+    var lockPassword = document.getElementById('lockPassword');
+    
+    if (togglePassword && lockPassword) {
+        // 🔥 眼睛切換
+        togglePassword.addEventListener('click', function() {
+            var type = lockPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+            lockPassword.setAttribute('type', type);
+            this.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+        
+        // 🔥 Enter 鍵送出
+        lockPassword.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                unlockSession();
+            }
+        });
+    }
+})();
+    
     async function unlockSession() {
         const staffId = document.getElementById('lockStaffSelect').value;
         const password = document.getElementById('lockPassword').value;
@@ -853,18 +888,26 @@ async function getSwitchableStaff() {
         }
     }
 
-    document.getElementById('lockPassword')?.addEventListener('input', function() {
-        const errorEl = document.getElementById('lockPasswordError');
-        errorEl.style.display = 'none';
-        this.style.borderColor = '';
-        this.style.backgroundColor = '';
-    });
+document.getElementById('lockPassword')?.addEventListener('input', function() {
+    const errorEl = document.getElementById('lockPasswordError');
+    errorEl.style.display = 'none';
+    this.style.borderColor = '';
+    this.style.backgroundColor = '';
+});
 
-    function forceLogout() {
-        if (confirm('確定要登出嗎？')) {
-            logout();
-        }
+// 🔥 密碼輸入框按 Enter 觸發解鎖
+document.getElementById('lockPassword')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        unlockSession();
     }
+});
+    
+function forceLogout() {
+    if (confirm('確定要登出嗎？')) {
+        logout();
+    }
+}
 
     // ============================================================
     //  核心函數：getCouponPrefixes
