@@ -5,33 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>老娘領地 - 電腦版</title>
    <style>
-/* ===== 全域設定 ===== */
+/* ===== 全域設定 (取消強制滿版，改為貼齊卡片) ===== */
     body { 
         font-family: "Microsoft JhengHei", sans-serif; 
-        padding: 15px; 
+        padding: 10px; 
         background: #f4f7f6; 
         margin: 0;
-        min-height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-sizing: border-box;
+        /* 移除原本的 min-height: 100vh、display: flex、justify-content 與 align-items */
     }
-     
     /* ===== 卡片容器 ===== */
-    .card {
+.card {
         background: white;
-        padding: 24px;
-        border-radius: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        padding: 12px 16px; /* 縮小上下左右的內部留白 */
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
         width: 100%;
-        max-width: 650px; /* 從原本的 1050px 縮小，您可以依 POS 畫面調整為 750px ~ 850px */
+        max-width: 820px; /* 控制整體最大寬度剛好 */
         max-height: 95vh;
         overflow-y: auto;
         box-sizing: border-box;
         margin: auto;
     }
-
     /* ===== 頂部橫向配置 (對應配置_2.jpg上方) ===== */
     .top-header-bar {
         display: flex;
@@ -59,18 +53,20 @@
         width: fit-content;
     }
 
-    /* ===== 左右雙欄主網格 ===== */
+/* ===== 左右雙欄主體內容 (縮小欄位間距) ===== */
     .card-layout {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* 將右欄比例從 1.35fr 縮減為 1.1fr 或 1fr */
-        gap: 20px;
+        grid-template-columns: 1fr 1.35fr;
+        gap: 10px; /* 縮小左右欄之間的距離 */
         align-items: start;
+        margin-top: 10px;
     }
 
+    /* ===== 左欄與右欄內部區塊的緊湊化 ===== */
     .column-left, .column-right {
         display: flex;
         flex-direction: column;
-        gap: 15px;
+        gap: 8px; /* 縮小上下疊放元件之間的間距 */
     }
 
     /* ===== 右側表單內的 2x2 雙欄輸入區 ===== */
