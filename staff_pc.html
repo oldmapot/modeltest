@@ -431,13 +431,13 @@
                         <div id="redeemTip" class="redeem-tip tip-normal"></div>
                     </div>
                 </div>
-                <!-- 🎫 購買餐券模式的專屬輸入區 (平時隱藏，打勾後顯示) -->
-                <div id="ticket-fields" style="display: none;">
-                    <div class="input-group">
-                        <label>購買餐券金額</label>
-                        <input type="text" id="buyTicketAmount" inputmode="decimal" oninput="doCalc()" placeholder="請輸入欲購買的餐券金額">
-                    </div>
-                </div>
+            <!-- 🎫 購買餐券模式的專屬輸入區 (平時隱藏，打勾後顯示) -->
+              <div id="ticket-fields" style="display: none;">
+              <div class="input-group">
+              <label>購買餐券金額</label>
+              <input type="text" id="buyTicket" inputmode="decimal" oninput="doCalc()" placeholder="請輸入欲購買的餐券金額">
+           </div>
+        </div>
                 <div class="info-box" style="margin-top: 10px; padding: 10px 12px;">
                     <div id="pointsDisplay">
                         本次預計發放點數：<b id="new-pts" style="color:#1a73e8;">0</b> 點
@@ -1254,10 +1254,24 @@ if (scanMode === 'coupon') {
         }
     }
   
-   function toggleMode() {
+function toggleMode() {
     const isTicket = document.getElementById('ticketMode').checked;
-    document.getElementById('normal-fields').style.display = isTicket ? 'none' : 'block';
-    document.getElementById('ticket-fields').style.display = isTicket ? 'block' : 'none';
+    
+    const ticketSpendGroup = document.getElementById('ticket-spend-group');
+    const buyTicketGroup = document.getElementById('buy-ticket-group');
+    
+    if (isTicket) {
+        ticketSpendGroup.style.display = 'none';
+        buyTicketGroup.style.display = 'block';
+        // 🔥 如果勾選餐券模式時有優惠券，提示
+        if (window.activeCoupon) {
+            showToast('🍽️ 餐券模式不適用優惠券，優惠券將保留');
+        }
+    } else {
+        ticketSpendGroup.style.display = 'block';
+        buyTicketGroup.style.display = 'none';
+    }
+    
     doCalc();
 }
    
@@ -1265,7 +1279,7 @@ function doCalc() {
     let couponDiscountAmount = 0;
     let finalCouponBonus = 0;
     
-    // ---------- 1. 獲取所有 DOM 元素（統一管理） ----------
+    // ---------- 1. 獲取所有 DOM 元素 ----------
     const elements = {
         totalInput: document.getElementById('totalSpend'),
         ticketInput: document.getElementById('ticketSpend'),
@@ -1282,7 +1296,7 @@ function doCalc() {
         couponStatusDisplay: document.getElementById('coupon-status-display')
     };
     
-    // ---------- 2. 檢查必要元素是否存在 ----------
+    // ---------- 2. 檢查必要元素 ----------
     if (!elements.totalInput || !elements.ticketInput || !elements.redeemInput) {
         console.warn('⚠️ 必要表單元素不存在，跳過計算');
         return;
@@ -1296,7 +1310,7 @@ function doCalc() {
     const redeemAmount = parseFloat(elements.redeemInput.value) || 0;
     const buyTicketAmount = parseFloat(elements.buyTicketInput?.value) || 0;
     
-    // ---------- 4. 取得優惠券資訊（從全域變數） ----------
+    // ---------- 4. 取得優惠券資訊 ----------
     const couponBonus = window.activeCoupon?.bonusPoints || 0;
     const couponMinSpend = window.activeCoupon?.minSpend || 0;
     const couponType = window.activeCoupon?.type || '';
@@ -1306,54 +1320,25 @@ function doCalc() {
     // ---------- 5. 取得系統配置 ----------
     const cfg = config || {};
     const earnRate = cfg.earnRate || 0.03;
+    const ticketRate = cfg.ticketRate || 0.02;  // 🔥 加入餐券集點比例
     const levelRate = cfg.levelRate || 1;
     const eventMultiplier = cfg.eventMultiplier || 1;
     const maxRate = cfg.maxRate || 0;
     const shopCode = cfg.shopCode || 'OMP';
     
-    // ---------- 6. 計算實際消費金額 ----------
-    let baseAmount = totalSpend - ticketSpend - couponDiscount;
-    
-    // ============================================================
-    //  🔥🔥🔥 優惠券折抵金額門檻歸零邏輯
-    // ============================================================
-    if (couponType === '消費折抵' && elements.couponDiscountInput) {
-        const actualSpend = totalSpend - ticketSpend;
-        const hasValidCoupon = window.activeCouponDocId && window.activeCouponDocId !== '';
-        
-        if (hasValidCoupon && couponMinSpend > 0) {
-            if (actualSpend >= couponMinSpend) {
-                if (elements.couponDiscountInput.value != couponDiscountOriginal) {
-                    elements.couponDiscountInput.value = couponDiscountOriginal;
-                    console.log('✅ 達門檻！折抵金額恢復為:', couponDiscountOriginal);
-                }
-            } else {
-                if (elements.couponDiscountInput.value != 0) {
-                    elements.couponDiscountInput.value = 0;
-                    console.log('❌ 未達門檻（需滿', couponMinSpend, '，實際', actualSpend, '），折抵歸零');
-                }
-            }
-        }
-    }
-    
-    const finalCouponDiscount = parseFloat(elements.couponDiscountInput?.value) || 0;
-    baseAmount = totalSpend - ticketSpend - finalCouponDiscount;
-    
-    // ---------- 7. 宣告結果變數 ----------
+    // ---------- 6. 宣告結果變數 ----------
     let redeem = 0;
     let maxRedeem = 0;
     let basePoints = 0;
     let totalNewPoints = 0;
     let tipMessage = '';
     let tipClass = 'redeem-tip tip-normal';
+    let finalTicketSpend = ticketSpend;  // 🔥 用於回傳
     
-    // ============================================================
-    //  🔥 8. 優惠券門檻即時比對（顯示在 UI）
-    // ============================================================
-    if (elements.couponStatusDisplay && couponMinSpend > 0) {
+    // ---------- 7. 優惠券門檻即時比對 ----------
+    if (elements.couponStatusDisplay && couponMinSpend > 0 && !isTicketMode) {  // 🔥 餐券模式跳過
         if (couponType) {
             const actualSpend = totalSpend - ticketSpend;
-            
             if (actualSpend >= couponMinSpend) {
                 elements.couponStatusDisplay.innerHTML = 
                     `✅ 已達門檻！消費滿 ${couponMinSpend} 元，可正常使用「${couponName || '優惠券'}」`;
@@ -1371,22 +1356,61 @@ function doCalc() {
             elements.couponStatusDisplay.style.color = '#666';
             elements.couponStatusDisplay.className = 'coupon-status no-coupon';
         }
+    } else if (isTicketMode && elements.couponStatusDisplay) {
+        elements.couponStatusDisplay.innerHTML = '🍽️ 餐券模式，不適用優惠券';
+        elements.couponStatusDisplay.style.color = '#666';
+        elements.couponStatusDisplay.className = 'coupon-status no-coupon';
     }
     
-    // ============================================================
-    //  🔥 9. 點數計算邏輯
-    // ============================================================
+    // ---------- 8. 優惠券折抵金額門檻歸零邏輯（餐券模式跳過） ----------
+    if (!isTicketMode && couponType === '消費折抵' && elements.couponDiscountInput) {
+        const actualSpend = totalSpend - ticketSpend;
+        const hasValidCoupon = window.activeCouponDocId && window.activeCouponDocId !== '';
+        
+        if (hasValidCoupon && couponMinSpend > 0) {
+            if (actualSpend >= couponMinSpend) {
+                if (elements.couponDiscountInput.value != couponDiscountOriginal) {
+                    elements.couponDiscountInput.value = couponDiscountOriginal;
+                    console.log('✅ 達門檻！折抵金額恢復為:', couponDiscountOriginal);
+                }
+            } else {
+                if (elements.couponDiscountInput.value != 0) {
+                    elements.couponDiscountInput.value = 0;
+                    console.log('❌ 未達門檻（需滿', couponMinSpend, '，實際', actualSpend, '），折抵歸零');
+                }
+            }
+        }
+    } else if (isTicketMode && elements.couponDiscountInput) {
+        // 🔥 餐券模式：活動折抵歸零
+        elements.couponDiscountInput.value = 0;
+    }
+    
+    const finalCouponDiscount = parseFloat(elements.couponDiscountInput?.value) || 0;
+    
+    // ---------- 9. 點數計算邏輯 ----------
     if (isTicketMode) {
-        basePoints = Math.floor(buyTicketAmount * earnRate * levelRate * eventMultiplier);
-        totalNewPoints = basePoints + couponBonus;
-        tipMessage = '🍽️ 餐券模式：僅計算餐券購買點數';
+        // ===== 餐券模式 =====
+        // 🔥 使用 ticketRate 計算，不使用優惠券
+        basePoints = Math.floor(buyTicketAmount * ticketRate * levelRate * eventMultiplier);
+        totalNewPoints = basePoints;  // 🔥 不加 couponBonus
+        tipMessage = '🍽️ 餐券模式：僅計算餐券購買點數，不適用優惠券';
         tipClass = 'redeem-tip tip-ticket-mode';
         maxRedeem = 0;
         redeem = 0;
-        console.log(`🍽️ 餐券模式: 購買 ${buyTicketAmount} 元 → ${basePoints} 點 + 活動贈點 ${couponBonus} 點`);
+        finalTicketSpend = buyTicketAmount;  // 🔥 讓 submitData 正確送出
+        
+        console.log(`🍽️ 餐券模式: 購買 ${buyTicketAmount} 元 → ${basePoints} 點（不適用優惠券）`);
+        
+        // 🔥 更新 coupon-status-display（如果有優惠券）
+        if (window.activeCoupon && elements.couponStatusDisplay) {
+            elements.couponStatusDisplay.innerHTML = '🍽️ 餐券模式，優惠券已保留，下次使用';
+            elements.couponStatusDisplay.style.color = '#666';
+            elements.couponStatusDisplay.className = 'coupon-status no-coupon';
+        }
+        
     } else {
         // ===== 一般消費模式 =====
-        const baseForRedeem = totalSpend - ticketSpend - couponDiscount;
+        const baseForRedeem = totalSpend - ticketSpend - finalCouponDiscount;
         const minSpendThreshold = shopCode === 'SWO' ? 500 : 1500;
         
         if (maxRate <= 0) {
@@ -1408,16 +1432,16 @@ function doCalc() {
         
         redeem = Math.min(redeemAmount, maxRedeem);
         
-        // 🔥 優惠券折抵判斷（總額 - 餐券 - 點數折抵）
+        // 優惠券折抵判斷
         const baseForCoupon = totalSpend - ticketSpend - redeem;
-       
         
         if (couponType === '消費折抵' && couponMinSpend > 0) {
             if (baseForCoupon >= couponMinSpend) {
-                couponDiscountAmount = couponDiscount;
-                console.log(`✅ 折抵券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，折抵 ${couponDiscount} 元`);
+                couponDiscountAmount = finalCouponDiscount;
+                console.log(`✅ 折抵券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，折抵 ${finalCouponDiscount} 元`);
             } else {
                 console.log(`❌ 折抵券未達標（${baseForCoupon} 元 < ${couponMinSpend} 元）`);
+                couponDiscountAmount = 0;
             }
         } else if (couponType === '贈點' && couponMinSpend > 0) {
             if (baseForCoupon >= couponMinSpend) {
@@ -1425,28 +1449,26 @@ function doCalc() {
                 console.log(`✅ 贈點券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，贈送 ${couponBonus} 點`);
             } else {
                 console.log(`❌ 贈點券未達標（${baseForCoupon} 元 < ${couponMinSpend} 元）`);
+                finalCouponBonus = 0;
             }
         }
         
-        // 🔥 更新活動折抵欄位
+        // 更新活動折抵欄位
         if (elements.couponDiscountInput) {
             elements.couponDiscountInput.value = couponDiscountAmount;
         }
         
-        // 🔥 計算最終實際付款金額
+        // 計算最終實際付款金額
         const finalActual = totalSpend - ticketSpend - redeem - couponDiscountAmount;
         
-        // 🔥 計算獲得點數
+        // 計算獲得點數
         basePoints = Math.floor(Math.max(0, finalActual) * earnRate * levelRate * eventMultiplier);
         totalNewPoints = basePoints + finalCouponBonus;
         
         console.log(`💳 一般模式: 總額 ${totalSpend} - 餐券 ${ticketSpend} - 點數 ${redeem} - 優惠券 ${couponDiscountAmount} = 實付 ${finalActual} 元 → ${basePoints} 點 + 贈點 ${finalCouponBonus} 點 = ${totalNewPoints} 點`);
     }
     
-    // ============================================================
-    //  🔥 10. 更新 UI（統一處理）
-    // ============================================================
-    
+    // ---------- 10. 更新 UI ----------
     if (elements.tipEl) {
         elements.tipEl.innerText = tipMessage;
         elements.tipEl.className = tipClass;
@@ -1460,9 +1482,11 @@ function doCalc() {
         elements.redeemInput.value = redeem;
     }
     
-    // 🔥 更新 newPtsEl
+    // 更新 newPtsEl
     if (elements.newPtsEl) {
-        if (finalCouponBonus > 0) {
+        if (isTicketMode) {
+            elements.newPtsEl.innerHTML = `${basePoints} 點（餐券回饋）`;
+        } else if (finalCouponBonus > 0) {
             elements.newPtsEl.innerHTML = 
                 `${basePoints} 點 + 活動贈點 <b style="color:#ff6b00;">${finalCouponBonus}</b> 點 = ` +
                 `<b style="color:#1a73e8;">${totalNewPoints}</b> 點`;
@@ -1471,13 +1495,8 @@ function doCalc() {
         }
     }
     
-    // 🔥 更新 bonusPointsDisplay
     if (elements.bonusPointsDisplay) {
-        if (finalCouponBonus > 0) {
-            elements.bonusPointsDisplay.style.display = 'inline';
-        } else {
-            elements.bonusPointsDisplay.style.display = 'none';
-        }
+        elements.bonusPointsDisplay.style.display = (finalCouponBonus > 0 && !isTicketMode) ? 'inline' : 'none';
     }
     
     if (elements.afterPtsEl) {
@@ -1486,9 +1505,8 @@ function doCalc() {
         elements.afterPtsEl.innerText = `${afterPoints} 點`;
     }
     
-    // 🔥 更新 couponBonusDisplay
     if (elements.couponBonusDisplay) {
-        if (finalCouponBonus > 0) {
+        if (finalCouponBonus > 0 && !isTicketMode) {
             elements.couponBonusDisplay.textContent = `🎁 活動贈點 +${finalCouponBonus} 點`;
             elements.couponBonusDisplay.style.display = 'block';
         } else {
@@ -1496,13 +1514,11 @@ function doCalc() {
         }
     }
     
-    // ============================================================
-    //  🔥 11. 返回計算結果
-    // ============================================================
+    // ---------- 11. 返回計算結果 ----------
     const result = {
         isTicketMode,
         totalSpend,
-        ticketSpend,
+        ticketSpend: finalTicketSpend,  // 🔥 餐券模式 = buyTicketAmount
         couponDiscount: finalCouponDiscount,
         couponMinSpend,
         couponName,
@@ -1513,13 +1529,13 @@ function doCalc() {
         couponBonus: couponBonus,
         finalCouponBonus: finalCouponBonus,
         totalNewPoints,
-        baseAmount,
+        baseAmount: totalSpend - ticketSpend - finalCouponDiscount,
         afterPoints: (currentPoints || 0) - redeem + totalNewPoints,
-        couponEligible: couponType && couponMinSpend > 0 && (totalSpend - ticketSpend) >= couponMinSpend
+        couponEligible: !isTicketMode && couponType && couponMinSpend > 0 && (totalSpend - ticketSpend) >= couponMinSpend,
+        buyTicketAmount: buyTicketAmount  // 🔥 額外回傳購買餐券金額
     };
     
     window.calcResult = result;
-    
     console.log('📊 計算結果:', result);
     return result;
 }
@@ -1598,19 +1614,23 @@ if (fromCoupon === 'true') {
         baseAmount
     } = calcResult;
     
-   // ---------- 3. 檢查優惠券門檻 ----------
-    const couponMinSpend = window.activeCoupon?.minSpend || 0;
-    const couponDocId = window.activeCoupon?.couponDocId || '';
-    const couponType = window.activeCoupon?.type || '';
-    
-    // ✅ 預設可以使用優惠券
-    let couponEligible = true;
-    
-    if (couponType && couponMinSpend > 0 && baseAmount < couponMinSpend) {
-        // ✅ 未達門檻：提示但繼續結帳（優惠券不使用）
-        showToast(`⚠️ 本次消費未達門檻（需滿 ${couponMinSpend} 元），優惠券未使用，使用期限內可用`);
-        couponEligible = false;  // ← 標記為不使用優惠券
-    }
+// ---------- 3. 檢查優惠券門檻 ----------
+const couponMinSpend = window.activeCoupon?.minSpend || 0;
+const couponDocId = window.activeCoupon?.couponDocId || '';
+const couponType = window.activeCoupon?.type || '';
+
+// 🔥 預設可以使用優惠券
+let couponEligible = true;
+
+// 🔥 餐券模式跳過優惠券
+if (calcResult.isTicketMode) {
+    couponEligible = false;
+    console.log('🍽️ 餐券模式，跳過優惠券');
+} else if (couponType && couponMinSpend > 0 && baseAmount < couponMinSpend) {
+    // 未達門檻：提示但繼續結帳（優惠券不使用）
+    showToast(`⚠️ 本次消費未達門檻（需滿 ${couponMinSpend} 元），優惠券未使用，使用期限內可用`);
+    couponEligible = false;
+}
     
     // ---------- 4. UI 鎖定 ----------
     const btn = document.getElementById('submitBtn');
