@@ -263,7 +263,7 @@
 </div>
 
 <div id="mainUI" class="card">
-    <!-- 🌟 頂部橫向配置 (店名、掃描器、按鈕群) -->
+    <!-- 🌟 頂部橫向配置 -->
     <div class="top-header-bar">
         <div class="shop-brand-area">
             <h2 style="margin:0;"><span id="shop-name">老娘鍋河堤店</span></h2>
@@ -296,7 +296,7 @@
     <!-- 🌟 左右雙欄主體內容 -->
     <div class="card-layout">
         
-        <!-- 【左欄】：會員資訊、優惠券 -->
+        <!-- 【左欄】：會員資訊、優惠券資訊 (補回!) -->
         <div class="column-left">
             <!-- 👤 會員資訊 -->
             <div class="member-info" id="member-ui">
@@ -325,14 +325,14 @@
             </div>
         </div>
 
-        <!-- 【右欄】：模式勾選、2x2 輸入框、結算資訊與送出按鈕 -->
+        <!-- 【右欄】：模式勾選、2x2 輸入框、結算與按鈕 -->
         <div class="column-right">
             <div id="form-ui" class="locked">
                 <label style="background:#fff3e0; padding:8px 12px; display:block; border-radius:8px; margin-bottom:12px; cursor:pointer; border:1px solid #ff9800; font-size: 13px;">
                     <input type="checkbox" id="ticketMode" onchange="toggleMode()" style="width:auto;"> <b>勾選：購買餐券模式 (無股東分紅)</b>
                 </label>
 
-             <!-- 2x2 左右並排輸入區 (完美對應您的順序) -->
+                <!-- 2x2 左右並排輸入區 -->
                 <div class="inputs-grid" id="normal-fields">
                     <div class="input-group">
                         <label>1. 本日消費總額</label>
@@ -352,6 +352,7 @@
                         <div id="redeemTip" class="redeem-tip tip-normal"></div>
                     </div>
                 </div>
+
                 <div class="info-box" style="margin-top: 12px;">
                     <div id="pointsDisplay">
                         本次預計發放點數：<b id="new-pts" style="color:#1a73e8;">0</b> 點
