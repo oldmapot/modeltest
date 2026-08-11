@@ -5,39 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>老娘領地 - 電腦版</title>
    <style>
-    /* ===== 全域設定 ===== */
+/* ===== 全域設定 ===== */
     body { 
         font-family: "Microsoft JhengHei", sans-serif; 
         padding: 15px; 
         background: #f4f7f6; 
         margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
     }
-      
-    /* ===== 卡片容器 ===== */
-    .card { 
-        background: white; 
-        padding: 20px; 
-        border-radius: 12px; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
-        max-width: 500px; 
-        margin: auto; 
+     
+    /* ===== 卡片容器 (電腦版寬螢幕卡片，支援內部雙欄與捲軸) ===== */
+    .card {
+        background: white;
+        padding: 24px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+        width: 100%;
+        max-width: 980px; /* 放寬最大寬度以容納左右雙欄 */
+        max-height: 92vh; /* 限制最大高度，避免超出畫面 */
+        overflow-y: auto; /* 內容過多時內部滾動 */
+        box-sizing: border-box;
+        margin: auto;
     }
-    
+
+    /* ===== 左右雙欄網格佈局 (對應配置.jpg) ===== */
+    .card-layout {
+        display: grid;
+        grid-template-columns: 1fr 1.3fr; /* 左窄右寬，完美比例 */
+        gap: 20px;
+        align-items: start;
+    }
+
+    .column-left {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .column-right {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
     /* ===== 標頭 ===== */
     .header { 
         text-align: center; 
         border-bottom: 2px solid #eee; 
-        margin-bottom: 15px; 
-        padding-bottom: 10px; 
+        margin-bottom: 20px; 
+        padding-bottom: 12px; 
     }
-    
+     
     .header-top { 
         display: flex; 
         justify-content: flex-end; 
         gap: 6px; 
         margin-bottom: 5px; 
     }
-    
+     
     .header-btn { 
         font-size: 12px; 
         padding: 3px 6px; 
@@ -45,12 +74,12 @@
         border-radius: 4px; 
         cursor: pointer; 
     }
-    
+     
     .btn-logout { 
         background: #ff4444; 
         color: #fff; 
     }
-    
+     
     .role-badge { 
         background: #333; 
         color: white; 
@@ -58,117 +87,82 @@
         border-radius: 4px; 
         font-size: 12px; 
     }
-    
+     
     /* ===== 按鈕 ===== */
     .btn { 
         width: 100%; 
-        padding: 15px; 
+        padding: 14px; 
         border: none; 
         border-radius: 8px; 
-        font-size: 18px; 
+        font-size: 16px; 
         font-weight: bold; 
         cursor: pointer; 
-        margin-bottom: 15px; 
         transition: all 0.3s ease;
     }
-    
+     
     .btn:active {
         transform: scale(0.98);
     }
-    
-    .btn-scan { 
-        background: #00b900; 
-        color: white; 
-    }
-    
-    .btn-scan:hover {
-        background: #009900;
-    }
-    
+     
     .btn-submit { 
         background: #1a73e8; 
         color: white; 
-        margin-top: 10px; 
+        margin-top: 5px; 
     }
-    
+     
     .btn-submit:hover:not(:disabled) {
         background: #1557b0;
     }
-    
+     
     .btn-submit:disabled { 
         background: #ccc; 
         cursor: not-allowed; 
     }
-    
-    .button-row { 
-        display: flex; 
-        gap: 12px; 
-        margin-bottom: 15px; 
-    }
-    
-    .btn-scan { 
-        flex: 3; 
-        margin-bottom: 0; 
-    }
-    
-    .btn-reset { 
-        flex: 1; 
-        background: #666; 
-        color: white; 
-        padding: 15px; 
-        border: none; 
-        border-radius: 8px; 
-        font-size: 16px; 
-        font-weight: bold; 
-        cursor: pointer; 
-    }
-    
-    .btn-reset:hover {
-        background: #555;
-    }
-    
+     
     /* ===== 表單 ===== */
     .input-group { 
-        margin-bottom: 15px; 
+        margin-bottom: 12px; 
     }
-    
+     
     label { 
         display: block; 
-        margin-bottom: 5px; 
+        margin-bottom: 4px; 
         font-weight: bold; 
-        font-size: 14px; 
+        font-size: 13px; 
     }
-    
+     
     input { 
         width: 100%; 
-        padding: 12px; 
+        padding: 10px 12px; 
         border: 1px solid #ddd; 
         border-radius: 8px; 
-        font-size: 16px; 
+        font-size: 15px; 
         box-sizing: border-box; 
         transition: border-color 0.3s ease;
     }
-    
+     
     input:focus {
         border-color: #1a73e8;
         outline: none;
         box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
     }
-    
+     
     .locked { 
         opacity: 0.4; 
         pointer-events: none; 
     }
-    
+     
     /* ===== 會員資訊 ===== */
     .member-info { 
         background: #fff9c4; 
-        padding: 12px; 
-        border-radius: 8px; 
-        margin-bottom: 15px; 
+        padding: 14px; 
+        border-radius: 10px; 
+        border: 1px solid #fbc02d;
         display: none; 
+        font-size: 15px;
+        line-height: 1.6;
     }
-    
+     
     .member-level { 
         display: inline-block; 
         background: #ff9800; 
@@ -178,15 +172,14 @@
         font-size: 12px; 
         margin-left: 8px; 
     }
-    
+     
     .info-box { 
         background: #e8f0fe; 
-        padding: 15px; 
+        padding: 12px 15px; 
         border-radius: 10px; 
-        margin-top: 15px; 
-        font-size: 15px; 
+        font-size: 14px; 
     }
-    
+     
     /* ===== 優惠券狀態顯示 ===== */
     .coupon-status {
         padding: 8px 12px;
@@ -196,64 +189,32 @@
         font-weight: 500;
         transition: all 0.3s ease;
     }
-    
-    .coupon-status.eligible {
-        background-color: #e8f5e9;
-        border-left: 4px solid #2e7d32;
-        color: #2e7d32;
-    }
-    
-    .coupon-status.not-eligible {
-        background-color: #fff3e0;
-        border-left: 4px solid #e65100;
-        color: #e65100;
-    }
-    
-    .coupon-status.no-coupon {
-        background-color: #f5f5f5;
-        border-left: 4px solid #999;
-        color: #666;
-    }
-    
+     
     /* ===== 折抵提示 ===== */
     .redeem-tip {
-        margin-top: 8px;
-        padding: 8px 12px;
-        border-radius: 8px;
-        font-size: 13px;
+        margin-top: 6px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 12px;
         font-weight: bold;
-        transition: all 0.3s ease;
     }
-    
-    .redeem-tip.tip-normal {
-        background-color: #e3f2fd;
-        color: #0d47a1;
-    }
-    
-    .redeem-tip.tip-no-redeem {
-        background-color: #ffebee;
-        color: #b71c1c;
-    }
-    
-    .redeem-tip.tip-ticket-mode {
-        background-color: #f3e5f5;
-        color: #4a148c;
-    }
-    
-    /* ===== Modal ===== */
-    #customModal { 
+     
+    .redeem-tip.tip-normal { background-color: #e3f2fd; color: #0d47a1; }
+    .redeem-tip.tip-no-redeem { background-color: #ffebee; color: #b71c1c; }
+    .redeem-tip.tip-ticket-mode { background-color: #f3e5f5; color: #4a148c; }
+     
+    /* ===== Modal & 遮罩 ===== */
+    #customModal, #lockScreen, #loadingOverlay { 
         display: none; 
         position: fixed; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: 100%; 
+        top: 0; left: 0; 
+        width: 100%; height: 100%; 
         background: rgba(0,0,0,0.7); 
         z-index: 9999; 
         justify-content: center; 
         align-items: center; 
     }
-    
+     
     .modal-content { 
         background: white; 
         width: 85%; 
@@ -261,20 +222,8 @@
         padding: 25px; 
         border-radius: 15px; 
         text-align: center; 
-        animation: modalIn 0.3s ease;
     }
-    
-    @keyframes modalIn {
-        from {
-            transform: scale(0.8);
-            opacity: 0;
-        }
-        to {
-            transform: scale(1);
-            opacity: 1;
-        }
-    }
-    
+     
     .modal-btn { 
         background: #00b900; 
         color: white; 
@@ -286,72 +235,25 @@
         cursor: pointer; 
         width: 100%; 
     }
-    
-    .modal-btn:hover {
-        background: #009900;
-    }
-    
-    /* ===== 隱藏輸入 ===== */
-    #hiddenIdInput { 
-        position: absolute; 
-        left: -9999px; 
-        opacity: 0; 
-    }
-    
-    /* ===== Loading 遮罩 ===== */
-    #loadingOverlay { 
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: 100%; 
-        background: rgba(0,0,0,0.6); 
-        z-index: 10000; 
-        display: none; 
-        justify-content: center; 
-        align-items: center; 
-        flex-direction: column; 
-    }
-    
+     
     .loading-spinner { 
-        width: 50px; 
-        height: 50px; 
+        width: 50px; height: 50px; 
         border: 5px solid #f3f3f3; 
         border-top: 5px solid #00b900; 
         border-radius: 50%; 
         animation: spin 1s linear infinite; 
     }
-    
+     
     @keyframes spin { 
         0% { transform: rotate(0deg); } 
         100% { transform: rotate(360deg); } 
     }
-    
-    .loading-text { 
-        color: white; 
-        margin-top: 15px; 
-        font-size: 16px; 
-    }
-    
-    /* ===== 響應式設計 ===== */
-    @media (max-width: 480px) {
-        body {
-            padding: 10px;
-        }
-        .card {
-            padding: 15px;
-        }
-        .btn {
-            font-size: 16px;
-            padding: 12px;
-        }
-        input {
-            font-size: 14px;
-            padding: 10px;
-        }
-        .modal-content {
-            padding: 20px;
-        }
+
+    /* ===== 手機版響應式設計 (自動轉為單欄上下堆疊) ===== */
+    @media (max-width: 768px) {
+        body { padding: 8px; }
+        .card { padding: 15px; max-height: none; }
+        .card-layout { grid-template-columns: 1fr; gap: 15px; }
     }
 </style>
     <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -430,141 +332,111 @@
 </div>
 
 <div id="mainUI" class="card">
+    <!-- 頂部標頭（跨左右兩欄） -->
     <div class="header">
-       <div class="header-top">
-    <button class="header-btn" onclick="showSwitchAccount()" style="background:#ff9800; color:#fff;">🔄 切換帳號</button>
-    <button class="header-btn btn-logout" onclick="logout()">登出</button>
-    </div>
+        <div class="header-top">
+            <button class="header-btn" onclick="showSwitchAccount()" style="background:#ff9800; color:#fff;">🔄 切換帳號</button>
+            <button class="header-btn btn-logout" onclick="logout()">登出</button>
+        </div>
         <h2 style="margin:0;"><span id="shop-name">老娘領地</span></h2>
         <div style="font-size:14px; color:#666; margin-top:5px;">
             <span id="role-text" class="role-badge">夥伴</span>：<span id="staff-name">-</span>
         </div>
     </div>
-<!-- ============================================================
-     📷 掃描狀態區塊（電腦版 - 不可手動輸入）
-     ============================================================ -->
-<div id="scanStatusBar" style="
-    background: #f8f9fa;
-    border-radius: 10px;
-    border: 2px solid #e0e0e0;
-    padding: 10px 14px;
-    margin-bottom: 15px;
-    position: relative;
-">
-   
-    
-    <!-- 可見的掃描狀態顯示區 -->
-    <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 16px;">📷</span>
-        <span id="scanStatusDot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #28a745;"></span>
-        <span id="scanStatusText" style="font-size: 13px; color: #28a745; font-weight: 500;">就緒</span>
+
+    <!-- 🌟 核心：左右雙欄網格容器 -->
+    <div class="card-layout">
         
-        <div id="scanErrorMessage" style="
-            display: none;
-            margin-left: auto;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            background: #ffe5e5;
-            border: 1px solid #ff4444;
-            color: #cc0000;
-        ">
-            ❌ <span id="scanErrorText">錯誤訊息</span>
-        </div>
-    </div>
-    
-    <!-- 掃描提示 -->
-    <div style="
-        margin-top: 6px;
-        font-size: 12px;
-        color: #999;
-        text-align: center;
-        border-top: 1px dashed #ddd;
-        padding-top: 6px;
-    ">
-        💡 請將 QR Code 對準掃碼槍，系統會自動偵測
-    </div>
-</div>
-
-    <!-- ✅ 重新整理按鈕 -->
-    <div style="display: flex; gap: 12px; margin-bottom: 15px;">
-        <button onclick="forceReset()" style="
-            width: 100%;
-            padding: 10px;
-            background: #666;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-        ">🔄 重新整理</button>
-    </div>
-
-    <div class="member-info" id="member-ui">
-        顧客：<b id="cus-name">-</b> <span id="member-level" class="member-level"></span><br>
-        現有資產：<b id="cus-pts" style="color:red;">0</b> 點<br>
-        累積消費：<b id="cus-total">0</b> 元
-    </div>
-    
-    <div id="coupon-info" style="display:none; background:#fff3e0; border:2px solid #ff9800; border-radius:10px; padding:12px 15px; margin-bottom:15px;">
-        <div style="font-weight:bold; color:#e65100; font-size:16px;">
-            🎫 使用優惠券：<span id="coupon-name-display">載入中...</span>
-        </div>
-        <div style="font-size:14px; color:#555; margin-top:2px;">
-            <span id="coupon-content-display">優惠資料讀取中...</span>
-        </div>
-        <div style="font-size:14px; color:#666; margin-top:4px;">
-            滿 <span id="coupon-min-spend-display">--</span> 元 <span id="coupon-action-label">贈</span> <span id="coupon-action-value-display">--</span> <span id="coupon-action-unit">點</span>
-        </div>
-        <div id="coupon-status-display" style="font-size:13px; margin-top:6px; font-weight:bold;">
-            請輸入消費金額以確認門檻
-        </div>
-        <div id="coupon-rule-note" style="font-size:12px; color:#999; margin-top:2px;">
-            ⚠️ 未達門檻時，優惠券將保留，下次使用
-        </div>
-    </div>
-    
-    <div id="form-ui" class="locked">
-        <label style="background:#fff3e0; padding:10px; display:block; border-radius:8px; margin-bottom:15px; cursor:pointer; border:1px solid #ff9800;">
-            <input type="checkbox" id="ticketMode" onchange="toggleMode()" style="width:auto;"> <b>勾選：購買餐券模式 (無股東分紅)</b>
-        </label>
-
-        <div id="normal-fields">
-            <div class="input-group">
-                <label>1. 本日消費總額</label>
-                <input type="text" id="totalSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入消費金額" style="...">
+        <!-- 【左欄】：放 掃描狀態、會員資訊、優惠券 -->
+        <div class="column-left">
+            <!-- 📷 掃描狀態區塊 -->
+            <div id="scanStatusBar" style="background: #f8f9fa; border-radius: 10px; border: 2px solid #e0e0e0; padding: 10px 14px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 16px;">📷</span>
+                    <span id="scanStatusDot" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #28a745;"></span>
+                    <span id="scanStatusText" style="font-size: 13px; color: #28a745; font-weight: 500;">就緒</span>
+                    <div id="scanErrorMessage" style="display: none; margin-left: auto; padding: 4px 10px; border-radius: 4px; font-size: 12px; background: #ffe5e5; border: 1px solid #ff4444; color: #cc0000;">
+                        ❌ <span id="scanErrorText">錯誤訊息</span>
+                    </div>
+                </div>
+                <div style="margin-top: 6px; font-size: 11px; color: #999; text-align: center; border-top: 1px dashed #ddd; padding-top: 6px;">
+                    💡 請將 QR Code 對準掃碼槍，系統會自動偵測
+                </div>
             </div>
-            <div class="input-group">
-                <label>2. 活動折抵消費 <span id="coupon-discount-label" style="color:#ff9800;font-size:12px;"></span></label>
-                <input type="text" id="couponDiscount" inputmode="decimal" oninput="doCalc()" placeholder="0" readonly style="background:#f5f5f5;cursor:not-allowed;user-select:none;">
-                <div style="font-size:12px;color:#999;margin-top:4px;">💡 此欄位由優惠券自動帶入，不可編輯</div>
+
+            <!-- 👤 會員資訊 -->
+            <div class="member-info" id="member-ui">
+                顧客：<b id="cus-name">-</b> <span id="member-level" class="member-level"></span><br>
+                現有資產：<b id="cus-pts" style="color:red;">0</b> 點<br>
+                累積消費：<b id="cus-total">0</b> 元
             </div>
-            <div class="input-group">
-                <label>3. 使用餐券金額</label>
-                <input type="text" id="ticketSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入餐券支付額" style="...">
+            
+            <!-- 🎫 優惠券資訊 -->
+            <div id="coupon-info" style="display:none; background:#fff3e0; border:2px solid #ff9800; border-radius:10px; padding:12px 15px;">
+                <div style="font-weight:bold; color:#e65100; font-size:15px;">
+                    🎫 使用優惠券：<span id="coupon-name-display">載入中...</span>
+                </div>
+                <div style="font-size:13px; color:#555; margin-top:2px;">
+                    <span id="coupon-content-display">優惠資料讀取中...</span>
+                </div>
+                <div style="font-size:13px; color:#666; margin-top:4px;">
+                    滿 <span id="coupon-min-spend-display">--</span> 元 <span id="coupon-action-label">贈</span> <span id="coupon-action-value-display">--</span> <span id="coupon-action-unit">點</span>
+                </div>
+                <div id="coupon-status-display" style="font-size:12px; margin-top:6px; font-weight:bold;">
+                    請輸入消費金額以確認門檻
+                </div>
+                <div id="coupon-rule-note" style="font-size:11px; color:#999; margin-top:2px;">
+                    ⚠️ 未達門檻時，優惠券將保留，下次使用
+                </div>
             </div>
-            <div class="input-group">
-                <label>4. 折抵點數 (上限：<span id="max-hint" style="color:blue;">0</span> 點)</label>
-                <input type="text" id="redeemAmount" inputmode="numeric" oninput="doCalc()" placeholder="欲折抵點數" style="...">
-                <div id="redeemTip" class="redeem-tip tip-normal"></div>
+
+            <!-- 🔄 重新整理按鈕 -->
+            <button onclick="forceReset()" style="width: 100%; padding: 10px; background: #666; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">🔄 重新整理</button>
+        </div>
+
+        <!-- 【右欄】：放 模式勾選、四大輸入框、試算金額與送出按鈕 -->
+        <div class="column-right">
+            <div id="form-ui" class="locked">
+                <label style="background:#fff3e0; padding:10px; display:block; border-radius:8px; margin-bottom:12px; cursor:pointer; border:1px solid #ff9800; font-size: 13px;">
+                    <input type="checkbox" id="ticketMode" onchange="toggleMode()" style="width:auto;"> <b>勾選：購買餐券模式 (無股東分紅)</b>
+                </label>
+
+                <div id="normal-fields">
+                    <div class="input-group">
+                        <label>1. 本日消費總額</label>
+                        <input type="text" id="totalSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入消費金額">
+                    </div>
+                    <div class="input-group">
+                        <label>2. 活動折抵消費 <span id="coupon-discount-label" style="color:#ff9800;font-size:11px;"></span></label>
+                        <input type="text" id="couponDiscount" inputmode="decimal" oninput="doCalc()" placeholder="0" readonly style="background:#f5f5f5;cursor:not-allowed;user-select:none;">
+                    </div>
+                    <div class="input-group">
+                        <label>3. 使用餐券金額</label>
+                        <input type="text" id="ticketSpend" inputmode="decimal" oninput="doCalc()" placeholder="輸入餐券支付額">
+                    </div>
+                    <div class="input-group">
+                        <label>4. 折抵點數 (上限：<span id="max-hint" style="color:blue;">0</span> 點)</label>
+                        <input type="text" id="redeemAmount" inputmode="numeric" oninput="doCalc()" placeholder="欲折抵點數">
+                        <div id="redeemTip" class="redeem-tip tip-normal"></div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <div id="pointsDisplay">
+                        本次預計發放點數：<b id="new-pts" style="color:#1a73e8;">0</b> 點
+                        <span id="bonus-points-display" style="display:none;color:#ff6b00;"></span>
+                    </div>
+                    <div style="margin-top:4px;">
+                        結帳後總資產：<b id="after-pts">0</b> 點
+                    </div>
+                </div>
+
+                <button class="btn btn-submit" id="submitBtn" onclick="submitData()">確認過卡</button>
             </div>
         </div>
 
-        <div class="info-box">
-            <div id="pointsDisplay">
-                本次預計發放點數：<b id="new-pts" style="color:#1a73e8;">0</b> 點
-                <span id="bonus-points-display" style="display:none;color:#ff6b00;"></span>
-            </div>
-            <div style="margin-top:5px;">
-                結帳後總資產：<b id="after-pts">0</b> 點
-            </div>
-        </div>
-
-        <button class="btn btn-submit" id="submitBtn" onclick="submitData()">確認過卡</button>
     </div>
 </div>
-
 <script>
     // ============================================================
     //  GAS URL
