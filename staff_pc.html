@@ -1676,33 +1676,32 @@ if (calcResult.isTicketMode) {
     // ---------- 5. 產生交易 ID ----------
     const transactionId = generateTransactionId(customerId);
     
-    // ---------- 6. 建立請求參數 ----------
-    const params = new URLSearchParams({
-        action: 'addPointsWithInfo',
-        customerId: customerId,
-        branch: staff.branch || '',
-        staffName: staff.name || '',
-        // 🔥 根據模式決定分類
-        category: isTicketMode ? '購買餐券' : '一般消費',
-        totalSpend: totalSpend,
-        ticketSpend: ticketSpend,
-        redeemAmount: redeem,
-        couponDiscount: couponEligible ? couponDiscount : 0,  // ← 不符合門檻則折抵歸零
-        earnRate: config?.earnRate || 0.03,
-        levelRate: config?.levelRate || 1,
-        eventMultiplier: config?.eventMultiplier || 1,
-        loginId: staff.loginId || '',
-        deviceId: staff.deviceId || '',
-        transactionId: transactionId,
-        couponDocId: couponEligible ? couponDocId : '',  // ← 不符合門檻則不傳
-        couponMinSpend: couponMinSpend,
-        couponBonus: couponEligible ? couponBonus : 0,   // ← 不符合門檻則贈點歸零
-        couponDiscount: couponEligible ? couponDiscount : 0,
-        couponType: couponEligible ? couponType : '',     // ← 不符合門檻則不傳
-        calculatedPoints: totalNewPoints,
-        basePoints: basePoints,
-        isTicketMode: isTicketMode
-    });
+// ---------- 6. 建立請求參數 ----------
+const params = new URLSearchParams({
+    action: 'addPointsWithInfo',
+    customerId: customerId,
+    branch: staff.branch || '',
+    staffName: staff.name || '',
+    category: isTicketMode ? '購買餐券' : '一般消費',
+    totalSpend: totalSpend,  // ← 直接用 calcResult 的 totalSpend
+    ticketSpend: isTicketMode ? 0 : ticketSpend,  // ← 餐券模式傳 0
+    redeemAmount: redeem,
+    couponDiscount: couponEligible ? couponDiscount : 0,
+    earnRate: config?.earnRate || 0.03,
+    levelRate: config?.levelRate || 1,
+    eventMultiplier: config?.eventMultiplier || 1,
+    loginId: staff.loginId || '',
+    deviceId: staff.deviceId || '',
+    transactionId: transactionId,
+    couponDocId: couponEligible ? couponDocId : '',
+    couponMinSpend: couponMinSpend,
+    couponBonus: couponEligible ? couponBonus : 0,
+    couponDiscount: couponEligible ? couponDiscount : 0,
+    couponType: couponEligible ? couponType : '',
+    calculatedPoints: totalNewPoints,
+    basePoints: basePoints,
+    isTicketMode: isTicketMode
+});
 // ---------- 7. 發送請求 ----------
     try {
         console.log(`📤 提交集點請求，交易ID: ${transactionId}`);
