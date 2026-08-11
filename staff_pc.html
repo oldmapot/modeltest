@@ -363,10 +363,10 @@
         </div>
     </div>
 
-    <!-- 🌟 左右雙欄主體內容 -->
+<!-- 🌟 左右雙欄主體內容 -->
     <div class="card-layout">
         
-        <!-- 【左欄】：會員資訊、優惠券資訊 (補回!) -->
+        <!-- 【左欄】：會員資訊、優惠券資訊、餐券模式勾選 -->
         <div class="column-left">
             <!-- 👤 會員資訊 -->
             <div class="member-info" id="member-ui">
@@ -393,16 +393,19 @@
                     ⚠️ 未達門檻時，優惠券將保留，下次使用
                 </div>
             </div>
-        </div>
 
-        <!-- 【右欄】：模式勾選、2x2 輸入框、結算與按鈕 -->
-        <div class="column-right">
-            <div id="form-ui" class="locked">
-                <label style="background:#fff3e0; padding:8px 12px; display:block; border-radius:8px; margin-bottom:12px; cursor:pointer; border:1px solid #ff9800; font-size: 13px;">
+            <!-- 🔄 購買餐券模式移至左側下方 -->
+            <div id="ticket-mode-container" style="background:#fff3e0; padding:10px 12px; border-radius:10px; border:1px solid #ff9800; font-size:13px;">
+                <label style="cursor:pointer; margin:0; display:flex; align-items:center; gap:6px;">
                     <input type="checkbox" id="ticketMode" onchange="toggleMode()" style="width:auto;"> <b>勾選：購買餐券模式 (無股東分紅)</b>
                 </label>
+            </div>
+        </div>
 
-                <!-- 2x2 左右並排輸入區 -->
+        <!-- 【右欄】：精簡版 2x2 輸入區、結算與按鈕 -->
+        <div class="column-right">
+            <div id="form-ui" class="locked">
+                <!-- 2x2 左右並排輸入區 (調整寬度更精簡) -->
                 <div class="inputs-grid" id="normal-fields">
                     <div class="input-group">
                         <label>1. 本日消費總額</label>
@@ -423,22 +426,21 @@
                     </div>
                 </div>
 
-                <div class="info-box" style="margin-top: 12px;">
+                <div class="info-box" style="margin-top: 10px; padding: 10px 12px;">
                     <div id="pointsDisplay">
                         本次預計發放點數：<b id="new-pts" style="color:#1a73e8;">0</b> 點
                         <span id="bonus-points-display" style="display:none;color:#ff6b00;"></span>
                     </div>
-                    <div style="margin-top:4px;">
+                    <div style="margin-top:2px;">
                         結帳後總資產：<b id="after-pts">0</b> 點
                     </div>
                 </div>
 
-                <button class="btn btn-submit" id="submitBtn" onclick="submitData()" style="margin-top: 12px;">確認過卡</button>
+                <button class="btn btn-submit" id="submitBtn" onclick="submitData()" style="margin-top: 10px; padding: 10px;">確認過卡</button>
             </div>
         </div>
 
     </div>
-</div>
 <script>
     // ============================================================
     //  GAS URL
