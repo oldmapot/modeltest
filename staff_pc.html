@@ -415,7 +415,7 @@
         <!-- 【右欄】：精簡版 2x2 輸入區、結算與按鈕 -->
         <div class="column-right">
             <div id="form-ui" class="locked">
-<!-- 2x2 左右並排輸入區 -->
+ <!-- 2x2 左右並排輸入區 -->
 <div class="inputs-grid" id="normal-fields">
     <div class="input-group">
         <label>1. 本日消費總額</label>
@@ -1248,19 +1248,8 @@ if (scanMode === 'coupon') {
   
    function toggleMode() {
     const isTicket = document.getElementById('ticketMode').checked;
-    
-    // 🔥 切換「使用餐券金額」和「購買餐券金額」
-    const ticketSpendGroup = document.getElementById('ticket-spend-group');
-    const buyTicketGroup = document.getElementById('buy-ticket-group');
-    
-    if (isTicket) {
-        ticketSpendGroup.style.display = 'none';
-        buyTicketGroup.style.display = 'block';
-    } else {
-        ticketSpendGroup.style.display = 'block';
-        buyTicketGroup.style.display = 'none';
-    }
-    
+    document.getElementById('normal-fields').style.display = isTicket ? 'none' : 'block';
+    document.getElementById('ticket-fields').style.display = isTicket ? 'block' : 'none';
     doCalc();
 }
    
