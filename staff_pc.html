@@ -25,7 +25,7 @@
         border-radius: 16px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
         width: 100%;
-        max-width: 1050px; 
+        max-width: 650px; /* 從原本的 1050px 縮小，您可以依 POS 畫面調整為 750px ~ 850px */
         max-height: 95vh;
         overflow-y: auto;
         box-sizing: border-box;
@@ -62,7 +62,7 @@
     /* ===== 左右雙欄主網格 ===== */
     .card-layout {
         display: grid;
-        grid-template-columns: 1fr 1.35fr; 
+        grid-template-columns: 1fr 1fr; /* 將右欄比例從 1.35fr 縮減為 1.1fr 或 1fr */
         gap: 20px;
         align-items: start;
     }
@@ -78,6 +78,17 @@
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 12px;
+    }
+
+    /* ===== 限制 2x2 裡面輸入框的寬度，讓它不那麼寬 ===== */
+    .inputs-grid input {
+        width: 100%; 
+        max-width: 120px; /* 這裡的數值您可以自行微調 (例如 130px ~ 160px) */
+        padding: 8px 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
     }
 
     /* ===== 按鈕通用 ===== */
