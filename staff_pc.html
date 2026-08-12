@@ -1305,7 +1305,7 @@ if (scanMode === 'coupon') {
             showModal("系統連線失敗：" + err.message);
         }
     }
-  
+}
 function toggleMode() {
     const isTicket = document.getElementById('ticketMode').checked;
     
@@ -1742,7 +1742,6 @@ const params = new URLSearchParams({
     couponDocId: couponEligible ? couponDocId : '',
     couponMinSpend: couponMinSpend,
     couponBonus: couponEligible ? couponBonus : 0,
-    couponDiscount: couponEligible ? couponDiscount : 0,
     couponType: couponEligible ? couponType : '',
     calculatedPoints: totalNewPoints,
     basePoints: basePoints,
