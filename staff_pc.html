@@ -468,7 +468,7 @@
     // ============================================================
     //  GAS URL
     // ============================================================
-   const GAS_URL = "https://tiny-salad-c64c.urthing-inn.workers.dev/";
+    const GAS_URL = "https://tiny-salad-c64c.urthing-inn.workers.dev";
 
     // ============================================================
     //  全域變數
@@ -483,41 +483,39 @@
     let currentMemberData = null;
     let isScreenLocked = false;
     let cachedSwitchableStaff = null;
-    let isProcessing = false;  // 🔥 新增：標記是否正在處理掃描
-    // 閒置計時器
+    let isProcessing = false;
     let idleTimer = null;
-    let idleTimeout = 5 * 60 * 1000; // 5 分鐘（毫秒）
-    let isLocked = false;  // 🔥 鎖定標記
+    let idleTimeout = 5 * 60 * 1000;
+    let isLocked = false;
 
+    // ============================================================
+    //  掃描狀態輔助函數
+    // ============================================================
+    function showScanError(message) {
+        scanErrorText.textContent = message;
+        scanErrorMessage.style.display = 'block';
+        scanStatusDot.style.background = '#dc3545';
+        scanStatusText.textContent = '錯誤';
+        scanStatusText.style.color = '#dc3545';
+        clearTimeout(window.scanErrorTimer);
+        window.scanErrorTimer = setTimeout(function() {
+            hideScanError();
+        }, 3000);
+    }
 
-// ============================================================
-//  掃描狀態輔助函數
-// ============================================================
+    function hideScanError() {
+        scanErrorMessage.style.display = 'none';
+        scanStatusDot.style.background = '#28a745';
+        scanStatusText.textContent = '就緒';
+        scanStatusText.style.color = '#28a745';
+    }
 
-function showScanError(message) {
-    scanErrorText.textContent = message;
-    scanErrorMessage.style.display = 'block';
-    scanStatusDot.style.background = '#dc3545';
-    scanStatusText.textContent = '錯誤';
-    scanStatusText.style.color = '#dc3545';
-    clearTimeout(window.scanErrorTimer);
-    window.scanErrorTimer = setTimeout(function() {
-        hideScanError();
-    }, 3000);
-}
+    function showScanning() {
+        scanStatusDot.style.background = '#ffc107';
+        scanStatusText.textContent = '掃描中...';
+        scanStatusText.style.color = '#ffc107';
+    }
 
-function hideScanError() {
-    scanErrorMessage.style.display = 'none';
-    scanStatusDot.style.background = '#28a745';
-    scanStatusText.textContent = '就緒';
-    scanStatusText.style.color = '#28a745';
-}
-
-function showScanning() {
-    scanStatusDot.style.background = '#ffc107';
-    scanStatusText.textContent = '掃描中...';
-    scanStatusText.style.color = '#ffc107';
-}
     // ============================================================
     //  工具函數
     // ============================================================
@@ -623,69 +621,70 @@ function showScanning() {
         document.getElementById('lockScreen').style.display = 'flex';
         console.log('🔄 切換帳號介面已開啟');
     }
-// ============================================================
-//  閒置計時器
-// ============================================================
 
-function resetIdleTimer() {
-    console.log('🔄 重置閒置計時器');  // ← 加這行
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(function() {
-        console.log('⏰ 閒置 5 分鐘，自動鎖屏');
-        showIdleLockScreen();
-    }, idleTimeout);
-}
-
-function showIdleLockScreen() {
-    if (!isLoggedIn) return;
-    console.log('🔒 閒置鎖屏');
-    
-    // 🔥 清除會員資料和輸入框
-    if (typeof resetMember === 'function') {
-        resetMember();
+    // ============================================================
+    //  閒置計時器
+    // ============================================================
+    function resetIdleTimer() {
+        console.log('🔄 重置閒置計時器');
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function() {
+            console.log('⏰ 閒置 5 分鐘，自動鎖屏');
+            showIdleLockScreen();
+        }, idleTimeout);
     }
-    
-    localStorage.setItem('isLocked', 'true');
-    isLocked = true;
-    
-    populateLockStaffListInstant();
-    document.getElementById('lockPassword').value = '';
-    document.getElementById('lockScreen').style.display = 'flex';
-}
 
-function clearIdleTimer() {
-    clearTimeout(idleTimer);
-}
-async function getSwitchableStaff() {
-    try {
-        var currentLoginId = localStorage.getItem('staffLoginId') || '';
-        if (!currentLoginId && staff && staff.loginId) {
-            currentLoginId = staff.loginId;
+    function showIdleLockScreen() {
+        if (!isLoggedIn) return;
+        console.log('🔒 閒置鎖屏');
+        
+        if (typeof resetMember === 'function') {
+            resetMember();
         }
-        if (!currentLoginId) {
-            console.error('⚠️ 無法取得 loginId');
+        
+        localStorage.setItem('isLocked', 'true');
+        isLocked = true;
+        
+        populateLockStaffListInstant();
+        document.getElementById('lockPassword').value = '';
+        document.getElementById('lockScreen').style.display = 'flex';
+    }
+
+    function clearIdleTimer() {
+        clearTimeout(idleTimer);
+    }
+
+    // ============================================================
+    //  核心函數：getSwitchableStaff
+    // ============================================================
+    async function getSwitchableStaff() {
+        try {
+            var currentLoginId = localStorage.getItem('staffLoginId') || '';
+            if (!currentLoginId && staff && staff.loginId) {
+                currentLoginId = staff.loginId;
+            }
+            if (!currentLoginId) {
+                console.error('⚠️ 無法取得 loginId');
+                return [];
+            }
+
+            var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&platform=pc&t=' + Date.now();
+            var res = await fetch(url, {
+                method: 'GET',
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            var data = await res.json();
+            return data.success && data.staff ? data.staff : [];
+        } catch (e) {
+            console.error('取得可切換店員失敗:', e);
             return [];
         }
-
-        var deviceId = localStorage.getItem('pc_device_id') || getDeviceId();
-
-        // ✅ 加入 platform=pc 參數
-        var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&platform=pc&t=' + Date.now();
-        var res = await fetch(url, {
-    method: 'GET',
-    cache: 'no-cache',
-    headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
     }
-});
-        var data = await res.json();
-        return data.success && data.staff ? data.staff : [];
-    } catch (e) {
-        console.error('取得可切換店員失敗:', e);
-        return [];
-    }
-}
+
     async function preloadSwitchableStaff() {
         try {
             console.log('⏳ 背景預載切換帳號清單...');
@@ -733,6 +732,9 @@ async function getSwitchableStaff() {
         });
     }
 
+    // ============================================================
+    //  核心函數：verifyStaffPassword
+    // ============================================================
     async function verifyStaffPassword(loginId, keyword) {
         var url = GAS_URL + '?action=verifyStaffPassword' +
             '&loginId=' + encodeURIComponent(loginId) +
@@ -740,13 +742,13 @@ async function getSwitchableStaff() {
             '&t=' + Date.now();
         try {
             var res = await fetch(url, {
-    method: 'GET',
-    cache: 'no-cache',
-    headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-    }
-});
+                method: 'GET',
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
             if (!res.ok) {
                 console.error('HTTP 錯誤:', res.status, res.statusText);
                 return { success: false, message: '伺服器連線失敗' };
@@ -759,33 +761,33 @@ async function getSwitchableStaff() {
             return { success: false, message: '連線異常' };
         }
     }
- // ============================================================
-//  密碼顯示/隱藏切換 + Enter 鍵送出
-// ============================================================
 
-// 🔥 放在 init() 中執行，或直接執行（因為 DOM 已載入）
-(function() {
-    var togglePassword = document.getElementById('togglePassword');
-    var lockPassword = document.getElementById('lockPassword');
-    
-    if (togglePassword && lockPassword) {
-        // 🔥 眼睛切換
-        togglePassword.addEventListener('click', function() {
-            var type = lockPassword.getAttribute('type') === 'password' ? 'text' : 'password';
-            lockPassword.setAttribute('type', type);
-            this.textContent = type === 'password' ? '👁️' : '🙈';
-        });
+    // ============================================================
+    //  密碼顯示/隱藏切換 + Enter 鍵送出
+    // ============================================================
+    (function() {
+        var togglePassword = document.getElementById('togglePassword');
+        var lockPassword = document.getElementById('lockPassword');
         
-        // 🔥 Enter 鍵送出
-        lockPassword.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                unlockSession();
-            }
-        });
-    }
-})();
-    
+        if (togglePassword && lockPassword) {
+            togglePassword.addEventListener('click', function() {
+                var type = lockPassword.getAttribute('type') === 'password' ? 'text' : 'password';
+                lockPassword.setAttribute('type', type);
+                this.textContent = type === 'password' ? '👁️' : '🙈';
+            });
+            
+            lockPassword.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    unlockSession();
+                }
+            });
+        }
+    })();
+
+    // ============================================================
+    //  核心函數：unlockSession
+    // ============================================================
     async function unlockSession() {
         const staffId = document.getElementById('lockStaffSelect').value;
         const password = document.getElementById('lockPassword').value;
@@ -843,7 +845,6 @@ async function getSwitchableStaff() {
                 inputEl.style.borderColor = '';
                 inputEl.style.backgroundColor = '';
                 document.getElementById('lockScreen').style.display = 'none';
-                // 🔥 清除鎖定標記
                 localStorage.removeItem('isLocked');
                 isLocked = false;
 
@@ -857,37 +858,68 @@ async function getSwitchableStaff() {
                 inputEl.style.backgroundColor = '#fff5f5';
                 inputEl.focus();
             }
-       } catch (error) {
-    // 🔥 即使發生錯誤，也要清除鎖定標記
-    localStorage.removeItem('isLocked');
-    isLocked = false;
-    
-    errorEl.textContent = '⚠️ ' + error.message;
-    errorEl.style.display = 'block';
-    console.error('❌ unlockSession 錯誤:', error);
-}
-
-document.getElementById('lockPassword')?.addEventListener('input', function() {
-    const errorEl = document.getElementById('lockPasswordError');
-    errorEl.style.display = 'none';
-    this.style.borderColor = '';
-    this.style.backgroundColor = '';
-});
-
-// 🔥 密碼輸入框按 Enter 觸發解鎖
-document.getElementById('lockPassword')?.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        unlockSession();
+        } catch (error) {
+            localStorage.removeItem('isLocked');
+            isLocked = false;
+            errorEl.textContent = '⚠️ ' + error.message;
+            errorEl.style.display = 'block';
+            console.error('❌ unlockSession 錯誤:', error);
+        }
     }
-});
-    
-function forceLogout() {
-    if (confirm('確定要登出嗎？')) {
-        logout();
-    }
-}
 
+    document.getElementById('lockPassword')?.addEventListener('input', function() {
+        const errorEl = document.getElementById('lockPasswordError');
+        errorEl.style.display = 'none';
+        this.style.borderColor = '';
+        this.style.backgroundColor = '';
+    });
+
+    document.getElementById('lockPassword')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            unlockSession();
+        }
+    });
+
+    function forceLogout() {
+        if (confirm('確定要登出嗎？')) {
+            logout();
+        }
+    }
+
+    // ============================================================
+    //  核心函數：getCouponPrefixes
+    // ============================================================
+    async function getCouponPrefixes() {
+        console.log("🔄 準備定義 getCouponPrefixes");
+        if (cachedPrefixes) {
+            return cachedPrefixes;
+        }
+        try {
+            const url = `${GAS_URL}?action=getCouponPrefixes&t=${Date.now()}`;
+            const response = await fetch(url, {
+                method: 'GET',
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            const data = await response.json();
+            console.log("📌 getCouponPrefixes API 回傳:", data);
+            if (data.success && data.prefixes && data.prefixes.length > 0) {
+                cachedPrefixes = data.prefixes;
+                console.log("✅ 取得優惠券前綴:", cachedPrefixes);
+                return cachedPrefixes;
+            }
+            cachedPrefixes = ["ANN_OMP_pt01", "GIFT_OMP_gf01", "BIR_OMP_gf02", "SPC_OMP_fe01", "MEM_OMP_pt02"];
+            return cachedPrefixes;
+        } catch (e) {
+            console.error("❌ 取得優惠券前綴失敗:", e);
+            cachedPrefixes = ["ANN_OMP_pt01", "GIFT_OMP_gf01", "BIR_OMP_gf02", "SPC_OMP_fe01", "MEM_OMP_pt02"];
+            return cachedPrefixes;
+        }
+    }
 
     // ============================================================
     //  核心函數：loadMemberData
@@ -897,13 +929,13 @@ function forceLogout() {
         try {
             var url = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(userId)}&branch=${encodeURIComponent(staff.branch)}&t=${Date.now()}`;
             var res = await fetch(url, {
-    method: 'GET',
-    cache: 'no-cache',
-    headers: {
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-    }
-});
+                method: 'GET',
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
             var data = await res.json();
             console.log("📊 loadMemberData 完整回傳:", JSON.stringify(data));
             hideLoading();
@@ -941,7 +973,14 @@ function forceLogout() {
         try {
             console.log("📌 載入優惠券細節:", brandCode, couponId);
             const url = `${GAS_URL}?action=getCouponDetail&brandCode=${encodeURIComponent(brandCode)}&couponId=${encodeURIComponent(couponId)}&t=${Date.now()}`;
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                method: 'GET',
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
             const result = await response.json();
             console.log("📌 getCouponDetail 回傳:", result);
             if (result.success) {
@@ -963,71 +1002,72 @@ function forceLogout() {
         }
     }
 
-function displayCouponInfo(data) {
-    var couponInfoDiv = document.getElementById('coupon-info');
-    if (!couponInfoDiv) return;
-    
-    couponInfoDiv.style.display = 'block';
-    document.getElementById('coupon-name-display').innerText = data.couponName || '優惠券';
-    document.getElementById('coupon-content-display').innerText = data.couponContent || '';
-    document.getElementById('coupon-min-spend-display').innerText = data.minSpend || '--';
-    document.getElementById('coupon-action-value-display').innerText = data.type === '贈點' ? data.bonusPoints : data.discountAmount || '--';
-    document.getElementById('coupon-action-label').innerText = data.type === '贈點' ? '贈' : '折';
-     document.getElementById('coupon-action-unit').innerText = data.type === '贈點' ? '點' : '元';
-    
-    var discountInput = document.getElementById('couponDiscount');
-    if (discountInput) {
-        if (data.type === '消費折抵') {
-            discountInput.value = data.discountAmount || 0;
-            console.log('💰 折抵型優惠券，帶入折抵金額:', data.discountAmount);
-        } else if (data.type === '贈點') {
-            discountInput.value = 0;
-            console.log('⭐ 贈點型優惠券，折抵金額設為 0');
-        } else {
-            discountInput.value = 0;
+    // ============================================================
+    //  核心函數：displayCouponInfo
+    // ============================================================
+    function displayCouponInfo(data) {
+        var couponInfoDiv = document.getElementById('coupon-info');
+        if (!couponInfoDiv) return;
+        
+        couponInfoDiv.style.display = 'block';
+        document.getElementById('coupon-name-display').innerText = data.couponName || '優惠券';
+        document.getElementById('coupon-content-display').innerText = data.couponContent || '';
+        document.getElementById('coupon-min-spend-display').innerText = data.minSpend || '--';
+        document.getElementById('coupon-action-value-display').innerText = data.type === '贈點' ? data.bonusPoints : data.discountAmount || '--';
+        document.getElementById('coupon-action-label').innerText = data.type === '贈點' ? '贈' : '折';
+        document.getElementById('coupon-action-unit').innerText = data.type === '贈點' ? '點' : '元';
+        
+        var discountInput = document.getElementById('couponDiscount');
+        if (discountInput) {
+            if (data.type === '消費折抵') {
+                discountInput.value = data.discountAmount || 0;
+                console.log('💰 折抵型優惠券，帶入折抵金額:', data.discountAmount);
+            } else if (data.type === '贈點') {
+                discountInput.value = 0;
+                console.log('⭐ 贈點型優惠券，折抵金額設為 0');
+            } else {
+                discountInput.value = 0;
+            }
+        }
+        
+        var minSpendDisplay = document.getElementById('coupon-min-spend-display');
+        var actionDisplay = document.getElementById('coupon-action-display');
+        
+        if (minSpendDisplay) {
+            if (data.minSpend > 0) {
+                minSpendDisplay.innerText = data.minSpend;
+                minSpendDisplay.style.display = 'inline';
+            } else {
+                minSpendDisplay.innerText = '--';
+                minSpendDisplay.style.display = 'inline';
+            }
+        }
+        
+        if (actionDisplay) {
+            if (data.type === '贈點' && data.bonusPoints > 0) {
+                actionDisplay.innerText = ' 贈 ' + data.bonusPoints + ' 點';
+                actionDisplay.style.display = 'inline';
+            } else if (data.type === '消費折抵' && data.discountAmount > 0) {
+                actionDisplay.innerText = ' 折 ' + data.discountAmount + ' 元';
+                actionDisplay.style.display = 'inline';
+            } else {
+                actionDisplay.innerText = '';
+                actionDisplay.style.display = 'none';
+            }
+        }
+        
+        var typeDisplay = document.getElementById('coupon-type-display');
+        if (typeDisplay) {
+            var typeMap = {
+                '贈點': '⭐ 滿額贈點券',
+                '消費折抵': '💰 滿額折抵券',
+                '兌換': '🎁 兌換券',
+                '優惠套餐': '🍽️ 優惠套餐券'
+            };
+            typeDisplay.innerText = typeMap[data.type] || data.type || '優惠券';
         }
     }
-    
-    // 🔥🔥🔥 修改：顯示「滿 X 元 贈 Y 點」或「滿 X 元 折 Y 元」
-    var minSpendDisplay = document.getElementById('coupon-min-spend-display');
-    var actionDisplay = document.getElementById('coupon-action-display');
-    
-    if (minSpendDisplay) {
-        if (data.minSpend > 0) {
-            minSpendDisplay.innerText = data.minSpend;
-            minSpendDisplay.style.display = 'inline';
-        } else {
-            minSpendDisplay.innerText = '--';
-            minSpendDisplay.style.display = 'inline';
-        }
-    }
-    
-    // 🔥🔥🔥 設定動作顯示（贈點 / 折抵）
-    if (actionDisplay) {
-        if (data.type === '贈點' && data.bonusPoints > 0) {
-            actionDisplay.innerText = ' 贈 ' + data.bonusPoints + ' 點';
-            actionDisplay.style.display = 'inline';
-        } else if (data.type === '消費折抵' && data.discountAmount > 0) {
-            actionDisplay.innerText = ' 折 ' + data.discountAmount + ' 元';
-            actionDisplay.style.display = 'inline';
-        } else {
-            actionDisplay.innerText = '';
-            actionDisplay.style.display = 'none';
-        }
-    }
-    
-    // 🔥 檢查 coupon-type-display 是否存在
-    var typeDisplay = document.getElementById('coupon-type-display');
-    if (typeDisplay) {
-        var typeMap = {
-            '贈點': '⭐ 滿額贈點券',
-            '消費折抵': '💰 滿額折抵券',
-            '兌換': '🎁 兌換券',
-            '優惠套餐': '🍽️ 優惠套餐券'
-        };
-        typeDisplay.innerText = typeMap[data.type] || data.type || '優惠券';
-    }
-}
+
     // ============================================================
     //  核心函數：parseScannedCode
     // ============================================================
@@ -1070,133 +1110,120 @@ function displayCouponInfo(data) {
     // ============================================================
     //  核心函數：onScanSuccess
     // ============================================================
-  async function onScanSuccess(scannedText) {
-    const startTime = Date.now();
-   
-    console.log("⏱️ ==== 掃描流程開始 ====");
-    console.log("⏱️ 0ms - 掃描開始");
-    console.log("📌 當前掃描模式:", scanMode === 'member' ? '🧾 掃描消費' : '🎫 掃描優惠券');
-    
-    if (!isLoggedIn || !staff.loginId) {
-        showToast("⚠️ 請先登入");
-        setTimeout(() => { window.location.href = 'staff_login_pc.html'; }, 1500);
-        return;
-    }
-    // ✅ 電腦版不需要相機相關程式碼
-      // if (scanInterval) { clearInterval(scanInterval); scanInterval = null; }
-    
-      // console.log("⏱️", Date.now() - startTime, "ms - 關閉相機");
-      //await closeCamera();
-      // if (navigator.vibrate) navigator.vibrate(200);
-      // resetIdleTimer();
-    
-    // 🔥 只有「掃描優惠券」模式才需要取得前綴
-let parsed;
-if (scanMode === 'coupon') {
-    console.log("⏱️", Date.now() - startTime, "ms - 取得優惠券前綴");
-    await getCouponPrefixes();
-    
-    // 🔥 加入這行，查看 cachedPrefixes 內容
-    console.log("📌 cachedPrefixes 內容:", JSON.stringify(cachedPrefixes));
-    
-    parsed = parseScannedCode(scannedText);
-    console.log("📌 解析結果（優惠券模式）:", parsed);
-} else {
-    // 掃描消費模式：直接視為會員 QR Code
-    console.log("⏱️", Date.now() - startTime, "ms - 跳過優惠券前綴檢查（掃描消費模式）");
-    parsed = parseScannedCode(scannedText);
-    console.log("📌 解析結果（會員模式）:", parsed);
-}
-    
-    try {
-        showLoading("連線中...");
-        console.log("⏱️", Date.now() - startTime, "ms - 顯示載入中");
+    async function onScanSuccess(scannedText) {
+        const startTime = Date.now();
+       
+        console.log("⏱️ ==== 掃描流程開始 ====");
+        console.log("⏱️ 0ms - 掃描開始");
+        console.log("📌 當前掃描模式:", scanMode === 'member' ? '🧾 掃描消費' : '🎫 掃描優惠券');
         
-        // ============================================================
-        //  🔥 優惠券處理
-        // ============================================================
-        if (parsed.type === "coupon") {
-    const realStaffName = staff.name;
-    const realStaffBranch = staff.branch;
-    const clientIp = await getUserIP();
-    const loginId = staff.loginId || "";
-    const deviceId = staff.deviceId || "";
-    
-    // 🔥 傳送完整 QR 字串
-    const fullQr = parsed.fullData;  // ANN_OMP_pt01_U590...
-    console.log("🎯 優惠券掃描，完整 QR:", fullQr);
-    
-    showLoading("🔄 處理優惠券兌換中...");
-    
-    try {
-        // 🔥🔥🔥 傳送完整 QR 字串
-        const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(fullQr)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
-        const res = await fetch(url);
-        const text = await res.text();  // ← 先讀成文字
-        console.log('📊 原始回應:', text);
-        // ✅ 安全解析
-        let result;
-        try {
-            result = JSON.parse(text);
-        } catch (parseErr) {
-            console.error('❌ JSON 解析失敗:', text);
-            hideLoading();
-            showModal('❌ 伺服器回應格式錯誤');
-            return;
-        }
-
-        const data = safeJsonParse(text);  // ← 安全解析
-        if (!data) {
-        hideLoading();
-        showModal('❌ 伺服器回應格式錯誤，請聯繫管理員');
-        return;
-        }
-        console.log("📊 優惠券兌換回應:", JSON.stringify(result));
-        
-        if (result.logout) {
-            hideLoading();
-            showToast("⏰ 登入已過期，請重新登入");
-            setTimeout(() => { logout(); }, 2000);
+        if (!isLoggedIn || !staff.loginId) {
+            showToast("⚠️ 請先登入");
+            setTimeout(() => { window.location.href = 'staff_login_pc.html'; }, 1500);
             return;
         }
         
-        // 🔥🔥🔥 檢查是否為「贈點」或「消費折抵」類型
-        if (result.needAmount === true) {
-            hideLoading();
-            console.log("🎯 優惠券需要進入結帳畫面");
-            console.log('📌 電腦版 result.couponContent 原始值:', result.couponContent);
-            var redirectUrl = 'staff_pc.html?userId=' + encodeURIComponent(result.userId) +
-      '&fromCoupon=true' +
-      '&couponDocId=' + encodeURIComponent(result.couponDocId) +
-      '&minSpend=' + encodeURIComponent(result.minSpend) +
-      '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
-      '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
-      '&couponType=' + encodeURIComponent(result.type || '') +
-      '&couponName=' + encodeURIComponent(result.couponName || '優惠券') +
-      '&couponContent=' + encodeURIComponent(result.couponContent || '') +  // 🔥🔥🔥 加入這行
-      '&name=' + encodeURIComponent(staff.name) +
-      '&branch=' + encodeURIComponent(staff.branch) +
-      '&loginId=' + encodeURIComponent(staff.loginId);
-            
-            window.location.href = redirectUrl;
-            return;
-        }
-        
-        if (result.success) {
-            hideLoading();
-            showModal(`🎉 ${result.message || "優惠券兌換成功！"}`);
+        let parsed;
+        if (scanMode === 'coupon') {
+            console.log("⏱️", Date.now() - startTime, "ms - 取得優惠券前綴");
+            await getCouponPrefixes();
+            console.log("📌 cachedPrefixes 內容:", JSON.stringify(cachedPrefixes));
+            parsed = parseScannedCode(scannedText);
+            console.log("📌 解析結果（優惠券模式）:", parsed);
         } else {
-            hideLoading();
-            showModal(`❌ 優惠券兌換失敗<br><br>錯誤訊息：${result.error || result.message || "未知錯誤"}`);
+            console.log("⏱️", Date.now() - startTime, "ms - 跳過優惠券前綴檢查（掃描消費模式）");
+            parsed = parseScannedCode(scannedText);
+            console.log("📌 解析結果（會員模式）:", parsed);
         }
         
-    } catch (err) {
-        hideLoading();
-        console.error("❌ 優惠券處理錯誤:", err);
-        showModal(`❌ 連線錯誤：${err.message}`);
-    }
-    return;
-}
+        try {
+            showLoading("連線中...");
+            console.log("⏱️", Date.now() - startTime, "ms - 顯示載入中");
+            
+            if (parsed.type === "coupon") {
+                const realStaffName = staff.name;
+                const realStaffBranch = staff.branch;
+                const clientIp = await getUserIP();
+                const loginId = staff.loginId || "";
+                const deviceId = staff.deviceId || "";
+                const fullQr = parsed.fullData;
+                console.log("🎯 優惠券掃描，完整 QR:", fullQr);
+                
+                showLoading("🔄 處理優惠券兌換中...");
+                
+                try {
+                    const url = `${GAS_URL}?action=verifyScan&customerId=${encodeURIComponent(fullQr)}&staffLineId=&staffName=${encodeURIComponent(realStaffName)}&staffBranch=${encodeURIComponent(realStaffBranch)}&clientIp=${encodeURIComponent(clientIp)}&loginId=${encodeURIComponent(loginId)}&deviceId=${encodeURIComponent(deviceId)}&isCoupon=true&t=${Date.now()}`;
+                    const res = await fetch(url, {
+                        method: 'GET',
+                        cache: 'no-cache',
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
+                        }
+                    });
+                    const text = await res.text();
+                    console.log('📊 原始回應:', text);
+                    
+                    let result;
+                    try {
+                        result = JSON.parse(text);
+                    } catch (parseErr) {
+                        console.error('❌ JSON 解析失敗:', text);
+                        hideLoading();
+                        showModal('❌ 伺服器回應格式錯誤');
+                        return;
+                    }
+                    
+                    const data = safeJsonParse(text);
+                    if (!data) {
+                        hideLoading();
+                        showModal('❌ 伺服器回應格式錯誤，請聯繫管理員');
+                        return;
+                    }
+                    console.log("📊 優惠券兌換回應:", JSON.stringify(result));
+                    
+                    if (result.logout) {
+                        hideLoading();
+                        showToast("⏰ 登入已過期，請重新登入");
+                        setTimeout(() => { logout(); }, 2000);
+                        return;
+                    }
+                    
+                    if (result.needAmount === true) {
+                        hideLoading();
+                        console.log("🎯 優惠券需要進入結帳畫面");
+                        console.log('📌 電腦版 result.couponContent 原始值:', result.couponContent);
+                        var redirectUrl = 'staff_pc.html?userId=' + encodeURIComponent(result.userId) +
+                            '&fromCoupon=true' +
+                            '&couponDocId=' + encodeURIComponent(result.couponDocId) +
+                            '&minSpend=' + encodeURIComponent(result.minSpend) +
+                            '&bonusPoints=' + encodeURIComponent(result.bonusPoints || 0) +
+                            '&discountAmount=' + encodeURIComponent(result.discountAmount || 0) +
+                            '&couponType=' + encodeURIComponent(result.type || '') +
+                            '&couponName=' + encodeURIComponent(result.couponName || '優惠券') +
+                            '&couponContent=' + encodeURIComponent(result.couponContent || '') +
+                            '&name=' + encodeURIComponent(staff.name) +
+                            '&branch=' + encodeURIComponent(staff.branch) +
+                            '&loginId=' + encodeURIComponent(staff.loginId);
+                        
+                        window.location.href = redirectUrl;
+                        return;
+                    }
+                    
+                    if (result.success) {
+                        hideLoading();
+                        showModal(`🎉 ${result.message || "優惠券兌換成功！"}`);
+                    } else {
+                        hideLoading();
+                        showModal(`❌ 優惠券兌換失敗<br><br>錯誤訊息：${result.error || result.message || "未知錯誤"}`);
+                    }
+                } catch (err) {
+                    hideLoading();
+                    console.error("❌ 優惠券處理錯誤:", err);
+                    showModal(`❌ 連線錯誤：${err.message}`);
+                }
+                return;
+            }
             
             if (parsed.type === "member") {
                 if (!parsed.userId) {
@@ -1212,7 +1239,15 @@ if (scanMode === 'coupon') {
                 console.log("⏱️", Date.now() - startTime, "ms - 呼叫 getMemberInfo");
                 try {
                     const fetchStart = Date.now();
-                    const res = await fetch(finalUrl, { method: "GET", mode: "cors" });
+                    const res = await fetch(finalUrl, {
+                        method: "GET",
+                        mode: "cors",
+                        cache: "no-cache",
+                        headers: {
+                            'Cache-Control': 'no-cache',
+                            'Pragma': 'no-cache'
+                        }
+                    });
                     console.log("⏱️", Date.now() - fetchStart, "ms - getMemberInfo API 回應");
                     console.log("🔍 HTTP 狀態:", res.status);
                     const data = await res.json();
@@ -1263,722 +1298,723 @@ if (scanMode === 'coupon') {
             showModal("系統連線失敗：" + err.message);
         }
     }
-}
-function toggleMode() {
-    const isTicket = document.getElementById('ticketMode').checked;
-    
-    const totalLabel = document.getElementById('totalSpendLabel');
-    const totalInput = document.getElementById('totalSpend');
-    const ticketSpendGroup = document.getElementById('ticket-spend-group');
-    const couponDiscountGroup = document.getElementById('coupon-discount-group');
-    const redeemGroup = document.getElementById('redeem-group');
-    
-    if (isTicket) {
-        // 🔥 餐券模式
-        totalLabel.textContent = '購買餐券金額';
-        totalInput.placeholder = '輸入購買餐券金額';
-        totalInput.value = '';  // 清空
-        totalInput.id = 'buyTicket';  // 改 ID
+
+    // ============================================================
+    //  核心函數：toggleMode
+    // ============================================================
+    function toggleMode() {
+        const isTicket = document.getElementById('ticketMode').checked;
         
-        // 隱藏不需要的欄位
-        ticketSpendGroup.style.display = 'none';
-        couponDiscountGroup.style.display = 'none';
-        redeemGroup.style.display = 'none';
+        const totalLabel = document.getElementById('totalSpendLabel');
+        const totalInput = document.getElementById('totalSpend');
+        const ticketSpendGroup = document.getElementById('ticket-spend-group');
+        const couponDiscountGroup = document.getElementById('coupon-discount-group');
+        const redeemGroup = document.getElementById('redeem-group');
         
-        // 清空被隱藏欄位的值
-        document.getElementById('ticketSpend').value = '';
-        document.getElementById('couponDiscount').value = '';
-        document.getElementById('redeemAmount').value = '';
-        document.getElementById('redeemTip').innerHTML = '';
-        
-        if (window.activeCoupon) {
-            showToast('🍽️ 餐券模式不適用優惠券，優惠券將保留');
+        if (isTicket) {
+            totalLabel.textContent = '購買餐券金額';
+            totalInput.placeholder = '輸入購買餐券金額';
+            totalInput.value = '';
+            totalInput.id = 'buyTicket';
+            
+            ticketSpendGroup.style.display = 'none';
+            couponDiscountGroup.style.display = 'none';
+            redeemGroup.style.display = 'none';
+            
+            document.getElementById('ticketSpend').value = '';
+            document.getElementById('couponDiscount').value = '';
+            document.getElementById('redeemAmount').value = '';
+            document.getElementById('redeemTip').innerHTML = '';
+            
+            if (window.activeCoupon) {
+                showToast('🍽️ 餐券模式不適用優惠券，優惠券將保留');
+            }
+        } else {
+            totalLabel.textContent = '1. 本日消費總額';
+            totalInput.placeholder = '輸入消費金額';
+            totalInput.value = '';
+            totalInput.id = 'totalSpend';
+            
+            ticketSpendGroup.style.display = 'block';
+            couponDiscountGroup.style.display = 'block';
+            redeemGroup.style.display = 'block';
+            
+            document.getElementById('buyTicket').value = '';
         }
-    } else {
-        // 🔥 一般模式
-        totalLabel.textContent = '1. 本日消費總額';
-        totalInput.placeholder = '輸入消費金額';
-        totalInput.value = '';
-        totalInput.id = 'totalSpend';  // 恢復 ID
         
-        // 顯示所有欄位
-        ticketSpendGroup.style.display = 'block';
-        couponDiscountGroup.style.display = 'block';
-        redeemGroup.style.display = 'block';
+        doCalc();
+    }
+
+    // ============================================================
+    //  核心函數：doCalc
+    // ============================================================
+    function doCalc() {
+        let couponDiscountAmount = 0;
+        let finalCouponBonus = 0;
         
-        document.getElementById('buyTicket').value = '';
-    }
-    
-    doCalc();
-}
-   
-function doCalc() {
-    let couponDiscountAmount = 0;
-    let finalCouponBonus = 0;
-    
-    // ---------- 1. 判斷模式 ----------
-    const ticketModeCheck = document.getElementById('ticketMode');
-    const isTicketMode = ticketModeCheck ? ticketModeCheck.checked : false;
-    
-    // ---------- 2. 取得 DOM 元素 ----------
-    // 🔥 根據模式決定讀取哪個 input
-    const totalInput = document.getElementById(isTicketMode ? 'buyTicket' : 'totalSpend');
-    
-    const elements = {
-        totalInput: totalInput,
-        ticketInput: document.getElementById('ticketSpend'),
-        redeemInput: document.getElementById('redeemAmount'),
-        couponDiscountInput: document.getElementById('couponDiscount'),
-        buyTicketInput: document.getElementById('buyTicket'),
-        ticketModeCheck: ticketModeCheck,
-        tipEl: document.getElementById('redeemTip'),
-        maxHintEl: document.getElementById('max-hint'),
-        newPtsEl: document.getElementById('new-pts'),
-        afterPtsEl: document.getElementById('after-pts'),
-        couponBonusDisplay: document.getElementById('coupon-bonus-display'),
-        bonusPointsDisplay: document.getElementById('bonus-points-display'),
-        couponStatusDisplay: document.getElementById('coupon-status-display')
-    };
-    
-    // ---------- 3. 檢查必要元素 ----------
-    if (!elements.totalInput || !elements.ticketInput || !elements.redeemInput) {
-        console.warn('⚠️ 必要表單元素不存在，跳過計算');
-        return;
-    }
-    
-    // ---------- 4. 取得數值 ----------
-    const totalSpend = isTicketMode ? 0 : parseFloat(elements.totalInput.value) || 0;
-    const buyTicketAmount = isTicketMode ? parseFloat(elements.totalInput.value) || 0 : 0;
-    const ticketSpend = parseFloat(elements.ticketInput.value) || 0;
-    const couponDiscount = parseFloat(elements.couponDiscountInput?.value) || 0;
-    const redeemAmount = parseFloat(elements.redeemInput.value) || 0;
-    
-    // ---------- 5. 取得優惠券資訊 ----------
-    const couponBonus = window.activeCoupon?.bonusPoints || 0;
-    const couponMinSpend = window.activeCoupon?.minSpend || 0;
-    const couponType = window.activeCoupon?.type || '';
-    const couponName = window.activeCoupon?.couponName || '';
-    const couponDiscountOriginal = window.activeCoupon?.discountAmount || 0;
-    
-// ---------- 6. 取得系統配置 ----------
-const cfg = config || {};
-const shopCode = cfg.shopCode || 'OMP';
-
-// 🔥 品牌別參數（根據 shopCode 動態讀取）
-const earnRate = cfg['DEFAULT_EARN_RATE_' + shopCode] || 0.03;
-const maxRate = cfg['DEFAULT_REDEEM_RATE_' + shopCode] || 0.1;
-const minSpend = cfg['MIN_SPEND_THRESHOLD_' + shopCode] || 1500;
-const ticketRate = cfg['ticketRate_' + shopCode] || 0;
-
-// 🔥 通用參數（直接讀取）
-const levelRate = cfg.levelRate || 1;
-const eventMultiplier = cfg.eventMultiplier || 1;
-const refRate = cfg.MGM_COMMISSION_RATE || 0.02;
-const expireMonths = cfg.REWARD_EXPIRY_MONTHS || 12;
-    
-    // ---------- 7. 宣告結果變數 ----------
-    let redeem = 0;
-    let maxRedeem = 0;
-    let basePoints = 0;
-    let totalNewPoints = 0;
-    let tipMessage = '';
-    let tipClass = 'redeem-tip tip-normal';
-    let finalTicketSpend = ticketSpend;
-    
-    // ---------- 8. 優惠券門檻顯示（餐券模式跳過） ----------
-    if (elements.couponStatusDisplay && couponMinSpend > 0 && !isTicketMode) {
-        if (couponType) {
+        const ticketModeCheck = document.getElementById('ticketMode');
+        const isTicketMode = ticketModeCheck ? ticketModeCheck.checked : false;
+        
+        const totalInput = document.getElementById(isTicketMode ? 'buyTicket' : 'totalSpend');
+        
+        const elements = {
+            totalInput: totalInput,
+            ticketInput: document.getElementById('ticketSpend'),
+            redeemInput: document.getElementById('redeemAmount'),
+            couponDiscountInput: document.getElementById('couponDiscount'),
+            buyTicketInput: document.getElementById('buyTicket'),
+            ticketModeCheck: ticketModeCheck,
+            tipEl: document.getElementById('redeemTip'),
+            maxHintEl: document.getElementById('max-hint'),
+            newPtsEl: document.getElementById('new-pts'),
+            afterPtsEl: document.getElementById('after-pts'),
+            couponBonusDisplay: document.getElementById('coupon-bonus-display'),
+            bonusPointsDisplay: document.getElementById('bonus-points-display'),
+            couponStatusDisplay: document.getElementById('coupon-status-display')
+        };
+        
+        if (!elements.totalInput || !elements.ticketInput || !elements.redeemInput) {
+            console.warn('⚠️ 必要表單元素不存在，跳過計算');
+            return;
+        }
+        
+        const totalSpend = isTicketMode ? 0 : parseFloat(elements.totalInput.value) || 0;
+        const buyTicketAmount = isTicketMode ? parseFloat(elements.totalInput.value) || 0 : 0;
+        const ticketSpend = parseFloat(elements.ticketInput.value) || 0;
+        const couponDiscount = parseFloat(elements.couponDiscountInput?.value) || 0;
+        const redeemAmount = parseFloat(elements.redeemInput.value) || 0;
+        
+        const couponBonus = window.activeCoupon?.bonusPoints || 0;
+        const couponMinSpend = window.activeCoupon?.minSpend || 0;
+        const couponType = window.activeCoupon?.type || '';
+        const couponName = window.activeCoupon?.couponName || '';
+        const couponDiscountOriginal = window.activeCoupon?.discountAmount || 0;
+        
+        const cfg = config || {};
+        const shopCode = cfg.shopCode || 'OMP';
+        const earnRate = cfg['DEFAULT_EARN_RATE_' + shopCode] || 0.03;
+        const maxRate = cfg['DEFAULT_REDEEM_RATE_' + shopCode] || 0.1;
+        const minSpend = cfg['MIN_SPEND_THRESHOLD_' + shopCode] || 1500;
+        const ticketRate = cfg['ticketRate_' + shopCode] || 0;
+        const levelRate = cfg.levelRate || 1;
+        const eventMultiplier = cfg.eventMultiplier || 1;
+        const refRate = cfg.MGM_COMMISSION_RATE || 0.02;
+        const expireMonths = cfg.REWARD_EXPIRY_MONTHS || 12;
+        
+        let redeem = 0;
+        let maxRedeem = 0;
+        let basePoints = 0;
+        let totalNewPoints = 0;
+        let tipMessage = '';
+        let tipClass = 'redeem-tip tip-normal';
+        let finalTicketSpend = ticketSpend;
+        
+        if (elements.couponStatusDisplay && couponMinSpend > 0 && !isTicketMode) {
+            if (couponType) {
+                const actualSpend = totalSpend - ticketSpend;
+                if (actualSpend >= couponMinSpend) {
+                    elements.couponStatusDisplay.innerHTML = 
+                        `✅ 已達門檻！消費滿 ${couponMinSpend} 元，可正常使用「${couponName || '優惠券'}」`;
+                    elements.couponStatusDisplay.style.color = '#2e7d32';
+                    elements.couponStatusDisplay.className = 'coupon-status eligible';
+                } else {
+                    const diff = couponMinSpend - actualSpend;
+                    elements.couponStatusDisplay.innerHTML = 
+                        `⚠️ 尚未達門檻（還差 ${diff} 元），優惠券將保留，下次使用`;
+                    elements.couponStatusDisplay.style.color = '#e65100';
+                    elements.couponStatusDisplay.className = 'coupon-status not-eligible';
+                }
+            } else {
+                elements.couponStatusDisplay.innerHTML = '📋 尚未使用優惠券';
+                elements.couponStatusDisplay.style.color = '#666';
+                elements.couponStatusDisplay.className = 'coupon-status no-coupon';
+            }
+        } else if (isTicketMode && elements.couponStatusDisplay) {
+            elements.couponStatusDisplay.innerHTML = '🍽️ 餐券模式，不適用優惠券';
+            elements.couponStatusDisplay.style.color = '#666';
+            elements.couponStatusDisplay.className = 'coupon-status no-coupon';
+        }
+        
+        if (!isTicketMode && couponType === '消費折抵' && elements.couponDiscountInput) {
             const actualSpend = totalSpend - ticketSpend;
-            if (actualSpend >= couponMinSpend) {
-                elements.couponStatusDisplay.innerHTML = 
-                    `✅ 已達門檻！消費滿 ${couponMinSpend} 元，可正常使用「${couponName || '優惠券'}」`;
-                elements.couponStatusDisplay.style.color = '#2e7d32';
-                elements.couponStatusDisplay.className = 'coupon-status eligible';
-            } else {
-                const diff = couponMinSpend - actualSpend;
-                elements.couponStatusDisplay.innerHTML = 
-                    `⚠️ 尚未達門檻（還差 ${diff} 元），優惠券將保留，下次使用`;
-                elements.couponStatusDisplay.style.color = '#e65100';
-                elements.couponStatusDisplay.className = 'coupon-status not-eligible';
-            }
-        } else {
-            elements.couponStatusDisplay.innerHTML = '📋 尚未使用優惠券';
-            elements.couponStatusDisplay.style.color = '#666';
-            elements.couponStatusDisplay.className = 'coupon-status no-coupon';
-        }
-    } else if (isTicketMode && elements.couponStatusDisplay) {
-        elements.couponStatusDisplay.innerHTML = '🍽️ 餐券模式，不適用優惠券';
-        elements.couponStatusDisplay.style.color = '#666';
-        elements.couponStatusDisplay.className = 'coupon-status no-coupon';
-    }
-    
-    // ---------- 9. 優惠券折抵（餐券模式跳過） ----------
-    if (!isTicketMode && couponType === '消費折抵' && elements.couponDiscountInput) {
-        const actualSpend = totalSpend - ticketSpend;
-        const hasValidCoupon = window.activeCouponDocId && window.activeCouponDocId !== '';
-        
-        if (hasValidCoupon && couponMinSpend > 0) {
-            if (actualSpend >= couponMinSpend) {
-                if (elements.couponDiscountInput.value != couponDiscountOriginal) {
-                    elements.couponDiscountInput.value = couponDiscountOriginal;
-                    console.log('✅ 達門檻！折抵金額恢復為:', couponDiscountOriginal);
-                }
-            } else {
-                if (elements.couponDiscountInput.value != 0) {
-                    elements.couponDiscountInput.value = 0;
-                    console.log('❌ 未達門檻（需滿', couponMinSpend, '，實際', actualSpend, '），折抵歸零');
+            const hasValidCoupon = window.activeCouponDocId && window.activeCouponDocId !== '';
+            
+            if (hasValidCoupon && couponMinSpend > 0) {
+                if (actualSpend >= couponMinSpend) {
+                    if (elements.couponDiscountInput.value != couponDiscountOriginal) {
+                        elements.couponDiscountInput.value = couponDiscountOriginal;
+                        console.log('✅ 達門檻！折抵金額恢復為:', couponDiscountOriginal);
+                    }
+                } else {
+                    if (elements.couponDiscountInput.value != 0) {
+                        elements.couponDiscountInput.value = 0;
+                        console.log('❌ 未達門檻（需滿', couponMinSpend, '，實際', actualSpend, '），折抵歸零');
+                    }
                 }
             }
-        }
-    } else if (isTicketMode && elements.couponDiscountInput) {
-        elements.couponDiscountInput.value = 0;
-    }
-    
-    const finalCouponDiscount = parseFloat(elements.couponDiscountInput?.value) || 0;
-    
-    // ---------- 10. 點數計算 ----------
-    if (isTicketMode) {
-        // ===== 餐券模式 =====
-        basePoints = Math.floor(buyTicketAmount * ticketRate * levelRate * eventMultiplier);
-        totalNewPoints = basePoints;
-        tipMessage = '🍽️ 餐券模式：僅計算餐券購買點數，不適用優惠券';
-        tipClass = 'redeem-tip tip-ticket-mode';
-        maxRedeem = 0;
-        redeem = 0;
-        finalTicketSpend = buyTicketAmount;
-        
-        console.log(`🍽️ 餐券模式: 購買 ${buyTicketAmount} 元 → ${basePoints} 點`);
-        
-        if (window.activeCoupon && elements.couponStatusDisplay) {
-            elements.couponStatusDisplay.innerHTML = '🍽️ 餐券模式，優惠券已保留，下次使用';
-            elements.couponStatusDisplay.style.color = '#666';
-            elements.couponStatusDisplay.className = 'coupon-status no-coupon';
+        } else if (isTicketMode && elements.couponDiscountInput) {
+            elements.couponDiscountInput.value = 0;
         }
         
-    } else {
-        // ===== 一般消費模式 =====
-        const baseForRedeem = totalSpend - ticketSpend - finalCouponDiscount;
-        const minSpendThreshold = shopCode === 'SWO' ? 500 : 1500;
+        const finalCouponDiscount = parseFloat(elements.couponDiscountInput?.value) || 0;
         
-        if (maxRate <= 0) {
-            maxRedeem = 0;
-            tipMessage = '🚫 今日活動暫停折抵';
-            tipClass = 'redeem-tip tip-no-redeem';
-        } else if (baseForRedeem < minSpendThreshold) {
-            maxRedeem = 0;
-            tipMessage = `⚠️ 未達門檻 ${minSpendThreshold} 元，無法折點`;
-            tipClass = 'redeem-tip tip-no-redeem';
-        } else {
-            maxRedeem = Math.min(
-                currentPoints || 0,
-                Math.floor(baseForRedeem * maxRate)
-            );
-            tipMessage = `✅ 達低消 ${minSpendThreshold} 元，可抵 ${maxRedeem} 點`;
-            tipClass = 'redeem-tip tip-normal';
-        }
-        
-        redeem = Math.min(redeemAmount, maxRedeem);
-        
-        const baseForCoupon = totalSpend - ticketSpend - redeem;
-        
-        if (couponType === '消費折抵' && couponMinSpend > 0) {
-            if (baseForCoupon >= couponMinSpend) {
-                couponDiscountAmount = finalCouponDiscount;
-                console.log(`✅ 折抵券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，折抵 ${finalCouponDiscount} 元`);
-            } else {
-                console.log(`❌ 折抵券未達標（${baseForCoupon} 元 < ${couponMinSpend} 元）`);
-                couponDiscountAmount = 0;
-            }
-        } else if (couponType === '贈點' && couponMinSpend > 0) {
-            if (baseForCoupon >= couponMinSpend) {
-                finalCouponBonus = couponBonus;
-                console.log(`✅ 贈點券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，贈送 ${couponBonus} 點`);
-            } else {
-                console.log(`❌ 贈點券未達標（${baseForCoupon} 元 < ${couponMinSpend} 元）`);
-                finalCouponBonus = 0;
-            }
-        }
-        
-        if (elements.couponDiscountInput) {
-            elements.couponDiscountInput.value = couponDiscountAmount;
-        }
-        
-        const finalActual = totalSpend - ticketSpend - redeem - couponDiscountAmount;
-        
-        basePoints = Math.floor(Math.max(0, finalActual) * earnRate * levelRate * eventMultiplier);
-        totalNewPoints = basePoints + finalCouponBonus;
-        
-        console.log(`💳 一般模式: 總額 ${totalSpend} - 餐券 ${ticketSpend} - 點數 ${redeem} - 優惠券 ${couponDiscountAmount} = 實付 ${finalActual} 元 → ${basePoints} 點 + 贈點 ${finalCouponBonus} 點 = ${totalNewPoints} 點`);
-    }
-    
-    // ---------- 11. 更新 UI ----------
-    if (elements.tipEl) {
-        elements.tipEl.innerText = tipMessage;
-        elements.tipEl.className = tipClass;
-    }
-    
-    if (elements.maxHintEl) {
-        elements.maxHintEl.innerText = maxRedeem;
-    }
-    
-    if (elements.redeemInput && redeem !== redeemAmount) {
-        elements.redeemInput.value = redeem;
-    }
-    
-    if (elements.newPtsEl) {
         if (isTicketMode) {
-            elements.newPtsEl.innerHTML = `${basePoints} 點（餐券回饋）`;
-        } else if (finalCouponBonus > 0) {
-            elements.newPtsEl.innerHTML = 
-                `${basePoints} 點 + 活動贈點 <b style="color:#ff6b00;">${finalCouponBonus}</b> 點 = ` +
-                `<b style="color:#1a73e8;">${totalNewPoints}</b> 點`;
-        } else {
-            elements.newPtsEl.innerText = `${totalNewPoints} 點`;
-        }
-    }
-    
-    if (elements.bonusPointsDisplay) {
-        elements.bonusPointsDisplay.style.display = (finalCouponBonus > 0 && !isTicketMode) ? 'inline' : 'none';
-    }
-    
-    if (elements.afterPtsEl) {
-        const currentPts = currentPoints || 0;
-        const afterPoints = currentPts - redeem + totalNewPoints;
-        elements.afterPtsEl.innerText = `${afterPoints} 點`;
-    }
-    
-    if (elements.couponBonusDisplay) {
-        if (finalCouponBonus > 0 && !isTicketMode) {
-            elements.couponBonusDisplay.textContent = `🎁 活動贈點 +${finalCouponBonus} 點`;
-            elements.couponBonusDisplay.style.display = 'block';
-        } else {
-            elements.couponBonusDisplay.style.display = 'none';
-        }
-    }
-    
-    // ---------- 12. 返回計算結果 ----------
-    const result = {
-        isTicketMode,
-        totalSpend: isTicketMode ? buyTicketAmount : totalSpend,
-        ticketSpend: finalTicketSpend,
-        couponDiscount: finalCouponDiscount,
-        couponMinSpend,
-        couponName,
-        couponType,
-        redeem,
-        maxRedeem,
-        basePoints,
-        couponBonus: couponBonus,
-        finalCouponBonus: finalCouponBonus,
-        totalNewPoints,
-        baseAmount: isTicketMode ? buyTicketAmount : (totalSpend - ticketSpend - finalCouponDiscount),
-        afterPoints: (currentPoints || 0) - redeem + totalNewPoints,
-        couponEligible: !isTicketMode && couponType && couponMinSpend > 0 && (totalSpend - ticketSpend) >= couponMinSpend,
-        buyTicketAmount: buyTicketAmount
-    };
-    
-    window.calcResult = result;
-    console.log('📊 計算結果:', result);
-    return result;
-}
-// ============================================================
-//  🔥 產生固定交易 ID（放在 submitData 前面）
-// ============================================================
-function generateTransactionId(customerId) {
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const timeKey = day + '_' + hours + minutes + seconds;
-    const customerPrefix = customerId.substring(0, 5);
-    return customerPrefix + '_' + timeKey;
-}
-
-// ============================================================
-//  🔥 提交集點（修正版）
-// ============================================================
-async function submitData() {
-    console.log('🔍 1. customerId =', customerId);
-    console.log('🔍 2. typeof customerId =', typeof customerId);
-    console.log('🔍 3. window.customerId =', window.customerId);
-    const startTime = Date.now();
-    console.log('⏱️ ==== 集點流程開始 ====');
-    console.log('🔍 提交前 customerId:', customerId);  // ← 加入這行
-
-    // 🔥 雙重備援：先從 window 讀
-    if (!customerId && window.customerId) {
-        customerId = window.customerId;
-        console.log('🔄 從 window 還原 customerId:', customerId);
-    }
-    // 🔥 優惠券流程中，不要鎖住表單
-const urlParams = new URLSearchParams(window.location.search);
-const fromCoupon = urlParams.get('fromCoupon');
-if (fromCoupon === 'true') {
-    console.log('🎯 優惠券流程中，保留表單解鎖狀態');
-}
-    if (!customerId) {
-        var urlUserId = new URLSearchParams(window.location.search).get('userId');
-        if (urlUserId) {
-            customerId = urlUserId;
-            console.log('🔄 從 URL 重新讀取 customerId:', customerId);
-        }
-    }
-    
-    // ---------- 1. 前置檢查 ----------
-    if (!isLoggedIn || !staff?.loginId) {
-        showToast('⚠️ 請先登入');
-        setTimeout(() => { window.location.href = 'staff_login_pc.html'; }, 1500);
-        return;
-    }
-    
-    if (!customerId) {
-        alert('請先掃描會員！');
-        return;
-    }
-    
-    // ---------- 2. 取得計算結果 ----------
-    const calcResult = doCalc();
-    if (!calcResult) {
-        alert('❌ 計算失敗，請檢查輸入');
-        return;
-    }
-    
-    const {
-        isTicketMode,
-        totalSpend,
-        ticketSpend,
-        couponDiscount,
-        redeem,
-        basePoints,
-        couponBonus,
-        totalNewPoints,
-        baseAmount
-    } = calcResult;
-    
-// ---------- 3. 檢查優惠券門檻 ----------
-const couponMinSpend = window.activeCoupon?.minSpend || 0;
-const couponDocId = window.activeCoupon?.couponDocId || '';
-const couponType = window.activeCoupon?.type || '';
-
-// 🔥 餐券模式跳過優惠券
-let couponEligible = true;
-if (calcResult.isTicketMode) {
-    couponEligible = false;
-    console.log('🍽️ 餐券模式，跳過優惠券');
-} else if (couponType && couponMinSpend > 0 && calcResult.baseAmount < couponMinSpend) {
-    showToast(`⚠️ 本次消費未達門檻（需滿 ${couponMinSpend} 元），優惠券未使用，使用期限內可用`);
-    couponEligible = false;
-}
-    
-    // ---------- 4. UI 鎖定 ----------
-    const btn = document.getElementById('submitBtn');
-    btn.disabled = true;
-    showLoading('處理中...保持微笑');
-   
-    
-    // ---------- 5. 產生交易 ID ----------
-    const transactionId = generateTransactionId(customerId);
-    
-// ---------- 6. 建立請求參數 ----------
-const params = new URLSearchParams({
-    action: 'addPointsWithInfo',
-    customerId: customerId,
-    branch: staff.branch || '',
-    staffName: staff.name || '',
-    category: isTicketMode ? '購買餐券' : '一般消費',
-    totalSpend: totalSpend,  // ← 直接用 calcResult 的 totalSpend
-    ticketSpend: isTicketMode ? 0 : ticketSpend,  // ← 餐券模式傳 0
-    redeemAmount: redeem,
-    couponDiscount: couponEligible ? couponDiscount : 0,
-    earnRate: config?.earnRate || 0.03,
-    levelRate: config?.levelRate || 1,
-    eventMultiplier: config?.eventMultiplier || 1,
-    loginId: staff.loginId || '',
-    deviceId: staff.deviceId || '',
-    transactionId: transactionId,
-    couponDocId: couponEligible ? couponDocId : '',
-    couponMinSpend: couponMinSpend,
-    couponBonus: couponEligible ? couponBonus : 0,
-    couponType: couponEligible ? couponType : '',
-    calculatedPoints: totalNewPoints,
-    basePoints: basePoints,
-    isTicketMode: isTicketMode
-});
-// ---------- 7. 發送請求 ----------
-    try {
-        console.log(`📤 提交集點請求，交易ID: ${transactionId}`);
-        console.log(`📊 消費: ${totalSpend} 元 | 折抵: ${redeem} 點 | 獲得: ${totalNewPoints} 點`);
-        
-        const fetchStart = Date.now();
-        const response = await fetch(`${GAS_URL}?${params.toString()}&t=${Date.now()}`);
-        console.log(`⏱️ API 回應: ${Date.now() - fetchStart} ms`);
-        
-        // ✅ 安全解析 JSON
-        const text = await response.text();
-        console.log('📊 原始回應:', text);
-        
-        let result;
-        try {
-            result = JSON.parse(text);
-        } catch (parseErr) {
-            console.error('❌ JSON 解析失敗，原始內容:', text);
-            hideLoading();
-            // 如果回應包含成功訊息但 JSON 格式錯誤，仍提示成功（因為可能已入帳）
-            if (text.includes('success') || text.includes('成功')) {
-                showToast('⚠️ 交易可能已成功，請檢查流水帳');
-                resetMember();
-                return;
+            basePoints = Math.floor(buyTicketAmount * ticketRate * levelRate * eventMultiplier);
+            totalNewPoints = basePoints;
+            tipMessage = '🍽️ 餐券模式：僅計算餐券購買點數，不適用優惠券';
+            tipClass = 'redeem-tip tip-ticket-mode';
+            maxRedeem = 0;
+            redeem = 0;
+            finalTicketSpend = buyTicketAmount;
+            
+            console.log(`🍽️ 餐券模式: 購買 ${buyTicketAmount} 元 → ${basePoints} 點`);
+            
+            if (window.activeCoupon && elements.couponStatusDisplay) {
+                elements.couponStatusDisplay.innerHTML = '🍽️ 餐券模式，優惠券已保留，下次使用';
+                elements.couponStatusDisplay.style.color = '#666';
+                elements.couponStatusDisplay.className = 'coupon-status no-coupon';
             }
-            alert('❌ 伺服器回應格式錯誤，請檢查流水帳確認交易狀態');
-            return;
-        }
-        
-        console.log(`⏱️ 總耗時: ${Date.now() - startTime} ms`);
-        console.log('📊 完整回傳:', JSON.stringify(result));
-        
-        hideLoading();
-        
-        // ---------- 8. 處理回應 ----------
-        // 8a. 檢查登入狀態
-        if (result.logout) {
-            showToast('⏰ 登入已過期，請重新登入');
-            setTimeout(() => { logout(); }, 2000);
-            btn.disabled = false;
-            return;
-        }
-        
-        // 8b. 檢查成功
-        if (result.success) {
-            // 🔥 修正點：安全地更新會員資訊
-            if (result.member) {
-                try {
-                    // ✅ 使用統一欄位名稱
-                    currentPoints = result.member.currentPoints || result.member.points || 0;
-                    memberLevel = result.member.level || result.member.memberLevel || '一般會員';
-                    levelRate = result.member.levelRate || 1;
-                    
-                    // 🔥 修正點：檢查 DOM 元素是否存在再更新
-                    const ptsEl = document.getElementById('cus-pts');
-                    const totalEl = document.getElementById('cus-total');
-                    const levelEl = document.getElementById('member-level');
-                    
-                    if (ptsEl) ptsEl.innerText = currentPoints;
-                    if (totalEl) totalEl.innerText = result.member.totalSpend || 0;
-                    if (levelEl) levelEl.innerText = memberLevel;
-                    
-                    if (result.config) {
-                        config = result.config;
-                        config.eventMultiplier = Number(config.eventMultiplier) || 1;
-                        config.levelRate = Number(config.levelRate) || 1;
-                        config.earnRate = Number(config.earnRate) || 0.03;
-                    }
-                    
-                    console.log(`✅ 會員資料已更新，目前點數: ${currentPoints}`);
-                } catch (err) {
-                    console.warn('⚠️ 更新會員資料時發生錯誤:', err);
-                    // 不中斷流程，繼續執行
-                }
-            }       
+        } else {
+            const baseForRedeem = totalSpend - ticketSpend - finalCouponDiscount;
+            const minSpendThreshold = shopCode === 'SWO' ? 500 : 1500;
             
-            // ---------- 9. 顯示完成訊息 ----------
-            let message = '✅ 集點作業完成！';
-            let isDuplicate = false;
-            
-            if (result.duplicate) {
-                message = '⚠️ 此交易已處理過，請勿重複提交！';
-                isDuplicate = true;
-            } else if (result.message === '已處理過') {
-                message = '✅ 集點已完成（重複請求已忽略）';
-                isDuplicate = true;
+            if (maxRate <= 0) {
+                maxRedeem = 0;
+                tipMessage = '🚫 今日活動暫停折抵';
+                tipClass = 'redeem-tip tip-no-redeem';
+            } else if (baseForRedeem < minSpendThreshold) {
+                maxRedeem = 0;
+                tipMessage = `⚠️ 未達門檻 ${minSpendThreshold} 元，無法折點`;
+                tipClass = 'redeem-tip tip-no-redeem';
             } else {
-                const elapsed = result.elapsed ? ` (${Math.round(result.elapsed / 1000)}秒)` : '';
-                message = `✅ 集點完成！獲得 ${totalNewPoints} 點${elapsed}`;
+                maxRedeem = Math.min(
+                    currentPoints || 0,
+                    Math.floor(baseForRedeem * maxRate)
+                );
+                tipMessage = `✅ 達低消 ${minSpendThreshold} 元，可抵 ${maxRedeem} 點`;
+                tipClass = 'redeem-tip tip-normal';
             }
             
-            // 🔥 修正點：使用 alert 或自訂 Modal，避免 alert 阻斷後續流程
-            showToast(message);
+            redeem = Math.min(redeemAmount, maxRedeem);
             
-            // 🔥 修正點：即使 alert 被關閉，也要確保後續流程執行
-            console.log(`⏱️ ==== 集點流程完成 ==== ${Date.now() - startTime} ms`);
+            const baseForCoupon = totalSpend - ticketSpend - redeem;
             
-            // ---------- 10. 重置狀態（放入 setTimeout 確保 UI 更新） ----------
-            setTimeout(() => {
-                try {
-                    // 清除優惠券狀態
-                    if (window.activeCoupon) {
-                        window.activeCoupon = null;
-                        const couponInfoEl = document.getElementById('coupon-info');
-                        if (couponInfoEl) couponInfoEl.remove();
-                    }
-                    
- // 🔥 優惠券流程中，不要重置會員資料
-const urlParams = new URLSearchParams(window.location.search);
-const fromCoupon = urlParams.get('fromCoupon');
-
-if (fromCoupon === 'true') {
-    // 優惠券流程：只清除輸入框，不鎖表單
-    document.getElementById('totalSpend').value = '';
-    document.getElementById('ticketSpend').value = '';
-    document.getElementById('redeemAmount').value = '';
-    document.getElementById('new-pts').innerText = '0 點';
-    document.getElementById('after-pts').innerText = '0 點';
-    showToast('✅ 集點完成！');
-} else {
-    // 一般流程：完整重置
-    resetMember();
-    showToast('✅ 集點完成，已清除會員資料');
-}
-                    
-                    // 🔥 修正點：如果有優惠券且不是重複提交，顯示優惠券已使用
-                    if (couponType && !isDuplicate) {
-                        const statusEl = document.getElementById('coupon-status-display');
-                        if (statusEl) {
-                            statusEl.innerHTML = '🎉 優惠券已成功使用！';
-                            statusEl.style.color = '#2e7d32';
-                            statusEl.className = 'coupon-status eligible';
-                        }
-                    }
-                    
-                } catch (err) {
-                    console.warn('⚠️ 重置狀態時發生錯誤:', err);
+            if (couponType === '消費折抵' && couponMinSpend > 0) {
+                if (baseForCoupon >= couponMinSpend) {
+                    couponDiscountAmount = finalCouponDiscount;
+                    console.log(`✅ 折抵券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，折抵 ${finalCouponDiscount} 元`);
+                } else {
+                    console.log(`❌ 折抵券未達標（${baseForCoupon} 元 < ${couponMinSpend} 元）`);
+                    couponDiscountAmount = 0;
                 }
-            }, 500);
+            } else if (couponType === '贈點' && couponMinSpend > 0) {
+                if (baseForCoupon >= couponMinSpend) {
+                    finalCouponBonus = couponBonus;
+                    console.log(`✅ 贈點券達標！${baseForCoupon} 元 ≥ ${couponMinSpend} 元，贈送 ${couponBonus} 點`);
+                } else {
+                    console.log(`❌ 贈點券未達標（${baseForCoupon} 元 < ${couponMinSpend} 元）`);
+                    finalCouponBonus = 0;
+                }
+            }
             
-        } else {
-            // 失敗
-            alert(`❌ 集點失敗：${result.message || '未知錯誤'}`);
+            if (elements.couponDiscountInput) {
+                elements.couponDiscountInput.value = couponDiscountAmount;
+            }
+            
+            const finalActual = totalSpend - ticketSpend - redeem - couponDiscountAmount;
+            
+            basePoints = Math.floor(Math.max(0, finalActual) * earnRate * levelRate * eventMultiplier);
+            totalNewPoints = basePoints + finalCouponBonus;
+            
+            console.log(`💳 一般模式: 總額 ${totalSpend} - 餐券 ${ticketSpend} - 點數 ${redeem} - 優惠券 ${couponDiscountAmount} = 實付 ${finalActual} 元 → ${basePoints} 點 + 贈點 ${finalCouponBonus} 點 = ${totalNewPoints} 點`);
         }
         
-    } catch (error) {
-        // ---------- 11. 錯誤處理 ----------
-        hideLoading();
-        console.error('❌ 請求失敗:', error);
-        console.error('錯誤堆疊:', error.stack);
-        
-        // 🔥 修正點：顯示更詳細的錯誤訊息
-        let errorMsg = '網路錯誤，請檢查連線後再試';
-        if (error.message) {
-            errorMsg = error.message;
+        if (elements.tipEl) {
+            elements.tipEl.innerText = tipMessage;
+            elements.tipEl.className = tipClass;
         }
-        alert(`❌ 錯誤：${errorMsg}`);
         
-    } finally {
-        // ---------- 12. 解鎖按鈕（確保一定會執行） ----------
-        const btn = document.getElementById('submitBtn');
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = '確認過卡';
+        if (elements.maxHintEl) {
+            elements.maxHintEl.innerText = maxRedeem;
         }
-        hideLoading();
+        
+        if (elements.redeemInput && redeem !== redeemAmount) {
+            elements.redeemInput.value = redeem;
+        }
+        
+        if (elements.newPtsEl) {
+            if (isTicketMode) {
+                elements.newPtsEl.innerHTML = `${basePoints} 點（餐券回饋）`;
+            } else if (finalCouponBonus > 0) {
+                elements.newPtsEl.innerHTML = 
+                    `${basePoints} 點 + 活動贈點 <b style="color:#ff6b00;">${finalCouponBonus}</b> 點 = ` +
+                    `<b style="color:#1a73e8;">${totalNewPoints}</b> 點`;
+            } else {
+                elements.newPtsEl.innerText = `${totalNewPoints} 點`;
+            }
+        }
+        
+        if (elements.bonusPointsDisplay) {
+            elements.bonusPointsDisplay.style.display = (finalCouponBonus > 0 && !isTicketMode) ? 'inline' : 'none';
+        }
+        
+        if (elements.afterPtsEl) {
+            const currentPts = currentPoints || 0;
+            const afterPoints = currentPts - redeem + totalNewPoints;
+            elements.afterPtsEl.innerText = `${afterPoints} 點`;
+        }
+        
+        if (elements.couponBonusDisplay) {
+            if (finalCouponBonus > 0 && !isTicketMode) {
+                elements.couponBonusDisplay.textContent = `🎁 活動贈點 +${finalCouponBonus} 點`;
+                elements.couponBonusDisplay.style.display = 'block';
+            } else {
+                elements.couponBonusDisplay.style.display = 'none';
+            }
+        }
+        
+        const result = {
+            isTicketMode,
+            totalSpend: isTicketMode ? buyTicketAmount : totalSpend,
+            ticketSpend: finalTicketSpend,
+            couponDiscount: finalCouponDiscount,
+            couponMinSpend,
+            couponName,
+            couponType,
+            redeem,
+            maxRedeem,
+            basePoints,
+            couponBonus: couponBonus,
+            finalCouponBonus: finalCouponBonus,
+            totalNewPoints,
+            baseAmount: isTicketMode ? buyTicketAmount : (totalSpend - ticketSpend - finalCouponDiscount),
+            afterPoints: (currentPoints || 0) - redeem + totalNewPoints,
+            couponEligible: !isTicketMode && couponType && couponMinSpend > 0 && (totalSpend - ticketSpend) >= couponMinSpend,
+            buyTicketAmount: buyTicketAmount
+        };
+        
+        window.calcResult = result;
+        console.log('📊 計算結果:', result);
+        return result;
     }
-}
 
-function resetMember() {
-    try {
-        // ============================================================
-        //  🔥 如果正在優惠券流程中，不要完全重置
-        // ============================================================
+    // ============================================================
+    //  核心函數：generateTransactionId
+    // ============================================================
+    function generateTransactionId(customerId) {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const timeKey = day + '_' + hours + minutes + seconds;
+        const customerPrefix = customerId.substring(0, 5);
+        return customerPrefix + '_' + timeKey;
+    }
+
+    // ============================================================
+    //  核心函數：submitData
+    // ============================================================
+    async function submitData() {
+        console.log('🔍 1. customerId =', customerId);
+        console.log('🔍 2. typeof customerId =', typeof customerId);
+        console.log('🔍 3. window.customerId =', window.customerId);
+        const startTime = Date.now();
+        console.log('⏱️ ==== 集點流程開始 ====');
+        console.log('🔍 提交前 customerId:', customerId);
+
+        if (!customerId && window.customerId) {
+            customerId = window.customerId;
+            console.log('🔄 從 window 還原 customerId:', customerId);
+        }
+        
         const urlParams = new URLSearchParams(window.location.search);
         const fromCoupon = urlParams.get('fromCoupon');
-        
         if (fromCoupon === 'true') {
-            console.log('🔄 優惠券流程中，跳過重置會員資料');
-            // 只重置掃描相關狀態
+            console.log('🎯 優惠券流程中，保留表單解鎖狀態');
+        }
+        
+        if (!customerId) {
+            var urlUserId = new URLSearchParams(window.location.search).get('userId');
+            if (urlUserId) {
+                customerId = urlUserId;
+                console.log('🔄 從 URL 重新讀取 customerId:', customerId);
+            }
+        }
+        
+        if (!isLoggedIn || !staff?.loginId) {
+            showToast('⚠️ 請先登入');
+            setTimeout(() => { window.location.href = 'staff_login_pc.html'; }, 1500);
+            return;
+        }
+        
+        if (!customerId) {
+            alert('請先掃描會員！');
+            return;
+        }
+        
+        const calcResult = doCalc();
+        if (!calcResult) {
+            alert('❌ 計算失敗，請檢查輸入');
+            return;
+        }
+        
+        const {
+            isTicketMode,
+            totalSpend,
+            ticketSpend,
+            couponDiscount,
+            redeem,
+            basePoints,
+            couponBonus,
+            totalNewPoints,
+            baseAmount
+        } = calcResult;
+        
+        const couponMinSpend = window.activeCoupon?.minSpend || 0;
+        const couponDocId = window.activeCoupon?.couponDocId || '';
+        const couponType = window.activeCoupon?.type || '';
+        
+        let couponEligible = true;
+        if (calcResult.isTicketMode) {
+            couponEligible = false;
+            console.log('🍽️ 餐券模式，跳過優惠券');
+        } else if (couponType && couponMinSpend > 0 && calcResult.baseAmount < couponMinSpend) {
+            showToast(`⚠️ 本次消費未達門檻（需滿 ${couponMinSpend} 元），優惠券未使用，使用期限內可用`);
+            couponEligible = false;
+        }
+        
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        showLoading('處理中...保持微笑');
+        
+        const transactionId = generateTransactionId(customerId);
+        
+        const params = new URLSearchParams({
+            action: 'addPointsWithInfo',
+            customerId: customerId,
+            branch: staff.branch || '',
+            staffName: staff.name || '',
+            category: isTicketMode ? '購買餐券' : '一般消費',
+            totalSpend: totalSpend,
+            ticketSpend: isTicketMode ? 0 : ticketSpend,
+            redeemAmount: redeem,
+            couponDiscount: couponEligible ? couponDiscount : 0,
+            earnRate: config?.earnRate || 0.03,
+            levelRate: config?.levelRate || 1,
+            eventMultiplier: config?.eventMultiplier || 1,
+            loginId: staff.loginId || '',
+            deviceId: staff.deviceId || '',
+            transactionId: transactionId,
+            couponDocId: couponEligible ? couponDocId : '',
+            couponMinSpend: couponMinSpend,
+            couponBonus: couponEligible ? couponBonus : 0,
+            couponType: couponEligible ? couponType : '',
+            calculatedPoints: totalNewPoints,
+            basePoints: basePoints,
+            isTicketMode: isTicketMode
+        });
+        
+        try {
+            console.log(`📤 提交集點請求，交易ID: ${transactionId}`);
+            console.log(`📊 消費: ${totalSpend} 元 | 折抵: ${redeem} 點 | 獲得: ${totalNewPoints} 點`);
+            
+            const fetchStart = Date.now();
+            const response = await fetch(`${GAS_URL}?${params.toString()}&t=${Date.now()}`, {
+                method: 'GET',
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
+            console.log(`⏱️ API 回應: ${Date.now() - fetchStart} ms`);
+            
+            const text = await response.text();
+            console.log('📊 原始回應:', text);
+            
+            let result;
+            try {
+                result = JSON.parse(text);
+            } catch (parseErr) {
+                console.error('❌ JSON 解析失敗，原始內容:', text);
+                hideLoading();
+                if (text.includes('success') || text.includes('成功')) {
+                    showToast('⚠️ 交易可能已成功，請檢查流水帳');
+                    resetMember();
+                    return;
+                }
+                alert('❌ 伺服器回應格式錯誤，請檢查流水帳確認交易狀態');
+                return;
+            }
+            
+            console.log(`⏱️ 總耗時: ${Date.now() - startTime} ms`);
+            console.log('📊 完整回傳:', JSON.stringify(result));
+            
+            hideLoading();
+            
+            if (result.logout) {
+                showToast('⏰ 登入已過期，請重新登入');
+                setTimeout(() => { logout(); }, 2000);
+                btn.disabled = false;
+                return;
+            }
+            
+            if (result.success) {
+                if (result.member) {
+                    try {
+                        currentPoints = result.member.currentPoints || result.member.points || 0;
+                        memberLevel = result.member.level || result.member.memberLevel || '一般會員';
+                        levelRate = result.member.levelRate || 1;
+                        
+                        const ptsEl = document.getElementById('cus-pts');
+                        const totalEl = document.getElementById('cus-total');
+                        const levelEl = document.getElementById('member-level');
+                        
+                        if (ptsEl) ptsEl.innerText = currentPoints;
+                        if (totalEl) totalEl.innerText = result.member.totalSpend || 0;
+                        if (levelEl) levelEl.innerText = memberLevel;
+                        
+                        if (result.config) {
+                            config = result.config;
+                            config.eventMultiplier = Number(config.eventMultiplier) || 1;
+                            config.levelRate = Number(config.levelRate) || 1;
+                            config.earnRate = Number(config.earnRate) || 0.03;
+                        }
+                        
+                        console.log(`✅ 會員資料已更新，目前點數: ${currentPoints}`);
+                    } catch (err) {
+                        console.warn('⚠️ 更新會員資料時發生錯誤:', err);
+                    }
+                }
+                
+                let message = '✅ 集點作業完成！';
+                let isDuplicate = false;
+                
+                if (result.duplicate) {
+                    message = '⚠️ 此交易已處理過，請勿重複提交！';
+                    isDuplicate = true;
+                } else if (result.message === '已處理過') {
+                    message = '✅ 集點已完成（重複請求已忽略）';
+                    isDuplicate = true;
+                } else {
+                    const elapsed = result.elapsed ? ` (${Math.round(result.elapsed / 1000)}秒)` : '';
+                    message = `✅ 集點完成！獲得 ${totalNewPoints} 點${elapsed}`;
+                }
+                
+                showToast(message);
+                console.log(`⏱️ ==== 集點流程完成 ==== ${Date.now() - startTime} ms`);
+                
+                setTimeout(() => {
+                    try {
+                        if (window.activeCoupon) {
+                            window.activeCoupon = null;
+                            const couponInfoEl = document.getElementById('coupon-info');
+                            if (couponInfoEl) couponInfoEl.remove();
+                        }
+                        
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const fromCoupon = urlParams.get('fromCoupon');
+                        
+                        if (fromCoupon === 'true') {
+                            document.getElementById('totalSpend').value = '';
+                            document.getElementById('ticketSpend').value = '';
+                            document.getElementById('redeemAmount').value = '';
+                            document.getElementById('new-pts').innerText = '0 點';
+                            document.getElementById('after-pts').innerText = '0 點';
+                            showToast('✅ 集點完成！');
+                        } else {
+                            resetMember();
+                            showToast('✅ 集點完成，已清除會員資料');
+                        }
+                        
+                        if (couponType && !isDuplicate) {
+                            const statusEl = document.getElementById('coupon-status-display');
+                            if (statusEl) {
+                                statusEl.innerHTML = '🎉 優惠券已成功使用！';
+                                statusEl.style.color = '#2e7d32';
+                                statusEl.className = 'coupon-status eligible';
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('⚠️ 重置狀態時發生錯誤:', err);
+                    }
+                }, 500);
+            } else {
+                alert(`❌ 集點失敗：${result.message || '未知錯誤'}`);
+            }
+        } catch (error) {
+            hideLoading();
+            console.error('❌ 請求失敗:', error);
+            console.error('錯誤堆疊:', error.stack);
+            let errorMsg = '網路錯誤，請檢查連線後再試';
+            if (error.message) {
+                errorMsg = error.message;
+            }
+            alert(`❌ 錯誤：${errorMsg}`);
+        } finally {
+            const btn = document.getElementById('submitBtn');
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = '確認過卡';
+            }
+            hideLoading();
+        }
+    }
+
+    // ============================================================
+    //  核心函數：resetMember
+    // ============================================================
+    function resetMember() {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromCoupon = urlParams.get('fromCoupon');
+            
+            if (fromCoupon === 'true') {
+                console.log('🔄 優惠券流程中，跳過重置會員資料');
+                customerId = "";
+                window.customerId = undefined;
+                currentMemberData = null;
+                return;
+            }
+            
             customerId = "";
             window.customerId = undefined;
             currentMemberData = null;
             
-            // 🔥 重新聚焦隱藏輸入框
-            setTimeout(function() {
-                //focusHiddenInput();
-            }, 300);
-            return;
+            const memberInfo = document.getElementById('member-info');
+            if (memberInfo) {
+                memberInfo.style.display = 'none';
+            }
+            
+            const nameEl = document.getElementById('customer-name');
+            const phoneEl = document.getElementById('customer-phone');
+            if (nameEl) nameEl.textContent = '';
+            if (phoneEl) phoneEl.textContent = '';
+            
+            const couponInfo = document.getElementById('coupon-info');
+            if (couponInfo) {
+                couponInfo.style.display = 'none';
+            }
+            
+            var el = document.getElementById('coupon-name-display');
+            if (el) el.textContent = '';
+            
+            el = document.getElementById('coupon-content-display');
+            if (el) el.textContent = '';
+            
+            el = document.getElementById('coupon-minSpend-display');
+            if (el) el.textContent = '';
+            
+            el = document.getElementById('coupon-type-display');
+            if (el) el.textContent = '';
+            
+            const statusDisplay = document.getElementById('coupon-status-display');
+            if (statusDisplay) {
+                statusDisplay.innerHTML = '📋 尚未使用優惠券';
+                statusDisplay.style.color = '#666';
+                statusDisplay.className = 'coupon-status no-coupon';
+            }
+            
+            const totalInput = document.getElementById('totalSpend');
+            if (totalInput) totalInput.value = '';
+            
+            const ticketInput = document.getElementById('ticketSpend');
+            if (ticketInput) ticketInput.value = '';
+            
+            const redeemInput = document.getElementById('redeemAmount');
+            if (redeemInput) redeemInput.value = '';
+            
+            const couponDiscountInput = document.getElementById('couponDiscount');
+            if (couponDiscountInput) couponDiscountInput.value = '';
+            
+            const newPtsEl = document.getElementById('new-pts');
+            if (newPtsEl) newPtsEl.innerText = '0 點';
+            
+            const afterPtsEl = document.getElementById('after-pts');
+            if (afterPtsEl) afterPtsEl.innerText = '0 點';
+            
+            const maxHintEl = document.getElementById('max-hint');
+            if (maxHintEl) maxHintEl.innerText = '0';
+            
+            const tipEl = document.getElementById('redeemTip');
+            if (tipEl) {
+                tipEl.innerText = '';
+                tipEl.className = 'redeem-tip';
+            }
+            
+            window.activeCoupon = null;
+            window.activeCouponDocId = null;
+            window.calcResult = null;
+            window.couponData = null;
+            window.couponMinSpend = 0;
+            window.couponBonusPoints = 0;
+            window.couponDiscountAmount = 0;
+            window.couponType = '';
+            
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '請先掃描會員';
+            }
+            
+            const memberUI = document.getElementById('member-ui');
+            if (memberUI) {
+                memberUI.style.display = 'none';
+            }
+            
+            if (window.history && window.history.replaceState) {
+                try {
+                    var url = new URL(window.location.href);
+                    var paramsToRemove = [
+                        'userId', 'fromCoupon', 'couponDocId', 'minSpend',
+                        'bonusPoints', 'discountAmount', 'couponType',
+                        'couponName', 'couponContent', 'memberName',
+                        'currentPoints', 'memberLevel', 'totalSpend'
+                    ];
+                    paramsToRemove.forEach(function(param) {
+                        url.searchParams.delete(param);
+                    });
+                    window.history.replaceState({}, document.title, url.toString());
+                    console.log('✅ URL 殘留參數已清除');
+                } catch (err) {
+                    console.warn('⚠️ URL 清理時發生非致命例外:', err);
+                }
+            }
+            
+            isProcessing = false;
+            
+            console.log('🔄 會員資料已完整重置');
+        } catch (error) {
+            console.warn('⚠️ 重置會員資料時發生錯誤:', error);
+        }
+    }
+
+    // ============================================================
+    //  核心函數：forceReset
+    // ============================================================
+    function forceReset() {
+        console.log('🔄 強制重置所有資料');
+        
+        if (window.history && window.history.replaceState) {
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('fromCoupon');
+                url.searchParams.delete('userId');
+                url.searchParams.delete('couponDocId');
+                url.searchParams.delete('minSpend');
+                url.searchParams.delete('bonusPoints');
+                url.searchParams.delete('discountAmount');
+                url.searchParams.delete('couponType');
+                url.searchParams.delete('couponName');
+                url.searchParams.delete('couponContent');
+                window.history.replaceState({}, document.title, url.toString());
+                console.log('✅ URL 參數已清除');
+            } catch (err) {
+                console.warn('⚠️ 清除 URL 參數失敗:', err);
+            }
         }
         
-        // ============================================================
-        //  1️⃣ 重置掃描相關的狀態
-        // ============================================================
-        customerId = "";
-        window.customerId = undefined;
-        currentMemberData = null;
-        
-        // ============================================================
-        //  2️⃣ 清除會員 UI
-        // ============================================================
-        const memberInfo = document.getElementById('member-info');
-        if (memberInfo) {
-            memberInfo.style.display = 'none';
-        }
-        
-        const nameEl = document.getElementById('customer-name');
-        const phoneEl = document.getElementById('customer-phone');
-        if (nameEl) nameEl.textContent = '';
-        if (phoneEl) phoneEl.textContent = '';
-        
-        // ============================================================
-        //  3️⃣ 清除優惠券資訊
-        // ============================================================
-        const couponInfo = document.getElementById('coupon-info');
-        if (couponInfo) {
-            couponInfo.style.display = 'none';
-        }
-        
-        var el = document.getElementById('coupon-name-display');
-        if (el) el.textContent = '';
-        
-        el = document.getElementById('coupon-content-display');
-        if (el) el.textContent = '';
-        
-        el = document.getElementById('coupon-minSpend-display');
-        if (el) el.textContent = '';
-        
-        el = document.getElementById('coupon-type-display');
-        if (el) el.textContent = '';
-        
-        const statusDisplay = document.getElementById('coupon-status-display');
-        if (statusDisplay) {
-            statusDisplay.innerHTML = '📋 尚未使用優惠券';
-            statusDisplay.style.color = '#666';
-            statusDisplay.className = 'coupon-status no-coupon';
-        }
-        
-        // ============================================================
-        //  4️⃣ 清除結帳金額輸入
-        // ============================================================
-        const totalInput = document.getElementById('totalSpend');
-        if (totalInput) totalInput.value = '';
-        
-        const ticketInput = document.getElementById('ticketSpend');
-        if (ticketInput) ticketInput.value = '';
-        
-        const redeemInput = document.getElementById('redeemAmount');
-        if (redeemInput) redeemInput.value = '';
-        
-        const couponDiscountInput = document.getElementById('couponDiscount');
-        if (couponDiscountInput) couponDiscountInput.value = '';
-        
-        // ============================================================
-        //  5️⃣ 清除點數計算顯示
-        // ============================================================
-        const newPtsEl = document.getElementById('new-pts');
-        if (newPtsEl) newPtsEl.innerText = '0 點';
-        
-        const afterPtsEl = document.getElementById('after-pts');
-        if (afterPtsEl) afterPtsEl.innerText = '0 點';
-        
-        const maxHintEl = document.getElementById('max-hint');
-        if (maxHintEl) maxHintEl.innerText = '0';
-        
-        const tipEl = document.getElementById('redeemTip');
-        if (tipEl) {
-            tipEl.innerText = '';
-            tipEl.className = 'redeem-tip';
-        }
-        
-        // ============================================================
-        //  6️⃣ 清除優惠券全域變數
-        // ============================================================
         window.activeCoupon = null;
         window.activeCouponDocId = null;
         window.calcResult = null;
@@ -1988,153 +2024,46 @@ function resetMember() {
         window.couponDiscountAmount = 0;
         window.couponType = '';
         
-        // ============================================================
-        //  7️⃣ 重置按鈕狀態
-        // ============================================================
+        customerId = "";
+        window.customerId = undefined;
+        currentMemberData = null;
+        currentPoints = 0;
+        memberLevel = "";
+        levelRate = 1;
+        
+        const memberUI = document.getElementById('member-ui');
+        if (memberUI) memberUI.style.display = 'none';
+        
+        const couponInfo = document.getElementById('coupon-info');
+        if (couponInfo) couponInfo.style.display = 'none';
+        
+        document.getElementById('totalSpend').value = '';
+        document.getElementById('ticketSpend').value = '';
+        document.getElementById('redeemAmount').value = '';
+        document.getElementById('couponDiscount').value = '';
+        document.getElementById('new-pts').innerText = '0 點';
+        document.getElementById('after-pts').innerText = '0 點';
+        document.getElementById('max-hint').innerText = '0';
+        document.getElementById('redeemTip').innerHTML = '';
+        document.getElementById('cus-name').innerText = '-';
+        document.getElementById('cus-pts').innerText = '0';
+        document.getElementById('cus-total').innerText = '0';
+        document.getElementById('member-level').innerText = '';
+        
+        document.getElementById('form-ui').classList.add('locked');
+        
         const submitBtn = document.getElementById('submitBtn');
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.textContent = '請先掃描會員';
         }
         
-        const scanBtn = document.getElementById('scanBtn');
-        if (scanBtn) {
-            scanBtn.textContent = '📷 掃描會員';
-            scanBtn.disabled = false;
-        }
-        
-        // 隱藏會員 UI
-        const memberUI = document.getElementById('member-ui');
-        if (memberUI) {
-            memberUI.style.display = 'none';
-        }
-        
-        // ============================================================
-        //  8️⃣ 清理 URL 殘留參數（避免重複疊加）
-        // ============================================================
-        if (window.history && window.history.replaceState) {
-            try {
-                var url = new URL(window.location.href);
-                var paramsToRemove = [
-                    'userId', 'fromCoupon', 'couponDocId', 'minSpend',
-                    'bonusPoints', 'discountAmount', 'couponType',
-                    'couponName', 'couponContent', 'memberName',
-                    'currentPoints', 'memberLevel', 'totalSpend'
-                ];
-                paramsToRemove.forEach(function(param) {
-                    url.searchParams.delete(param);
-                });
-                window.history.replaceState({}, document.title, url.toString());
-                console.log('✅ URL 殘留參數已清除');
-            } catch (err) {
-                console.warn('⚠️ URL 清理時發生非致命例外:', err);
-            }
-        }
-        
-        // ============================================================
-        //  9️⃣ 重置處理狀態
-        // ============================================================
         isProcessing = false;
         
-        // ============================================================
-        //  🔟 重新聚焦隱藏輸入框
-        // ============================================================
-        setTimeout(function() {
-            //focusHiddenInput();
-        }, 300);
-        
-        console.log('🔄 會員資料已完整重置');
-    } catch (error) {
-        console.warn('⚠️ 重置會員資料時發生錯誤:', error);
+        showToast('✅ 已清除所有資料');
+        console.log('🔄 強制重置完成');
     }
-}
-// ============================================================
-//  🔥 強制重置（重新整理按鈕專用）
-// ============================================================
-function forceReset() {
-    console.log('🔄 強制重置所有資料');
-    
-    // 清除 URL 中的 fromCoupon 參數
-    if (window.history && window.history.replaceState) {
-        try {
-            var url = new URL(window.location.href);
-            url.searchParams.delete('fromCoupon');
-            url.searchParams.delete('userId');
-            url.searchParams.delete('couponDocId');
-            url.searchParams.delete('minSpend');
-            url.searchParams.delete('bonusPoints');
-            url.searchParams.delete('discountAmount');
-            url.searchParams.delete('couponType');
-            url.searchParams.delete('couponName');
-            url.searchParams.delete('couponContent');
-            window.history.replaceState({}, document.title, url.toString());
-            console.log('✅ URL 參數已清除');
-        } catch (err) {
-            console.warn('⚠️ 清除 URL 參數失敗:', err);
-        }
-    }
-    
-    // 清除優惠券全域變數
-    window.activeCoupon = null;
-    window.activeCouponDocId = null;
-    window.calcResult = null;
-    window.couponData = null;
-    window.couponMinSpend = 0;
-    window.couponBonusPoints = 0;
-    window.couponDiscountAmount = 0;
-    window.couponType = '';
-    
-    // 重置會員資料
-    customerId = "";
-    window.customerId = undefined;
-    currentMemberData = null;
-    currentPoints = 0;
-    memberLevel = "";
-    levelRate = 1;
-    
-    // 清除會員 UI
-    const memberUI = document.getElementById('member-ui');
-    if (memberUI) memberUI.style.display = 'none';
-    
-    // 清除優惠券 UI
-    const couponInfo = document.getElementById('coupon-info');
-    if (couponInfo) couponInfo.style.display = 'none';
-    
-    // 清除所有輸入框
-    document.getElementById('totalSpend').value = '';
-    document.getElementById('ticketSpend').value = '';
-    document.getElementById('redeemAmount').value = '';
-    document.getElementById('couponDiscount').value = '';
-    document.getElementById('new-pts').innerText = '0 點';
-    document.getElementById('after-pts').innerText = '0 點';
-    document.getElementById('max-hint').innerText = '0';
-    document.getElementById('redeemTip').innerHTML = '';
-    document.getElementById('cus-name').innerText = '-';
-    document.getElementById('cus-pts').innerText = '0';
-    document.getElementById('cus-total').innerText = '0';
-    document.getElementById('member-level').innerText = '';
-    
-    // 鎖住表單
-    document.getElementById('form-ui').classList.add('locked');
-    
-    // 重置按鈕
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = '請先掃描會員';
-    }
-    
-    // 重置處理狀態
-    isProcessing = false;
-    
-    // 聚焦隱藏輸入框
-    setTimeout(function() {
-        //focusHiddenInput();
-    }, 300);
-    
-    showToast('✅ 已清除所有資料');
-    console.log('🔄 強制重置完成');
-}
+
     function logout() {
         clearIdleTimer();
         showToast("正在登出...");
@@ -2143,219 +2072,174 @@ function forceReset() {
         localStorage.removeItem('staffRole');
         localStorage.removeItem('staffBranch');
         localStorage.removeItem('staffData');
-        localStorage.removeItem('isLocked');  // 🔥 清除鎖定標記
-        isLocked = false;  // 🔥 重置變數
+        localStorage.removeItem('isLocked');
+        isLocked = false;
         window.location.href = 'staff_login_pc.html';
     }
 
     // ============================================================
     //  初始化
     // ============================================================
-function init() {
-    console.log("📌 電腦版 staff_pc.html 啟動");
-    
-    // 🔥 檢查是否被鎖定
-    const isLockedStorage = localStorage.getItem('isLocked');
-    if (isLockedStorage === 'true') {
-        console.log('🔒 頁面已被鎖定，顯示鎖屏畫面');
-        isLocked = true;
-        // 直接顯示鎖屏，不進行自動登入
-        showIdleLockScreen();
-        return;
-    }
-    
-    var submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '⏳ 資料載入中...';
-    }
-    
-    // 從 localStorage 讀取登入狀態
-    var loginId = localStorage.getItem('staffLoginId');
-    var staffName = localStorage.getItem('staffName');
-    var branchName = localStorage.getItem('staffBranch');
-    var role = localStorage.getItem('staffRole') || '夥伴';
-    
-    if (!loginId) {
-        console.log("❌ 無登入憑證，請先登入");
+    function init() {
+        console.log("📌 電腦版 staff_pc.html 啟動");
+        
+        const isLockedStorage = localStorage.getItem('isLocked');
+        if (isLockedStorage === 'true') {
+            console.log('🔒 頁面已被鎖定，顯示鎖屏畫面');
+            isLocked = true;
+            showIdleLockScreen();
+            return;
+        }
+        
+        var submitBtn = document.getElementById('submitBtn');
         if (submitBtn) {
-            submitBtn.innerHTML = '請先登入';
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ 資料載入中...';
         }
-        setTimeout(function() {
-            window.location.href = 'staff_login_pc.html';
-        }, 1500);
-        return;
-    }
-    
-    // 設定店員資訊
-    staff.name = staffName || '';
-    staff.branch = branchName || '老娘鍋河堤店';
-    staff.loginId = loginId;
-    staff.role = role;
-    staff.deviceId = getDeviceId();
-    isLoggedIn = true;
-    
-    var staffNameEl = document.getElementById('staff-name');
-    var shopNameEl = document.getElementById('shop-name');
-    var roleTextEl = document.getElementById('role-text');
-    if (staffNameEl) staffNameEl.innerText = staff.name || '夥伴';
-    if (shopNameEl) shopNameEl.innerText = staff.branch || '老娘領地';
-    if (roleTextEl) roleTextEl.innerText = staff.role || '夥伴';
-    
-    if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '確認過卡';
-    }
-    
-    console.log("✅ 電腦版初始化完成，店員:", staff.name);
-    
-    // ============================================================
-    //  🔥 檢查是否從優惠券跳轉回來
-    // ============================================================
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromCoupon = urlParams.get('fromCoupon');
-    const userId = urlParams.get('userId');
+        
+        var loginId = localStorage.getItem('staffLoginId');
+        var staffName = localStorage.getItem('staffName');
+        var branchName = localStorage.getItem('staffBranch');
+        var role = localStorage.getItem('staffRole') || '夥伴';
+        
+        if (!loginId) {
+            console.log("❌ 無登入憑證，請先登入");
+            if (submitBtn) {
+                submitBtn.innerHTML = '請先登入';
+            }
+            setTimeout(function() {
+                window.location.href = 'staff_login_pc.html';
+            }, 1500);
+            return;
+        }
+        
+        staff.name = staffName || '';
+        staff.branch = branchName || '老娘鍋河堤店';
+        staff.loginId = loginId;
+        staff.role = role;
+        staff.deviceId = getDeviceId();
+        isLoggedIn = true;
+        
+        var staffNameEl = document.getElementById('staff-name');
+        var shopNameEl = document.getElementById('shop-name');
+        var roleTextEl = document.getElementById('role-text');
+        if (staffNameEl) staffNameEl.innerText = staff.name || '夥伴';
+        if (shopNameEl) shopNameEl.innerText = staff.branch || '老娘領地';
+        if (roleTextEl) roleTextEl.innerText = staff.role || '夥伴';
+        
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '確認過卡';
+        }
+        
+        console.log("✅ 電腦版初始化完成，店員:", staff.name);
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromCoupon = urlParams.get('fromCoupon');
+        const userId = urlParams.get('userId');
 
-    if (fromCoupon === 'true' && userId) {
-        console.log("🎯 從優惠券跳轉回來，userId:", userId);
-        
-        const couponDocId = urlParams.get('couponDocId') || '';
-        const minSpend = parseFloat(urlParams.get('minSpend')) || 0;
-        const bonusPoints = parseFloat(urlParams.get('bonusPoints')) || 0;
-        const discountAmount = parseFloat(urlParams.get('discountAmount')) || 0;
-        const couponType = urlParams.get('couponType') || '';
-        const couponName = urlParams.get('couponName') || '優惠券';
-        const couponContent = urlParams.get('couponContent') || '';
-        
-        window.activeCoupon = {
-            couponName: couponName,
-            couponContent: couponContent,
-            minSpend: minSpend,
-            bonusPoints: bonusPoints,
-            discountAmount: discountAmount,
-            type: couponType,
-            couponDocId: couponDocId
-        };
-        window.activeCouponDocId = couponDocId;
-        
-        console.log("✅ 已還原優惠券資料:", window.activeCoupon);
-        
-        loadMemberData(userId);
-        
-        if (window.activeCoupon) {
-            displayCouponInfo(window.activeCoupon);
+        if (fromCoupon === 'true' && userId) {
+            console.log("🎯 從優惠券跳轉回來，userId:", userId);
+            
+            const couponDocId = urlParams.get('couponDocId') || '';
+            const minSpend = parseFloat(urlParams.get('minSpend')) || 0;
+            const bonusPoints = parseFloat(urlParams.get('bonusPoints')) || 0;
+            const discountAmount = parseFloat(urlParams.get('discountAmount')) || 0;
+            const couponType = urlParams.get('couponType') || '';
+            const couponName = urlParams.get('couponName') || '優惠券';
+            const couponContent = urlParams.get('couponContent') || '';
+            
+            window.activeCoupon = {
+                couponName: couponName,
+                couponContent: couponContent,
+                minSpend: minSpend,
+                bonusPoints: bonusPoints,
+                discountAmount: discountAmount,
+                type: couponType,
+                couponDocId: couponDocId
+            };
+            window.activeCouponDocId = couponDocId;
+            
+            console.log("✅ 已還原優惠券資料:", window.activeCoupon);
+            
+            loadMemberData(userId);
+            
+            if (window.activeCoupon) {
+                displayCouponInfo(window.activeCoupon);
+            }
+            
+            if (window.history && window.history.replaceState) {
+                try {
+                    var url = new URL(window.location.href);
+                    url.searchParams.delete('fromCoupon');
+                    window.history.replaceState({}, document.title, url.toString());
+                } catch (err) {}
+            }
+            
+            hideLoading();
+            
+            resetIdleTimer();
+            document.addEventListener('mousemove', resetIdleTimer);
+            document.addEventListener('mousedown', resetIdleTimer);
+            document.addEventListener('keydown', resetIdleTimer);
+            document.addEventListener('scroll', resetIdleTimer);
+            document.addEventListener('click', resetIdleTimer);
+            
+            return;
         }
         
-        if (window.history && window.history.replaceState) {
-            try {
-                var url = new URL(window.location.href);
-                url.searchParams.delete('fromCoupon');
-                window.history.replaceState({}, document.title, url.toString());
-            } catch (err) {}
-        }
-        
+        preloadSwitchableStaff();
+        getCouponPrefixes();
         hideLoading();
         
-        // 🔥 啟動閒置計時器
         resetIdleTimer();
         document.addEventListener('mousemove', resetIdleTimer);
         document.addEventListener('mousedown', resetIdleTimer);
         document.addEventListener('keydown', resetIdleTimer);
         document.addEventListener('scroll', resetIdleTimer);
         document.addEventListener('click', resetIdleTimer);
-        
-        return;  // ← 這裡 return 是對的，跳出 init()
     }
-    
-    // ============================================================
-    //  🔥 非優惠券流程（正常登入）
-    // ============================================================
-    preloadSwitchableStaff();
-    getCouponPrefixes();
-    hideLoading();
-    
-    // 🔥 啟動閒置計時器
-    resetIdleTimer();
-    document.addEventListener('mousemove', resetIdleTimer);
-    document.addEventListener('mousedown', resetIdleTimer);
-    document.addEventListener('keydown', resetIdleTimer);
-    document.addEventListener('scroll', resetIdleTimer);
-    document.addEventListener('click', resetIdleTimer);
-    
-}  // ← init() 結束
-
-// ============================================================
-// 🔥 啟動
-// ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-    init();
-});
 
     // ============================================================
-    //  核心函數：getCouponPrefixes
+    //  掃碼槍監聽器（放在所有函數定義之後）
     // ============================================================
-    async function getCouponPrefixes() {
-        console.log("🔄 準備定義 getCouponPrefixes");
-        if (cachedPrefixes) {
-            return cachedPrefixes;
-        }
-        try {
-            const url = `${GAS_URL}?action=getCouponPrefixes&t=${Date.now()}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            console.log("📌 getCouponPrefixes API 回傳:", data);
-            if (data.success && data.prefixes && data.prefixes.length > 0) {
-                cachedPrefixes = data.prefixes;
-                console.log("✅ 取得優惠券前綴:", cachedPrefixes);
-                return cachedPrefixes;
+    let scanBuffer = '';
+    let scanTimer = null;
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            if (scanBuffer.length > 5) {
+                console.log('📌 掃描輸入:', scanBuffer);
+                var val = scanBuffer.trim();
+                scanBuffer = '';
+                onScanSuccess(val);
             }
-            cachedPrefixes = ["ANN_OMP_pt01", "GIFT_OMP_gf01", "BIR_OMP_gf02", "SPC_OMP_fe01", "MEM_OMP_pt02"];
-            return cachedPrefixes;
-        } catch (e) {
-            console.error("❌ 取得優惠券前綴失敗:", e);
-            cachedPrefixes = ["ANN_OMP_pt01", "GIFT_OMP_gf01", "BIR_OMP_gf02", "SPC_OMP_fe01", "MEM_OMP_pt02"];
-            return cachedPrefixes;
-        }
-    }
-     // ============================================================
-//  掃碼槍監聽（不搶焦點版）
-// ============================================================
-
-let scanBuffer = '';
-let scanTimer = null;
-
-document.addEventListener('keydown', function(e) {
-    // 如果按的是 Enter，檢查緩衝區
-    if (e.key === 'Enter') {
-        if (scanBuffer.length > 5) {
-            // 掃描完成
-            console.log('📌 掃描輸入:', scanBuffer);
-            var val = scanBuffer.trim();
-            scanBuffer = '';
-            onScanSuccess(val);
-        }
-        return;
-    }
-    
-    // 只處理可列印字元（掃碼槍輸入）
-    if (e.key.length === 1 && e.key.match(/[\w\d\-_=+]/)) {
-        // 如果焦點在金額輸入框，不攔截
-        var active = document.activeElement;
-        if (active && active.tagName === 'INPUT') {
-            var id = active.id;
-            if (id === 'totalSpend' || id === 'ticketSpend' || id === 'redeemAmount' || id === 'couponDiscount') {
-                return; // 讓金額輸入框正常輸入
-            }
+            return;
         }
         
-        // 收集掃碼槍輸入
-        scanBuffer += e.key;
-        clearTimeout(scanTimer);
-        scanTimer = setTimeout(function() {
-            scanBuffer = '';
-        }, 100);
-    }
-});
+        if (e.key.length === 1 && e.key.match(/[\w\d\-_=+]/)) {
+            var active = document.activeElement;
+            if (active && active.tagName === 'INPUT') {
+                var id = active.id;
+                if (id === 'totalSpend' || id === 'ticketSpend' || id === 'redeemAmount' || id === 'couponDiscount') {
+                    return;
+                }
+            }
+            
+            scanBuffer += e.key;
+            clearTimeout(scanTimer);
+            scanTimer = setTimeout(function() {
+                scanBuffer = '';
+            }, 100);
+        }
+    });
+
+    // ============================================================
+    //  啟動
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        init();
+    });
 </script>
 </body>
 </html>
