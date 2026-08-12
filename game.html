@@ -652,7 +652,7 @@ const confirmNo = document.getElementById('confirmNo');
 function init() {
     const params = new URLSearchParams(window.location.search);
     userId = params.get('userId') || '';
-    GAS_BASE_URL = params.get('api') || 'https://script.google.com/macros/s/AKfycbyJHTOyuXMiNX7drQZpjTsQpolrT8isTQTR4HBH05bA-WB_p8Ns1qmBsA6uQel-F60-/exec';
+    GAS_BASE_URL = params.get('api') || 'https://tiny-salad-c64c.urthing-inn.workers.dev/';
 
     if (!userId) {
         showStatus('⚠️ 請先登入會員');
