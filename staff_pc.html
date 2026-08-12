@@ -709,7 +709,14 @@ async function getSwitchableStaff() {
 
         // ✅ 加入 platform=pc 參數
         var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&deviceId=' + encodeURIComponent(deviceId) + '&platform=pc&t=' + Date.now();
-        var res = await fetch(url);
+        var res = await fetch(url, {
+    method: 'GET',
+    cache: 'no-cache',
+    headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+    }
+});
         var data = await res.json();
         return data.success && data.staff ? data.staff : [];
     } catch (e) {
@@ -770,7 +777,14 @@ async function getSwitchableStaff() {
             '&keyword=' + encodeURIComponent(keyword) +
             '&t=' + Date.now();
         try {
-            var res = await fetch(url);
+            var res = await fetch(url, {
+    method: 'GET',
+    cache: 'no-cache',
+    headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+    }
+});
             if (!res.ok) {
                 console.error('HTTP 錯誤:', res.status, res.statusText);
                 return { success: false, message: '伺服器連線失敗' };
@@ -920,7 +934,14 @@ function forceLogout() {
         showLoading("載入會員資料...");
         try {
             var url = `${GAS_URL}?action=getMemberInfo&userId=${encodeURIComponent(userId)}&branch=${encodeURIComponent(staff.branch)}&t=${Date.now()}`;
-            var res = await fetch(url);
+            var res = await fetch(url, {
+    method: 'GET',
+    cache: 'no-cache',
+    headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+    }
+});
             var data = await res.json();
             console.log("📊 loadMemberData 完整回傳:", JSON.stringify(data));
             hideLoading();
