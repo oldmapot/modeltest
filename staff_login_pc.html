@@ -20,10 +20,10 @@
    .login-card {
     background: white;
     border-radius: 28px;
-    padding: 12px 16px;
+    padding: 8px 16px; /* 【修改這裡】原本是 12px 16px，縮小上方內距讓空白變少 */
     width: 100%;
     max-width: 820px; /* 控制整體最大寬度剛好 */
-    max-height: 95vh;
+    max-height: 80vh;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     margin: auto;
     text-align: left;
@@ -49,16 +49,16 @@
     .logo-img {
         width: 180px;
         height: 180px;
-        border-radius: 50%;
-        object-fit: cover;
-        display: inline-block;
+        border-radius: 50%; /*將正方形的四個角圓角化到極致，直接變成一個正圓形 */
+        object-fit: cover; /*確保圖片在塞進這個正圓形框框時，如果原本的圖片比例不是正方形，它會自動裁切掉多餘的部分並填滿整個圓形，不會讓圖片被壓扁或變形*/
+        display: inline-block; /*讓圖片呈現「行內區塊」特性，可以和其他文字或元件並排在同一行，同時又能設定寬高*/
     }
     
     .brand-title {    /* LOGO下方文字 老娘領地 大小 */
         font-size: 26px;
         color: #8b0000;
         font-weight: 700;
-        margin-top: 6px;
+        margin-top: 4px;
     }
     
     .pc-badge {  /* LOGO下方文字 電腦版 大小 */
@@ -181,14 +181,14 @@
     }
     
     .demo-hint {
-    margin-top: 12px;
-    text-align: left;
+    margin-top: 12px;  /* 與上方元素保持 12px 的距離（留白） */
+    text-align: left;  /* 文字靠左對齊 */
     background: #f5f5f5;
-    padding: 10px 12px;
-    border-radius: 10px;
+    padding: 10px 12px; /* 內距設定（上下各留 10px、左右各留 12px），讓文字不會貼齊框框邊緣 */
+    border-radius: 10px; /*將框框的四個角變成圓角（半徑 10px）*/ 
     font-size: 12px;
     color: #666;
-    line-height: 1.6;
+    line-height: 1.6; /*行高設為 1.6 倍，增加行與行之間的間距，讓多行文字比較好閱讀 */
 }
     
     .demo-hint strong {
