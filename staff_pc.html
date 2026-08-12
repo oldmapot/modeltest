@@ -840,12 +840,17 @@ async function getSwitchableStaff() {
         try {
             const result = await verifyStaffPassword(staffId, password);
             
-            if (result.success) {
-                const staffList = await getSwitchableStaff();
-                const selectedStaff = staffList.find(s => s.id === staffId || s.loginId === staffId);
-                if (!selectedStaff) {
-                    throw new Error('找不到該店員資料');
-                }
+ if (result.success) {
+    // 🔥 直接用快取的店員清單，不重新呼叫 API
+    var staffList = cachedSwitchableStaff;
+    if (!staffList || staffList.length === 0) {
+        // 如果快取沒有，才重新呼叫
+        staffList = await getSwitchableStaff();
+    }
+    var selectedStaff = staffList.find(s => s.id === staffId || s.loginId === staffId);
+    if (!selectedStaff) {
+        throw new Error('找不到該店員資料');
+    }
                 staff.name = selectedStaff.name || '';
                 staff.branch = selectedStaff.branch || staff.branch;
                 staff.role = selectedStaff.role || '夥伴';
@@ -2307,20 +2312,30 @@ function init() {
         return;  // ← 這裡 return 是對的，跳出 init()
     }
     
-    // ============================================================
-    //  🔥 非優惠券流程（正常登入）
-    // ============================================================
-    preloadSwitchableStaff();
-    getCouponPrefixes();
-    hideLoading();
-    
-    // 🔥 啟動閒置計時器
-    resetIdleTimer();
-    document.addEventListener('mousemove', resetIdleTimer);
-    document.addEventListener('mousedown', resetIdleTimer);
-    document.addEventListener('keydown', resetIdleTimer);
-    document.addEventListener('scroll', resetIdleTimer);
-    document.addEventListener('click', resetIdleTimer);
+// ============================================================
+//  🔥 非優惠券流程（正常登入）
+// ============================================================
+// 🔥 核心功能先執行
+hideLoading();
+
+// 🔥 啟動閒置計時器
+resetIdleTimer();
+document.addEventListener('mousemove', resetIdleTimer);
+document.addEventListener('mousedown', resetIdleTimer);
+document.addEventListener('keydown', resetIdleTimer);
+document.addEventListener('scroll', resetIdleTimer);
+document.addEventListener('click', resetIdleTimer);
+
+// 🔥 背景串聯載入次要資料（不阻塞 UI）
+setTimeout(async function() {
+    try {
+        await preloadSwitchableStaff();
+        await getCouponPrefixes();
+        console.log('✅ 背景資料載入完成');
+    } catch (e) {
+        console.warn('⚠️ 背景資料載入失敗:', e);
+    }
+}, 500);
     
 }  // ← init() 結束
 
