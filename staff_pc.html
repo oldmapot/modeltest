@@ -916,6 +916,7 @@ function forceLogout() {
     //  核心函數：getCouponPrefixes
     // ============================================================
     async function getCouponPrefixes() {
+        console.log("🔄 準備定義 getCouponPrefixes");
         if (cachedPrefixes) {
             return cachedPrefixes;
         }
@@ -937,6 +938,7 @@ function forceLogout() {
             return cachedPrefixes;
         }
     }
+        console.log("✅ getCouponPrefixes 已定義");
 
     // ============================================================
     //  核心函數：loadMemberData
