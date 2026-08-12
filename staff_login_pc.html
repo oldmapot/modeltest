@@ -14,11 +14,11 @@ body {
         /* 移除原本的 min-height: 100vh、display: flex、justify-content 與 align-items */
     }
     
-    /* ===== 登入卡片 ===== */
+/* ===== 登入卡片 ===== */
    .login-card {
     background: white;
     border-radius: 28px;
-    padding: 12px 16px;
+    padding: 8px 16px; /* <-- 【修改這裡】原本是 12px 16px，縮小上方內距讓空白變少 */
     width: 100%;
     max-width: 820px; /* 控制整體最大寬度剛好 */
     max-height: 80vh;
@@ -45,21 +45,21 @@ body {
     
     /* ===== Logo 區 ===== */
     .logo-img {
-        width: 180px;
-        height: 180px;
-        border-radius: 50%;
-        object-fit: cover;
-        display: inline-block;
+        width: 160px;  /* 圖片的寬度為 160 像素 */
+        height: 160px;   /* 圖片的高度為 160 像素 */
+        border-radius: 50%; /*正方形的四個角圓角化到極致，直接變成一個正圓形 */
+        object-fit: cover; /* 確保圖片在塞進這個正圓形框框時，如果原本的圖片比例不是正方形，它會自動裁切掉多餘的部分並填滿整個圓形，不會讓圖片被壓扁或變形 */
+        display: inline-block; /* 讓圖片呈現「行內區塊」特性，可以和其他文字或元件並排在同一行，同時又能設定寬高 */
     }
-    
-    .brand-title {    /* LOGO下方文字 老娘領地 大小 */
+   /* LOGO下方文字 老娘領地 大小 */
+    .brand-title {    
         font-size: 26px;
         color: #8b0000;
         font-weight: 700;
-        margin-top: 6px;
+        margin-top: 2px; /* <-- 【修改這裡】原本是 6px，調小讓它跟 LOGO 靠近一點 */
     }
-    
-    .pc-badge {  /* LOGO下方文字 電腦版 大小 */
+    /* LOGO下方文字 電腦版 大小 */
+    .pc-badge {  
         display: inline-block;
         background: #8b0000;
         color: white;
@@ -179,14 +179,14 @@ body {
     }
     
     .demo-hint {
-    margin-top: 12px;
-    text-align: left;
-    background: #f5f5f5;
-    padding: 10px 12px;
-    border-radius: 10px;
-    font-size: 12px;
-    color: #666;
-    line-height: 1.6;
+    margin-top: 10px;  /*與上方元素保持 12px 的距離（留白）*/
+    text-align: left;  /*文字靠左對齊*/
+    background: #f5f5f5; /* 背景顏色設定為淺灰色 */
+    padding: 10px 12px; /* 內距設定（上下各留 10px、左右各留 12px），讓文字不會貼齊框框邊緣 */
+    border-radius: 10px; /* 將框框的四個角變成圓角（半徑 10px） */
+    font-size: 12px; /* 字型大小設為 12px */
+    color: #666; /* 文字顏色設為深灰色 */
+    line-height: 1.6; /* 行高設為 1.6 倍，增加行與行之間的間距 */
 }
     
     .demo-hint strong {
