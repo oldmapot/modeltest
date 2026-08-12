@@ -6,12 +6,15 @@
     <title>老娘領地 - 電腦版登入</title>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-body { 
-        font-family: "Microsoft JhengHei", sans-serif; 
-        padding: 10px; 
-        background: #f4f7f6; 
-        margin: 0;
-        /* 移除原本的 min-height: 100vh、display: flex、justify-content 與 align-items */
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #8b0000 0%, #ab545a 100%);
+        /* min-height: 100vh; <-- 【請把這行刪除或改成 auto】避免強制撐高畫面 */
+        min-height: auto; 
+        display: flex;
+        justify-content: center;
+        /* align-items: center; <-- 【請把這行刪除】不要讓卡片強制置中垂直撐開 */
+        padding: 10px; /* 讓卡片貼近視窗上方 */
     }
     
 /* ===== 登入卡片 ===== */
