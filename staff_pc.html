@@ -1007,7 +1007,10 @@ function forceLogout() {
                 if (window.activeCoupon) {
                     document.getElementById('coupon-info').style.display = 'block';
                 }
-                document.getElementById('totalSpend').focus();
+                setTimeout(function() {
+                const el = document.getElementById('totalSpend') || document.getElementById('buyTicket');
+                if (el) el.focus();
+                }, 300);
                 doCalc();
             } else {
                 showModal(`⚠️ 查無此會員！`);
@@ -1351,7 +1354,10 @@ if (scanMode === 'coupon') {
                         document.getElementById('member-level').innerText = memberLevel;
                         document.getElementById('cus-pts').innerText = currentPoints;
                         document.getElementById('cus-total').innerText = data.member.totalSpend || 0;
-                        document.getElementById('totalSpend').focus();
+                        setTimeout(function() {
+                        const el = document.getElementById('totalSpend') || document.getElementById('buyTicket');
+                        if (el) el.focus();
+                        }, 300);
                         doCalc();
                         console.log("⏱️ ==== 掃描流程完成 ====", Date.now() - startTime, "ms");
                     } else {
