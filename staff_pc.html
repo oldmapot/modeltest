@@ -708,7 +708,7 @@ async function getSwitchableStaff() {
         var deviceId = localStorage.getItem('pc_device_id') || getDeviceId();
 
         // ✅ 加入 platform=pc 參數
-        var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&deviceId=' + encodeURIComponent(deviceId) + '&platform=pc&t=' + Date.now();
+        var url = GAS_URL + '?action=getSwitchableStaff&loginId=' + encodeURIComponent(currentLoginId) + '&platform=pc&t=' + Date.now();
         var res = await fetch(url, {
     method: 'GET',
     cache: 'no-cache',
