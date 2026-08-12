@@ -581,23 +581,24 @@ function showScanning() {
     }
 
   async function getUserIP() {
-        try {
-            const response = await fetch('https://api.ipify.org?format=json', {
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-cache',
-                headers: {
-                    'Cache-Control': 'no-cache',
-                    'Pragma': 'no-cache'
-                }
-            });
-            const data = await response.json();
-            return data.ip;
-        } catch (err) {
-            console.warn("取得 IP 失敗，使用空值", err);
-            return "";
-        }
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 秒超時
+        
+        const response = await fetch('https://api.ipify.org?format=json', {
+            method: 'GET',
+            cache: 'no-cache',
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
+        const data = await response.json();
+        return data.ip;
+    } catch (err) {
+        console.warn("取得 IP 失敗，使用空值", err);
+        return "";
     }
+}
 
     function safeJsonParse(text) {
         try {
