@@ -330,11 +330,11 @@
             if (gasWarmedUp) return;
             gasWarmedUp = true;
             try {
-                fetch(`${GAS_URL}?action=staffLogin&...`, { 
-                method: 'GET',
-                mode: 'cors',          // 🔥 改為 cors
-                cache: 'no-cache'
-             })
+                console.log("🔥 開始預熱 GAS...");
+                fetch(`${GAS_URL}?action=ping&t=${Date.now()}`, { 
+                    method: 'GET',
+                    mode: 'no-cors'
+                });
                 console.log("✅ GAS 預熱請求已發送");
             } catch (e) {
                 console.log("⚠️ GAS 預熱失敗，不影響登入");
