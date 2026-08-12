@@ -1414,14 +1414,12 @@ function toggleMode() {
         totalInput.value = '';
         totalInput.id = 'totalSpend';  // 恢復 ID
         
-        // 顯示所有欄位
-        ticketSpendGroup.style.display = 'block';
-        couponDiscountGroup.style.display = 'block';
-        redeemGroup.style.display = 'block';
-        
-        document.getElementById('buyTicket').value = '';
+   // 🔥 防呆：確認 buyTicket 存在再操作
+    var buyTicketEl = document.getElementById('buyTicket');
+    if (buyTicketEl) {
+        buyTicketEl.value = '';
     }
-    
+}
     doCalc();
 }
    
