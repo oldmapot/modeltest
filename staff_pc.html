@@ -489,45 +489,7 @@
     let idleTimeout = 5 * 60 * 1000; // 5 分鐘（毫秒）
     let isLocked = false;  // 🔥 鎖定標記
 
-// ============================================================
-//  掃碼槍監聽（不搶焦點版）
-// ============================================================
 
-let scanBuffer = '';
-let scanTimer = null;
-
-document.addEventListener('keydown', function(e) {
-    // 如果按的是 Enter，檢查緩衝區
-    if (e.key === 'Enter') {
-        if (scanBuffer.length > 5) {
-            // 掃描完成
-            console.log('📌 掃描輸入:', scanBuffer);
-            var val = scanBuffer.trim();
-            scanBuffer = '';
-            onScanSuccess(val);
-        }
-        return;
-    }
-    
-    // 只處理可列印字元（掃碼槍輸入）
-    if (e.key.length === 1 && e.key.match(/[\w\d\-_=+]/)) {
-        // 如果焦點在金額輸入框，不攔截
-        var active = document.activeElement;
-        if (active && active.tagName === 'INPUT') {
-            var id = active.id;
-            if (id === 'totalSpend' || id === 'ticketSpend' || id === 'redeemAmount' || id === 'couponDiscount') {
-                return; // 讓金額輸入框正常輸入
-            }
-        }
-        
-        // 收集掃碼槍輸入
-        scanBuffer += e.key;
-        clearTimeout(scanTimer);
-        scanTimer = setTimeout(function() {
-            scanBuffer = '';
-        }, 100);
-    }
-});
 // ============================================================
 //  掃描狀態輔助函數
 // ============================================================
@@ -2355,7 +2317,45 @@ document.addEventListener('DOMContentLoaded', function() {
             return cachedPrefixes;
         }
     }
-     
+     // ============================================================
+//  掃碼槍監聽（不搶焦點版）
+// ============================================================
+
+let scanBuffer = '';
+let scanTimer = null;
+
+document.addEventListener('keydown', function(e) {
+    // 如果按的是 Enter，檢查緩衝區
+    if (e.key === 'Enter') {
+        if (scanBuffer.length > 5) {
+            // 掃描完成
+            console.log('📌 掃描輸入:', scanBuffer);
+            var val = scanBuffer.trim();
+            scanBuffer = '';
+            onScanSuccess(val);
+        }
+        return;
+    }
+    
+    // 只處理可列印字元（掃碼槍輸入）
+    if (e.key.length === 1 && e.key.match(/[\w\d\-_=+]/)) {
+        // 如果焦點在金額輸入框，不攔截
+        var active = document.activeElement;
+        if (active && active.tagName === 'INPUT') {
+            var id = active.id;
+            if (id === 'totalSpend' || id === 'ticketSpend' || id === 'redeemAmount' || id === 'couponDiscount') {
+                return; // 讓金額輸入框正常輸入
+            }
+        }
+        
+        // 收集掃碼槍輸入
+        scanBuffer += e.key;
+        clearTimeout(scanTimer);
+        scanTimer = setTimeout(function() {
+            scanBuffer = '';
+        }, 100);
+    }
+});
 </script>
 </body>
 </html>
