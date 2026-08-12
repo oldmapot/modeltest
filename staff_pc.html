@@ -1118,7 +1118,7 @@ function displayCouponInfo(data) {
     
     if (!isLoggedIn || !staff.loginId) {
         showToast("⚠️ 請先登入");
-        setTimeout(() => { window.location.href = 'staff_login_pc.html'; }, 1500);
+        setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
         return;
     }
     // ✅ 電腦版不需要相機相關程式碼
@@ -1667,7 +1667,7 @@ if (fromCoupon === 'true') {
     // ---------- 1. 前置檢查 ----------
     if (!isLoggedIn || !staff?.loginId) {
         showToast('⚠️ 請先登入');
-        setTimeout(() => { window.location.href = 'staff_login_pc.html'; }, 1500);
+        setTimeout(() => { window.location.href = 'staff_login.html'; }, 1500);
         return;
     }
     
