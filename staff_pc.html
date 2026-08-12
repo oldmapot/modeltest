@@ -881,12 +881,15 @@ async function getSwitchableStaff() {
                 inputEl.style.backgroundColor = '#fff5f5';
                 inputEl.focus();
             }
-        } catch (error) {
-            errorEl.textContent = '⚠️ ' + error.message;
-            errorEl.style.display = 'block';
-            console.error('❌ unlockSession 錯誤:', error);
-        }
-    }
+       } catch (error) {
+    // 🔥 即使發生錯誤，也要清除鎖定標記
+    localStorage.removeItem('isLocked');
+    isLocked = false;
+    
+    errorEl.textContent = '⚠️ ' + error.message;
+    errorEl.style.display = 'block';
+    console.error('❌ unlockSession 錯誤:', error);
+}
 
 document.getElementById('lockPassword')?.addEventListener('input', function() {
     const errorEl = document.getElementById('lockPasswordError');
