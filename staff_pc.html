@@ -912,33 +912,6 @@ function forceLogout() {
     }
 }
 
-    // ============================================================
-    //  核心函數：getCouponPrefixes
-    // ============================================================
-    async function getCouponPrefixes() {
-        console.log("🔄 準備定義 getCouponPrefixes");
-        if (cachedPrefixes) {
-            return cachedPrefixes;
-        }
-        try {
-            const url = `${GAS_URL}?action=getCouponPrefixes&t=${Date.now()}`;
-            const response = await fetch(url);
-            const data = await response.json();
-            console.log("📌 getCouponPrefixes API 回傳:", data);
-            if (data.success && data.prefixes && data.prefixes.length > 0) {
-                cachedPrefixes = data.prefixes;
-                console.log("✅ 取得優惠券前綴:", cachedPrefixes);
-                return cachedPrefixes;
-            }
-            cachedPrefixes = ["ANN_OMP_pt01", "GIFT_OMP_gf01", "BIR_OMP_gf02", "SPC_OMP_fe01", "MEM_OMP_pt02"];
-            return cachedPrefixes;
-        } catch (e) {
-            console.error("❌ 取得優惠券前綴失敗:", e);
-            cachedPrefixes = ["ANN_OMP_pt01", "GIFT_OMP_gf01", "BIR_OMP_gf02", "SPC_OMP_fe01", "MEM_OMP_pt02"];
-            return cachedPrefixes;
-        }
-    }
-        console.log("✅ getCouponPrefixes 已定義");
 
     // ============================================================
     //  核心函數：loadMemberData
@@ -2334,6 +2307,34 @@ function init() {
 document.addEventListener('DOMContentLoaded', function() {
     init();
 });
+
+    // ============================================================
+    //  核心函數：getCouponPrefixes
+    // ============================================================
+    async function getCouponPrefixes() {
+        console.log("🔄 準備定義 getCouponPrefixes");
+        if (cachedPrefixes) {
+            return cachedPrefixes;
+        }
+        try {
+            const url = `${GAS_URL}?action=getCouponPrefixes&t=${Date.now()}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            console.log("📌 getCouponPrefixes API 回傳:", data);
+            if (data.success && data.prefixes && data.prefixes.length > 0) {
+                cachedPrefixes = data.prefixes;
+                console.log("✅ 取得優惠券前綴:", cachedPrefixes);
+                return cachedPrefixes;
+            }
+            cachedPrefixes = ["ANN_OMP_pt01", "GIFT_OMP_gf01", "BIR_OMP_gf02", "SPC_OMP_fe01", "MEM_OMP_pt02"];
+            return cachedPrefixes;
+        } catch (e) {
+            console.error("❌ 取得優惠券前綴失敗:", e);
+            cachedPrefixes = ["ANN_OMP_pt01", "GIFT_OMP_gf01", "BIR_OMP_gf02", "SPC_OMP_fe01", "MEM_OMP_pt02"];
+            return cachedPrefixes;
+        }
+    }
+     
 </script>
 </body>
 </html>
