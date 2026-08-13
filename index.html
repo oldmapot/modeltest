@@ -10,6 +10,24 @@
     <title>老娘的一點心意/內測版</title>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <!-- 🔥 Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCGGQLz37yy9ExZ1bMYoftik1qUaUEyA2M",
+        authDomain: "memberpointssystem.firebaseapp.com",
+        projectId: "memberpointssystem",
+        storageBucket: "memberpointssystem.firebasestorage.app",
+        messagingSenderId: "1051650525212",
+        appId: "1:1051650525212:web:954b770ba38a45ba66f5d7"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    console.log('✅ Firebase 已初始化');
+</script>
     <style>
         :root { --primary: #8b0000; --bg: #fdf5e6; --card-bg: #fff; --text: #333; --light-text: #666; --action-btn: #beb1a8; --brand-btn: #ab545a; --success: #06C755; }
 .theme-so { --primary: #b57c82; --bg: #FFF9E6; }
